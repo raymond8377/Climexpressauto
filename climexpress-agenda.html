@@ -226,8 +226,12 @@
     width: 4px; height: 4px; border-radius: 50%; background: var(--orange);
   }
   .cal-day.today-day::after { background: var(--dark); }
-  .cal-day:not(.empty):not(.today-day):hover { background: rgba(0,194,255,0.12); }
+  .cal-day.blocked-day { background: rgba(255,68,68,0.2); color: #ff8080; border: 1px solid rgba(255,68,68,0.3); }
+  .cal-day.blocked-day::before { content: '🔒'; font-size: 8px; position: absolute; top: 1px; right: 1px; }
+  .cal-day:not(.empty):not(.today-day):not(.blocked-day):hover { background: rgba(0,194,255,0.12); }
   .cal-day.selected-day { background: rgba(0,194,255,0.2); color: var(--accent); font-weight: 700; }
+  .badge-lieu-place { background: rgba(0,214,143,0.15); color: var(--green); font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; margin-left: 4px; }
+  .badge-lieu-domicile { background: rgba(255,149,0,0.15); color: var(--orange); font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; margin-left: 4px; }
 
   /* MODAL */
   .modal-overlay {
@@ -577,10 +581,15 @@ function quickBook(h) {
 function rdvCard(r) {
   const badge = r.type.startsWith('VL') ? 'badge-vl' : r.type.startsWith('VU') ? 'badge-vu' : 'badge-pl';
   const label = r.type.startsWith('VL') ? 'VL' : r.type.startsWith('VU') ? 'VU' : r.type.startsWith('PL') ? 'PL' : '🔧';
+  const lieuBadge = r.lieu === 'À domicile (+10€)' || r.source === 'web' && r.adresse && r.adresse !== 'Sur place — La Foux'
+    ? `<span class="badge-lieu-domicile">🚗 Domicile +10€</span>`
+    : r.adresse === 'Sur place — La Foux' || r.lieu === 'Sur place — La Foux'
+    ? `<span class="badge-lieu-place">🏠 Sur place</span>`
+    : '';
   return `<div class="today-rdv ${r.status}" onclick="showRdvDetail(${r.id})">
     <div class="rdv-time">${r.heure}</div>
     <div class="rdv-info">
-      <div class="rdv-name">${r.nom}</div>
+      <div class="rdv-name">${r.nom} ${lieuBadge}</div>
       <div class="rdv-detail">📍 ${r.adresse || 'Adresse non précisée'}</div>
       <div class="rdv-detail">📞 <a class="tel" href="tel:${r.tel}" onclick="event.stopPropagation()">${r.tel}</a></div>
       <span class="rdv-badge ${badge}">${label}</span>
@@ -746,9 +755,10 @@ function renderCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hasRdv = rdvs.some(r => r.date === dateStr && r.status !== 'annule');
+    const isBlocked = isJourBloque(dateStr);
     const isToday = dateStr === today;
     const isSel = dateStr === selectedCalDay;
-    html += `<div class="cal-day ${isToday?'today-day':''} ${hasRdv?'has-rdv':''} ${isSel&&!isToday?'selected-day':''}" onclick="selectCalDay('${dateStr}')">${d}</div>`;
+    html += `<div class="cal-day ${isToday?'today-day':''} ${hasRdv&&!isBlocked?'has-rdv':''} ${isBlocked&&!isToday?'blocked-day':''} ${isSel&&!isToday?'selected-day':''}" onclick="selectCalDay('${dateStr}')">${d}</div>`;
   }
   grid.innerHTML = html;
   renderFullRDVList();
@@ -761,6 +771,61 @@ function selectCalDay(dateStr) {
   selectedCalDay = dateStr;
   renderCalendar();
   renderDayRDVs(dateStr);
+  // Afficher menu blocage pour ce jour
+  showCalDayMenu(dateStr);
+}
+
+function showCalDayMenu(dateStr) {
+  const isBloque = isJourBloque(dateStr);
+  const dayRdvs = rdvs.filter(r => r.date === dateStr && r.status !== 'annule');
+  const div = document.getElementById('dayRDVList');
+  const dateLabel = formatDate(dateStr);
+
+  let menuHtml = `<div style="background:#22487a;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px;margin-bottom:10px;">
+    <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:10px;">📅 ${dateLabel}</div>`;
+
+  if (isBloque) {
+    menuHtml += `<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;padding:10px;font-size:13px;color:#ff8080;margin-bottom:10px;">🔒 Ce jour est bloqué</div>
+    <button class="btn" onclick="debloquerJour('${dateStr}')" style="background:rgba(0,214,143,0.15);color:#00d68f;border:1px solid rgba(0,214,143,0.3);padding:10px;border-radius:10px;width:100%;font-weight:700;">🔓 Débloquer ce jour</button>`;
+  } else {
+    menuHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="btn" onclick="bloquerJourDepuisCalendrier('${dateStr}')" style="background:rgba(255,68,68,0.12);color:#ff8080;border:1px solid rgba(255,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🔒 Bloquer<br>le jour entier</button>
+      <button class="btn" onclick="ouvrirBlocageHeure('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🕐 Bloquer<br>une heure</button>
+    </div>`;
+  }
+  menuHtml += `</div>`;
+
+  if (dayRdvs.length > 0) {
+    div.innerHTML = menuHtml + `<div class="section-title" style="font-size:18px;margin-bottom:10px;">${dateLabel}</div>` + dayRdvs.map(r => rdvCard(r)).join('');
+  } else {
+    div.innerHTML = menuHtml;
+  }
+}
+
+function bloquerJourDepuisCalendrier(dateStr) {
+  const bloc = { id: Date.now(), type: 'jour', date: dateStr, heure: null, raison: 'Complet' };
+  blocages.push(bloc);
+  localStorage.setItem('clim_blocages', JSON.stringify(blocages));
+  syncBlocageToSupabase(bloc);
+  showNotif('🔒 Jour bloqué !', '#ff4444');
+  renderCalendar();
+  showCalDayMenu(dateStr);
+  renderAccueil();
+}
+
+function debloquerJour(dateStr) {
+  blocages = blocages.filter(b => !(b.date === dateStr && b.type === 'jour'));
+  localStorage.setItem('clim_blocages', JSON.stringify(blocages));
+  showNotif('🔓 Jour débloqué !', '#00d68f');
+  renderCalendar();
+  showCalDayMenu(dateStr);
+  renderAccueil();
+}
+
+function ouvrirBlocageHeure(dateStr) {
+  document.getElementById('blocDate').value = dateStr;
+  setBlocType('heure');
+  document.getElementById('blocageModal').classList.add('open');
 }
 
 function renderDayRDVs(dateStr) {

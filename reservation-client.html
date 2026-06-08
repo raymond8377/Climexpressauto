@@ -6,7 +6,9 @@
 <title>ClimExpress — Réserver une intervention</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>emailjs.init('2Mv3fI-1zNUEYBSX-');</script>
+<script>
+const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
+</script>
 <style>
   :root {
     --accent: #00c2ff; --green: #00d68f; --orange: #ff9500; --red: #ff4444;
@@ -322,10 +324,21 @@ async function loadSlots() {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#ff8080;font-weight:700;">🔒 Complet pour cette journée</div>`;
       return;
     }
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
     grid.innerHTML = HEURES.map(h => {
       const taken = takenSlots.includes(h) || heuresBloquees.includes(h);
+      // Bloquer automatiquement les créneaux passés si c'est aujourd'hui
+      const [hh, mm] = h.split(':').map(Number);
+      const slotMinutes = hh * 60 + mm;
+      const isPast = dateStr === todayStr && slotMinutes <= currentMinutes;
+      const isBlocked = taken || isPast;
       const sel = h === selectedHeure;
-      return `<div class="slot-btn ${taken?'taken':''} ${sel&&!taken?'selected':''}" onclick="${taken?'':'selectSlot(\''+h+'\')'}">${taken && heuresBloquees.includes(h) ? h + ' 🔒' : h}</div>`;
+      const label = isPast ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' 🔒' : h;
+      return `<div class="slot-btn ${isBlocked?'taken':''} ${sel&&!isBlocked?'selected':''}" onclick="${isBlocked?'':'selectSlot(\''+h+'\')'}">${label}</div>`;
     }).join('');
   } catch(e) {
     takenSlots = [];
@@ -377,14 +390,16 @@ async function confirmerRDV() {
     });
 
     if (res.ok || res.status === 201) {
-      // Envoyer email notification
-      emailjs.send('service_oo6sm23', 'template_2yfinvn', {
-        nom: nom,
-        tel: tel,
-        adresse: adresse,
-        type: selectedService,
-        date: selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
-        heure: selectedHeure
+      // Envoyer email via Formspree
+      fetch(FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          nom: nom, tel: tel, adresse: adresse, type: selectedService,
+          date: selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+          heure: selectedHeure,
+          _subject: '🔔 Nouveau RDV ClimExpress — ' + nom
+        })
       }).catch(e => console.log('Email:', e));
 
       const dateAff = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });

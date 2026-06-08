@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ClimExpress — Réserver une intervention</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('2Mv3fI-1zNUEYBSX-');</script>
 <style>
   :root {
     --accent: #00c2ff; --green: #00d68f; --orange: #ff9500; --red: #ff4444;
@@ -304,21 +305,33 @@ async function loadSlots() {
   const dateStr = selectedDate.toISOString().split('T')[0];
   document.getElementById('dateLabelDisp').textContent = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  // Récupérer les créneaux pris depuis Supabase
+  // Récupérer les créneaux pris ET les blocages depuis Supabase
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs?date=eq.${dateStr}&status=neq.annule&select=heure`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    });
-    const data = await res.json();
-    takenSlots = Array.isArray(data) ? data.map(r => r.heure) : [];
-  } catch(e) { takenSlots = []; }
+    const [resRdv, resBloc] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/rdvs?date=eq.${dateStr}&status=neq.annule&select=heure`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }),
+      fetch(`${SUPABASE_URL}/rest/v1/blocages?date=eq.${dateStr}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
+    ]);
+    const rdvData = await resRdv.json();
+    const blocData = await resBloc.json();
+    takenSlots = Array.isArray(rdvData) ? rdvData.map(r => r.heure) : [];
+    const jourBloque = Array.isArray(blocData) && blocData.some(b => b.type === 'jour');
+    const heuresBloquees = Array.isArray(blocData) ? blocData.filter(b => b.type === 'heure').map(b => b.heure) : [];
 
-  const grid = document.getElementById('slotsGrid');
-  grid.innerHTML = HEURES.map(h => {
-    const taken = takenSlots.includes(h);
-    const sel = h === selectedHeure;
-    return `<div class="slot-btn ${taken?'taken':''} ${sel&&!taken?'selected':''}" onclick="${taken?'':'selectSlot(\''+h+'\')'}">${h}</div>`;
-  }).join('');
+    const grid = document.getElementById('slotsGrid');
+    if (jourBloque) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#ff8080;font-weight:700;">🔒 Complet pour cette journée</div>`;
+      return;
+    }
+    grid.innerHTML = HEURES.map(h => {
+      const taken = takenSlots.includes(h) || heuresBloquees.includes(h);
+      const sel = h === selectedHeure;
+      return `<div class="slot-btn ${taken?'taken':''} ${sel&&!taken?'selected':''}" onclick="${taken?'':'selectSlot(\''+h+'\')'}">${taken && heuresBloquees.includes(h) ? h + ' 🔒' : h}</div>`;
+    }).join('');
+  } catch(e) {
+    takenSlots = [];
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = HEURES.map(h => `<div class="slot-btn" onclick="selectSlot('${h}')">${h}</div>`).join('');
+  }
 }
 
 function selectSlot(h) {
@@ -364,6 +377,16 @@ async function confirmerRDV() {
     });
 
     if (res.ok || res.status === 201) {
+      // Envoyer email notification
+      emailjs.send('service_oo6sm23', 'template_2yfinvn', {
+        nom: nom,
+        tel: tel,
+        adresse: adresse,
+        type: selectedService,
+        date: selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+        heure: selectedHeure
+      }).catch(e => console.log('Email:', e));
+
       const dateAff = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
       document.getElementById('confirmSub').innerHTML = `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>ClimExpress vous contactera si besoin au <strong>${tel}</strong>.`;
       goStep(5);

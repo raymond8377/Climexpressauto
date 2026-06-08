@@ -420,28 +420,29 @@ const SB_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
 const SB_HEADERS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
 
+let deletedSupabaseIds = JSON.parse(localStorage.getItem('clim_deleted_ids') || '[]');
+
 async function syncFromSupabase() {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/rdvs?select=*&order=date.asc,heure.asc`, { headers: SB_HEADERS });
     if (!res.ok) return;
     const data = await res.json();
     if (!Array.isArray(data)) return;
-    // Fusionner les RDV web avec les RDV locaux (éviter doublons par id_supabase)
-    const webRdvs = data.map(r => ({
-      id: r.id || ('web_' + r.created_at),
-      nom: r.nom, tel: r.tel, adresse: r.adresse, type: r.type,
-      email: r.email || '', lieu: r.lieu || '',
-      date: r.date, heure: r.heure, notes: r.notes || '',
-      status: r.status || 'confirmed', source: 'web',
-      supabase_id: r.id, createdAt: r.created_at
-    }));
-    // Garder les RDV locaux qui ne viennent pas du web
+    // Filtrer les RDV supprimés localement
+    const webRdvs = data
+      .filter(r => !deletedSupabaseIds.includes(r.id))
+      .map(r => ({
+        id: r.id || ('web_' + r.created_at),
+        nom: r.nom, tel: r.tel, adresse: r.adresse, type: r.type,
+        email: r.email || '', lieu: r.lieu || '',
+        date: r.date, heure: r.heure, notes: r.notes || '',
+        status: r.status || 'confirmed', source: 'web',
+        supabase_id: r.id, createdAt: r.created_at
+      }));
     const localOnly = rdvs.filter(r => r.source !== 'web');
-    // Fusionner
     const merged = [...localOnly, ...webRdvs];
     rdvs = merged;
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
-    // Auto-ajouter clients
     webRdvs.forEach(r => addClientIfNew(r.nom, r.tel, r.adresse, r.type));
     renderAccueil(); renderCalendar(); renderRappels(); updateStats();
     showSyncBadge(webRdvs.length);
@@ -744,14 +745,17 @@ function closeRdvModal() { document.getElementById('rdvModal').classList.remove(
 function deleteRDV(id) {
   if (!confirm('Supprimer ce RDV ?')) return;
   const r = rdvs.find(r => r.id === id);
-  rdvs = rdvs.filter(r => r.id !== id);
-  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
-  // Supprimer aussi dans Supabase
+  // Sauvegarder l'ID Supabase pour l'ignorer lors des synchros futures
   if (r && r.supabase_id) {
+    deletedSupabaseIds.push(r.supabase_id);
+    localStorage.setItem('clim_deleted_ids', JSON.stringify(deletedSupabaseIds));
+    // Essayer de supprimer dans Supabase aussi
     fetch(`${SB_URL}/rest/v1/rdvs?id=eq.${r.supabase_id}`, {
       method: 'DELETE', headers: SB_HEADERS
     }).catch(e => console.log('Supabase delete:', e));
   }
+  rdvs = rdvs.filter(r => r.id !== id);
+  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
   closeRdvModal(); renderAccueil(); renderCalendar(); renderRappels(); updateStats(); showNotif('RDV supprimé', '#ff4444');
 }
 

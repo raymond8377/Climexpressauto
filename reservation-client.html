@@ -395,11 +395,13 @@ async function loadSlots() {
       const [hh, mm] = h.split(':').map(Number);
       const slotMinutes = hh * 60 + mm;
       const isPast = dateStr === todayStr && slotMinutes <= currentMinutes;
-      // Bloquer les créneaux à moins de 1h d'un RDV existant
-      const tooClose = takenSlots.some(taken => {
-        const [th, tm] = taken.split(':').map(Number);
+      // Bloquer le créneau juste avant (30 min) pour laisser du temps
+      const tooClose = takenSlots.some(t => {
+        const [th, tm] = t.split(':').map(Number);
         const takenMinutes = th * 60 + tm;
-        return Math.abs(slotMinutes - takenMinutes) < 60 && Math.abs(slotMinutes - takenMinutes) > 0;
+        const diff = slotMinutes - takenMinutes;
+        // Bloquer uniquement le créneau 30 min APRÈS un RDV (temps de travail)
+        return diff > 0 && diff < 60;
       });
       const isBlocked = taken || isPast || tooClose;
       const sel = h === selectedHeure;

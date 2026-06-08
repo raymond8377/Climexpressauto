@@ -461,8 +461,8 @@ function showSyncBadge(n) {
   setTimeout(() => badge.remove(), 3000);
 }
 
-// Synchronisation automatique toutes les 30 secondes
-setInterval(syncFromSupabase, 30000);
+// Synchronisation automatique toutes les 5 minutes
+setInterval(syncFromSupabase, 300000);
 
 // =========== DATA ===========
 let rdvs = JSON.parse(localStorage.getItem('clim_rdvs') || '[]');
@@ -1037,9 +1037,9 @@ function programmerRappels(rdv) {
   const matin = new Date(rdv.date + 'T07:30:00');
   planifierNotif(rdv, matin, `🌅 RDV aujourd'hui à ${rdv.heure} — ${rdv.nom}`, `📍 ${rdv.adresse || rdv.type}`);
 
-  // 30 minutes avant
-  const avantRdv = new Date(rdvDate.getTime() - 30 * 60000);
-  planifierNotif(rdv, avantRdv, `⏰ RDV dans 30 min — ${rdv.nom}`, `📍 ${rdv.adresse || rdv.type} · ${rdv.heure}`);
+  // 1 heure avant
+  const avantRdv = new Date(rdvDate.getTime() - 60 * 60000);
+  planifierNotif(rdv, avantRdv, `⏰ RDV dans 1h — ${rdv.nom}`, `📍 ${rdv.adresse || rdv.type} · ${rdv.heure}`);
 }
 
 function planifierNotif(rdv, dateHeure, titre, corps) {
@@ -1078,10 +1078,10 @@ function checkRappelsAuLancement() {
   rdvAujourdhui.forEach(r => {
     const rdvHeure = new Date(r.date + 'T' + r.heure + ':00');
     const diff = rdvHeure - now;
-    // Si le RDV est dans + de 30 min, programmer le rappel 30min avant
-    if (diff > 30 * 60000) {
-      const avantRdv = new Date(rdvHeure.getTime() - 30 * 60000);
-      planifierNotif(r, avantRdv, `⏰ RDV dans 30 min — ${r.nom}`, `📍 ${r.adresse || r.type} · ${r.heure}`);
+    // Si le RDV est dans + de 1h, programmer le rappel 1h avant
+    if (diff > 60 * 60000) {
+      const avantRdv = new Date(rdvHeure.getTime() - 60 * 60000);
+      planifierNotif(r, avantRdv, `⏰ RDV dans 1h — ${r.nom}`, `📍 ${r.adresse || r.type} · ${r.heure}`);
     }
     // Si le RDV est dans - de 5 min et non fait, notification immédiate
     if (diff > -5 * 60000 && diff < 5 * 60000) {

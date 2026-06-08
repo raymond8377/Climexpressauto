@@ -675,14 +675,43 @@ function closeModal() { document.getElementById('clientModal').classList.remove(
 function showRdvDetail(id) {
   const r = rdvs.find(r => r.id === id);
   if (!r) return;
+  const dateAff = formatDate(r.date);
+  const msgAnnulation = `Bonjour ${r.nom}, votre RDV ClimExpress du ${dateAff} à ${r.heure} a été annulé. Pour reprendre RDV : climexpressauto.fr/reservation-client.html`;
+  const msgDeplacement = `Bonjour ${r.nom}, votre RDV ClimExpress du ${dateAff} à ${r.heure} doit être déplacé. Merci de me rappeler ou de reprendre RDV : climexpressauto.fr/reservation-client.html`;
+  const smsBtnAnn = `sms:${r.tel}?body=${encodeURIComponent(msgAnnulation)}`;
+  const smsBtnDep = `sms:${r.tel}?body=${encodeURIComponent(msgDeplacement)}`;
+
   document.getElementById('modalRdvContent').innerHTML = `
     <div class="form-group"><label>Client</label><div style="font-size:16px;font-weight:700;color:#fff;">${r.nom}</div></div>
     <div class="form-group"><label>Téléphone</label><a href="tel:${r.tel}" class="tel" style="font-size:16px;">${r.tel}</a></div>
-    <div class="form-group"><label>Date & Heure</label><div style="font-size:15px;color:#fff;">${formatDate(r.date)} à ${r.heure}</div></div>
+    ${r.email ? `<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">${r.email}</div></div>` : ''}
+    <div class="form-group"><label>Date & Heure</label><div style="font-size:15px;color:#fff;">${dateAff} à ${r.heure}</div></div>
     <div class="form-group"><label>Lieu</label><div style="font-size:14px;">${r.adresse || 'Non précisé'}</div></div>
     <div class="form-group"><label>Type de recharge</label><div style="font-size:13px;">${r.type}</div></div>
     ${r.notes ? `<div class="form-group"><label>Notes</label><div style="font-size:13px;">${r.notes}</div></div>` : ''}
-    <div style="display:flex;gap:8px;margin-top:12px;">
+
+    <div class="divider"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Contacter le client</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <a href="${smsBtnAnn}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
+        📱 SMS<br><span style="font-size:10px;font-weight:400;">Annulation</span>
+      </a>
+      <a href="${smsBtnDep}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
+        📱 SMS<br><span style="font-size:10px;font-weight:400;">Déplacement</span>
+      </a>
+    </div>
+
+    ${r.email ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <a href="mailto:${r.email}?subject=Annulation RDV ClimExpress&body=${encodeURIComponent(msgAnnulation)}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
+        📧 Email<br><span style="font-size:10px;font-weight:400;">Annulation</span>
+      </a>
+      <a href="mailto:${r.email}?subject=Déplacement RDV ClimExpress&body=${encodeURIComponent(msgDeplacement)}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
+        📧 Email<br><span style="font-size:10px;font-weight:400;">Déplacement</span>
+      </a>
+    </div>` : `<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:12px;">📧 Email non disponible (client n'a pas renseigné son email)</div>`}
+
+    <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="btn btn-primary" style="flex:1" onclick="callClient('${r.tel}');closeRdvModal()">📞 Appeler</button>
       <button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(${r.id})">✗ Annuler</button>
     </div>

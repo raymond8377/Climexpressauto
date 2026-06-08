@@ -395,9 +395,15 @@ async function loadSlots() {
       const [hh, mm] = h.split(':').map(Number);
       const slotMinutes = hh * 60 + mm;
       const isPast = dateStr === todayStr && slotMinutes <= currentMinutes;
-      const isBlocked = taken || isPast;
+      // Bloquer les créneaux à moins de 1h d'un RDV existant
+      const tooClose = takenSlots.some(taken => {
+        const [th, tm] = taken.split(':').map(Number);
+        const takenMinutes = th * 60 + tm;
+        return Math.abs(slotMinutes - takenMinutes) < 60 && Math.abs(slotMinutes - takenMinutes) > 0;
+      });
+      const isBlocked = taken || isPast || tooClose;
       const sel = h === selectedHeure;
-      const label = isPast ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' 🔒' : h;
+      const label = isPast ? h + ' ✗' : (taken || tooClose) ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' 🔒' : h;
       return `<div class="slot-btn ${isBlocked?'taken':''} ${sel&&!isBlocked?'selected':''}" onclick="${isBlocked?'':'selectSlot(\''+h+'\')'}">${label}</div>`;
     }).join('');
   } catch(e) {

@@ -357,8 +357,13 @@ function selectService(el, service) {
 }
 
 function changeDay(d) {
-  selectedDate.setDate(selectedDate.getDate() + d);
-  skipSunday(selectedDate);
+  const newDate = new Date(selectedDate);
+  newDate.setDate(newDate.getDate() + d);
+  skipSunday(newDate);
+  // Empêcher de revenir en arrière avant aujourd'hui
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (newDate < today) return;
+  selectedDate = newDate;
   selectedHeure = null;
   loadSlots();
 }

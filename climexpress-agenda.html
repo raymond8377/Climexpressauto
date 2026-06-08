@@ -729,15 +729,35 @@ function showRdvDetail(id) {
   document.getElementById('rdvModal').classList.add('open');
 }
 function closeRdvModal() { document.getElementById('rdvModal').classList.remove('open'); }
-function cancelRDV(id) {
-  const r = rdvs.find(r => r.id === id);
-  if (r) { r.status = 'annule'; localStorage.setItem('clim_rdvs', JSON.stringify(rdvs)); closeRdvModal(); renderAccueil(); renderCalendar(); updateStats(); showNotif('RDV annulé', '#ff9500'); }
-}
 function deleteRDV(id) {
   if (!confirm('Supprimer ce RDV ?')) return;
+  const r = rdvs.find(r => r.id === id);
   rdvs = rdvs.filter(r => r.id !== id);
   localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  // Supprimer aussi dans Supabase
+  if (r && r.supabase_id) {
+    fetch(`${SB_URL}/rest/v1/rdvs?id=eq.${r.supabase_id}`, {
+      method: 'DELETE', headers: SB_HEADERS
+    }).catch(e => console.log('Supabase delete:', e));
+  }
   closeRdvModal(); renderAccueil(); renderCalendar(); renderRappels(); updateStats(); showNotif('RDV supprimé', '#ff4444');
+}
+
+function cancelRDV(id) {
+  const r = rdvs.find(r => r.id === id);
+  if (r) {
+    r.status = 'annule';
+    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    // Mettre à jour aussi dans Supabase
+    if (r.supabase_id) {
+      fetch(`${SB_URL}/rest/v1/rdvs?id=eq.${r.supabase_id}`, {
+        method: 'PATCH',
+        headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ status: 'annule' })
+      }).catch(e => console.log('Supabase cancel:', e));
+    }
+    closeRdvModal(); renderAccueil(); renderCalendar(); updateStats(); showNotif('RDV annulé', '#ff9500');
+  }
 }
 
 // =========== CALENDAR ===========

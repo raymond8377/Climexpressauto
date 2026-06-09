@@ -461,8 +461,8 @@ function showSyncBadge(n) {
   setTimeout(() => badge.remove(), 3000);
 }
 
-// Synchronisation automatique toutes les 5 minutes
-setInterval(syncFromSupabase, 300000);
+// Synchronisation automatique toutes les 2 minutes
+setInterval(syncFromSupabase, 120000);
 
 // =========== DATA ===========
 let rdvs = JSON.parse(localStorage.getItem('clim_rdvs') || '[]');
@@ -1039,15 +1039,17 @@ function programmerRappels(rdv) {
 
   // 1 heure avant
   const avantRdv = new Date(rdvDate.getTime() - 60 * 60000);
-  planifierNotif(rdv, avantRdv, `⏰ RDV dans 1h — ${rdv.nom}`, `📍 ${rdv.adresse || rdv.type} · ${rdv.heure}`);
+  const msgSms = `Bonjour ${rdv.nom}, je vous rappelle votre RDV ClimExpress aujourd'hui à ${rdv.heure} au ${rdv.adresse || 'La Foux'}. À tout à l'heure !`;
+  const smsUrl = `sms:${rdv.tel}?body=${encodeURIComponent(msgSms)}`;
+  planifierNotif(rdv, avantRdv, `⏰ RDV dans 1h — ${rdv.nom}`, `📍 ${rdv.adresse || rdv.type} · Cliquez pour envoyer SMS`, smsUrl);
 }
 
-function planifierNotif(rdv, dateHeure, titre, corps) {
+function planifierNotif(rdv, dateHeure, titre, corps, actionUrl) {
   const now = new Date();
   const delay = dateHeure.getTime() - now.getTime();
-  if (delay <= 0) return; // déjà passé
+  if (delay <= 0) return;
 
-  const timeoutId = setTimeout(() => {
+  setTimeout(() => {
     if (Notification.permission === 'granted') {
       const notif = new Notification(titre, {
         body: corps,
@@ -1055,13 +1057,13 @@ function planifierNotif(rdv, dateHeure, titre, corps) {
         tag: 'rdv-' + rdv.id + '-' + dateHeure.getTime(),
         requireInteraction: true,
       });
-      notif.onclick = () => { window.focus(); notif.close(); };
+      notif.onclick = () => {
+        window.focus();
+        if (actionUrl) window.location.href = actionUrl;
+        notif.close();
+      };
     }
   }, delay);
-
-  // Stocker l'ID pour pouvoir annuler
-  const stored = JSON.parse(localStorage.getItem('clim_timeouts') || '[]');
-  // On ne peut pas vraiment stocker les timeoutId entre sessions, c'est OK
 }
 
 function programmerTousRappels() {

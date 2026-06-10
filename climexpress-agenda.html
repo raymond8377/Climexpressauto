@@ -605,6 +605,23 @@ function rdvCard(r) {
 }
 
 function callClient(tel) { window.location.href = 'tel:' + tel; }
+
+  const prenom = nom.split(' ')[0];
+  const msg = `Bonjour ${prenom} ! ❄️ ClimExpress est disponible pour recharger votre climatisation, sur place ou à domicile dans le Var. Réservez en 2 min 👉 climexpressauto.fr/reservation-client.html 📞 06 48 00 85 58`;
+  const smsUrl = `sms:${tel}?body=${encodeURIComponent(msg)}`;
+  const waUrl = `https://wa.me/33${tel.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
+
+  // Afficher choix SMS ou WhatsApp
+  document.getElementById('modalRdvContent').innerHTML = `
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">📣 Envoyer à ${nom}</div>
+    <div style="background:rgba(0,194,255,0.08);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px;line-height:1.5;">${msg}</div>
+    <div style="display:flex;gap:8px;">
+      <a href="${smsUrl}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(0,214,143,0.12);border:1px solid rgba(0,214,143,0.3);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;">📱 SMS</a>
+      <a href="${waUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:12px;color:#25d366;font-weight:700;font-size:14px;text-decoration:none;">💬 WhatsApp</a>
+    </div>
+  `;
+  document.getElementById('rdvModal').classList.add('open');
+}
 function doneRDV(id) {
   const r = rdvs.find(r => r.id === id);
   if (r) { r.status = 'done'; localStorage.setItem('clim_rdvs', JSON.stringify(rdvs)); renderAccueil(); updateStats(); showNotif('✓ RDV marqué comme fait'); }
@@ -644,6 +661,7 @@ function renderClients() {
       <div class="client-actions">
         <div class="btn-icon" onclick="callClient('${c.tel}')">📞</div>
         <div class="btn-icon" onclick="showClientDetail(${c.id})">ℹ️</div>
+        <div class="btn-icon" onclick="envoyerPromo('${c.tel}','${c.nom.replace(/'/g,"\\'")}')" title="Envoyer promo">📣</div>
       </div>
     </div>`;
   }).join('');
@@ -653,6 +671,27 @@ function showClientDetail(id) {
   const c = clients.find(c => c.id === id);
   if (!c) return;
   const cRdvs = rdvs.filter(r => r.tel === c.tel).sort((a,b) => b.date.localeCompare(a.date));
+
+  // Prochain RDV à venir
+  const today = new Date().toISOString().split('T')[0];
+  const prochainRdv = rdvs.filter(r => r.tel === c.tel && r.date >= today && r.status === 'confirmed')
+    .sort((a,b) => a.date.localeCompare(b.date))[0];
+  const prenom = c.nom.split(' ')[0];
+
+  let rappelBtn = '';
+  if (prochainRdv) {
+    const msgRdv = `Bonjour ${prenom} ! ❄️ Rappel de votre RDV ClimExpress le ${formatDate(prochainRdv.date)} à ${prochainRdv.heure}${prochainRdv.adresse ? ' — ' + prochainRdv.adresse : ''}. À bientôt !`;
+    const smsRdv = `sms:${c.tel}?body=${encodeURIComponent(msgRdv)}`;
+    const waRdv = `https://wa.me/33${c.tel.replace(/^0/,'')}?text=${encodeURIComponent(msgRdv)}`;
+    rappelBtn = `
+      <div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📅 Rappel RDV — ${formatDate(prochainRdv.date)} à ${prochainRdv.heure}</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <a href="${smsRdv}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:13px;text-decoration:none;">📱 SMS</a>
+        <a href="${waRdv}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:10px;color:#25d366;font-weight:700;font-size:13px;text-decoration:none;">💬 WhatsApp</a>
+      </div>
+      <div class="divider"></div>`;
+  }
+
   document.getElementById('modalClientName').textContent = c.nom;
   document.getElementById('modalClientContent').innerHTML = `
     <div class="form-group">
@@ -664,6 +703,7 @@ function showClientDetail(id) {
       <div style="display:flex;flex-wrap:wrap;gap:6px;">${(c.types||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
     </div>
     <div class="divider"></div>
+    ${rappelBtn}
     <div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:10px;">HISTORIQUE RDV (${cRdvs.length})</div>
     ${cRdvs.map(r => `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
       <div style="font-weight:600;font-size:13px;">${formatDate(r.date)} à ${r.heure}</div>

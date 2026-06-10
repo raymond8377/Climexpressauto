@@ -280,6 +280,7 @@
   <button class="nav-btn" onclick="goPage('clients',this)"><span class="icon">👥</span>Clients</button>
   <button class="nav-btn" onclick="goPage('agenda',this)"><span class="icon">🗓</span>Agenda</button>
   <button class="nav-btn" onclick="goPage('rappels',this)"><span class="icon">🔔</span><span id="notifBadge">Rappels</span></button>
+  <button class="nav-btn" onclick="goPage('compta',this)"><span class="icon">💰</span>Compta</button>
 </nav>
 
 <!-- PAGE ACCUEIL -->
@@ -394,6 +395,40 @@
 <div class="page" id="page-rappels">
   <div class="section-title">🔔 <span>Rappels</span></div>
   <div id="rappelList"></div>
+</div>
+
+<!-- PAGE COMPTABILITE -->
+<div class="page" id="page-compta">
+  <div class="section-title">💰 <span>Comptabilité</span></div>
+
+  <!-- Stats revenus -->
+  <div class="stats" style="margin-bottom:16px;">
+    <div class="stat-card">
+      <div class="stat-num" id="compta-jour" style="font-size:20px;">0€</div>
+      <div class="stat-label">Aujourd'hui</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="compta-semaine" style="font-size:20px;">0€</div>
+      <div class="stat-label">Cette semaine</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="compta-mois" style="font-size:20px;">0€</div>
+      <div class="stat-label">Ce mois</div>
+    </div>
+  </div>
+
+  <!-- Tarifs -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:14px;color:#fff;">Tarifs</div>
+      <button onclick="ouvrirEditTarifs()" style="background:rgba(0,194,255,0.15);border:1px solid rgba(0,194,255,0.3);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✏️ Modifier</button>
+    </div>
+    <div id="tarifsList"></div>
+  </div>
+
+  <!-- Liste interventions -->
+  <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Interventions effectuées</div>
+  <div id="interventionsList"></div>
 </div>
 
 <!-- MODAL CLIENT DETAIL -->
@@ -604,6 +639,39 @@ function rdvCard(r) {
   </div>`;
 }
 
+function marquerEffectue(id) {
+  const r = rdvs.find(r => r.id === id);
+  if (r) {
+    r.status = 'done';
+    r.deplacement = r.lieu && r.lieu.includes('domicile') ? true : false;
+    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    closeRdvModal(); renderAccueil(); updateStats();
+    showNotif('✓ Intervention effectuée ! +' + (getPrix(r.type) + (r.deplacement ? 10 : 0)) + '€');
+  }
+}
+
+function marquerNonEffectue(id) {
+  const r = rdvs.find(r => r.id === id);
+  if (r) {
+    r.status = 'non_effectue';
+    const note = document.getElementById('rdvNoteInput') ? document.getElementById('rdvNoteInput').value : '';
+    if (note) r.notes = note;
+    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    closeRdvModal(); renderAccueil(); updateStats();
+    showNotif('⚠️ Marqué non effectué', '#ff9500');
+  }
+}
+
+function saveRdvNote(id) {
+  const r = rdvs.find(r => r.id === id);
+  const input = document.getElementById('rdvNoteInput');
+  if (r && input) {
+    r.notes = input.value;
+    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    showNotif('✓ Note sauvegardée !');
+  }
+}
+
 function callClient(tel) { window.location.href = 'tel:' + tel; }
 
 function doneRDV(id) {
@@ -732,6 +800,14 @@ function showRdvDetail(id) {
   html += '<div style="display:flex;gap:8px;margin-top:4px;">';
   html += '<button class="btn btn-primary" style="flex:1" onclick="callClient(\'' + r.tel + '\');closeRdvModal()">Appeler</button>';
   html += '<button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(' + r.id + ')">Annuler RDV</button>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+  html += '<button class="btn" style="flex:1;background:rgba(0,214,143,0.15);color:var(--green);border:1px solid rgba(0,214,143,0.3);" onclick="marquerEffectue(' + r.id + ')">✓ Effectué</button>';
+  html += '<button class="btn" style="flex:1;background:rgba(255,149,0,0.15);color:var(--orange);border:1px solid rgba(255,149,0,0.3);" onclick="marquerNonEffectue(' + r.id + ')">⚠️ Non effectué</button>';
+  html += '</div>';
+  html += '<div style="margin-top:8px;">';
+  html += '<input type="text" id="rdvNoteInput" placeholder="Ajouter une note... (ex: compresseur HS)" value="' + (r.notes || '') + '" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:#163260;color:#fff;font-size:13px;">';
+  html += '<button class="btn btn-secondary" style="margin-top:6px;" onclick="saveRdvNote(' + r.id + ')">💾 Sauvegarder la note</button>';
   html += '</div>';
   html += '<button class="btn btn-danger" onclick="deleteRDV(' + r.id + ')">Supprimer le RDV</button>';
 
@@ -940,6 +1016,7 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
+  if (name === 'compta') renderCompta();
 }
 
 // Démo données si vide
@@ -1248,6 +1325,110 @@ function nettoyerAncienRdvs() {
   }
 }
 
+// =========== COMPTABILITE ===========
+const TARIFS_DEFAULT = {
+  'VL Recharge Standard (R134a)': 45,
+  'VL Recharge Standard (R1234yf)': 49,
+  'VL Recharge + Desinfection': 65,
+  'VU Recharge Standard': 60,
+  'VU Recharge + Desinfection': 80,
+  'PL Recharge Standard': 80,
+  'Diagnostic + Recharge': 55,
+  'Controle Etancheite': 45
+};
+
+let tarifs = JSON.parse(localStorage.getItem('clim_tarifs') || JSON.stringify(TARIFS_DEFAULT));
+
+function getPrix(type) {
+  if (!type) return 0;
+  // Cherche correspondance
+  for (const key in tarifs) {
+    if (type.toLowerCase().includes(key.toLowerCase().split(' ')[0].toLowerCase()) ||
+        key.toLowerCase().includes(type.toLowerCase().split(' ')[0].toLowerCase())) {
+      return tarifs[key] || 0;
+    }
+  }
+  // Correspondances directes
+  if (type.includes('R134a') && !type.includes('Desinfection') && !type.includes('sinfection')) return tarifs['VL Recharge Standard (R134a)'] || 45;
+  if (type.includes('R1234yf') && !type.includes('Desinfection') && !type.includes('sinfection')) return tarifs['VL Recharge Standard (R1234yf)'] || 49;
+  if (type.includes('sinfection') || type.includes('Desinfection')) return tarifs['VL Recharge + Desinfection'] || 65;
+  if (type.includes('VU')) return tarifs['VU Recharge Standard'] || 60;
+  if (type.includes('PL')) return tarifs['PL Recharge Standard'] || 80;
+  if (type.includes('Diagnostic')) return tarifs['Diagnostic + Recharge'] || 55;
+  return 0;
+}
+
+function renderCompta() {
+  const today = new Date().toISOString().split('T')[0];
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+  const ws = weekStart.toISOString().split('T')[0];
+  const moisStart = today.slice(0,7) + '-01';
+
+  const effectues = rdvs.filter(r => r.status === 'done');
+
+  const totalJour = effectues.filter(r => r.date === today).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
+  const totalSemaine = effectues.filter(r => r.date >= ws).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
+  const totalMois = effectues.filter(r => r.date >= moisStart).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
+
+  document.getElementById('compta-jour').textContent = totalJour + '€';
+  document.getElementById('compta-semaine').textContent = totalSemaine + '€';
+  document.getElementById('compta-mois').textContent = totalMois + '€';
+
+  // Tarifs list
+  let tarifsHtml = '';
+  for (const key in tarifs) {
+    tarifsHtml += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="font-size:13px;color:rgba(255,255,255,0.7);">' + key + '</div>' +
+      '<div style="font-weight:700;color:var(--accent);">' + tarifs[key] + '€</div></div>';
+  }
+  document.getElementById('tarifsList').innerHTML = tarifsHtml;
+
+  // Interventions list
+  const sorted = effectues.sort((a,b) => b.date.localeCompare(a.date));
+  let intHtml = '';
+  if (sorted.length === 0) {
+    intHtml = '<div class="empty-state"><div class="icon">📊</div><p>Aucune intervention effectuée</p></div>';
+  } else {
+    sorted.forEach(function(r) {
+      const prix = getPrix(r.type) + (r.deplacement ? 10 : 0);
+      intHtml += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+        '<div>' +
+        '<div style="font-weight:700;font-size:13px;color:#fff;">' + r.nom + '</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">' + formatDate(r.date) + ' — ' + r.type + '</div>' +
+        (r.notes ? '<div style="font-size:11px;color:rgba(255,149,0,0.8);margin-top:2px;">📝 ' + r.notes + '</div>' : '') +
+        '</div>' +
+        '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:var(--green);">' + prix + '€</div>' +
+        '</div>';
+    });
+  }
+  document.getElementById('interventionsList').innerHTML = intHtml;
+}
+
+function ouvrirEditTarifs() {
+  let html = '';
+  for (const key in tarifs) {
+    html += '<div class="form-group">' +
+      '<label>' + key + '</label>' +
+      '<input type="number" id="tarif_' + key.replace(/[^a-zA-Z0-9]/g,'_') + '" value="' + tarifs[key] + '" style="width:100%;">' +
+      '</div>';
+  }
+  document.getElementById('tarifsEditContent').innerHTML = html;
+  document.getElementById('tarifsModal').classList.add('open');
+}
+
+function closeTarifsModal() { document.getElementById('tarifsModal').classList.remove('open'); }
+
+function saveTarifs() {
+  for (const key in tarifs) {
+    const input = document.getElementById('tarif_' + key.replace(/[^a-zA-Z0-9]/g,'_'));
+    if (input) tarifs[key] = parseInt(input.value) || 0;
+  }
+  localStorage.setItem('clim_tarifs', JSON.stringify(tarifs));
+  closeTarifsModal();
+  renderCompta();
+  showNotif('✓ Tarifs sauvegardés !');
+}
+
 loadDemo();
 init();
 // Sync Supabase au démarrage
@@ -1303,6 +1484,16 @@ setTimeout(() => {
     <button class="btn btn-primary" style="background:var(--red);" onclick="saveBlocage()">🔒 Bloquer ce créneau</button>
 
     <div style="margin-top:16px;" id="blocageListDiv"></div>
+  </div>
+</div>
+
+<!-- MODAL TARIFS -->
+<div class="modal-overlay" id="tarifsModal" onclick="closeTarifsModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Modifier les tarifs</div>
+    <div id="tarifsEditContent"></div>
+    <button class="btn btn-primary" onclick="saveTarifs()" style="margin-top:12px;">✓ Sauvegarder</button>
   </div>
 </div>
 

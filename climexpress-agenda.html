@@ -655,9 +655,28 @@ function showClientDetail(id) {
   const c = clients.find(c => c.id === id);
   if (!c) return;
   const cRdvs = rdvs.filter(r => r.tel === c.tel).sort((a,b) => b.date.localeCompare(a.date));
+  const prenom = c.nom.split(' ')[0];
+  const msgPromo = 'Bonjour ' + prenom + ' ! ClimExpress est disponible pour recharger votre climatisation, sur place ou a domicile dans le Var. Reservez en 2 min : climexpressauto.fr/reservation-client.html - 06 48 00 85 58';
+  const smsUrl = 'sms:' + c.tel + '?body=' + encodeURIComponent(msgPromo);
+  const waUrl = 'https://wa.me/33' + c.tel.replace(/^0/,'') + '?text=' + encodeURIComponent(msgPromo);
+
   document.getElementById('modalClientName').textContent = c.nom;
-  let html = '<div class="form-group"><label>Telephone</label><a href="tel:' + c.tel + '" class="tel" style="font-size:18px;">' + c.tel + '</a></div>';
+  let html = '';
+  html += '<div class="form-group"><label>Telephone</label><a href="tel:' + c.tel + '" class="tel" style="font-size:18px;">' + c.tel + '</a></div>';
   if (c.adresse) html += '<div class="form-group"><label>Adresse</label><div style="font-size:14px;">' + c.adresse + '</div></div>';
+  if (c.email) html += '<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">' + c.email + '</div></div>';
+  
+  html += '<div class="divider"></div>';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Contacter</div>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px;">';
+  html += '<a href="tel:' + c.tel + '" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:#00c2ff;font-weight:700;font-size:13px;text-decoration:none;">📞 Appeler</a>';
+  html += '<a href="' + smsUrl + '" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);border-radius:10px;color:#00d68f;font-weight:700;font-size:13px;text-decoration:none;">📱 SMS</a>';
+  html += '<a href="' + waUrl + '" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:10px;color:#25d366;font-weight:700;font-size:13px;text-decoration:none;">💬 WA</a>';
+  html += '</div>';
+  if (c.email) {
+    html += '<a href="mailto:' + c.email + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:#00c2ff;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:12px;">📧 Envoyer un email</a>';
+  }
+
   html += '<div class="divider"></div>';
   html += '<div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:10px;">HISTORIQUE RDV (' + cRdvs.length + ')</div>';
   cRdvs.forEach(function(r) {

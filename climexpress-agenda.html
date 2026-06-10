@@ -639,12 +639,37 @@ function rdvCard(r) {
   </div>`;
 }
 
+function saveRdvNote(id) {
+  const r = rdvs.find(r => r.id === id);
+  const input = document.getElementById('rdvNoteInput');
+  if (r && input) {
+    r.notes = input.value;
+    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    // Sync Supabase
+    if (r.supabase_id) {
+      fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+        method: 'PATCH',
+        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        body: JSON.stringify({ notes: r.notes })
+      }).catch(function(e) { console.log('note sync:', e); });
+    }
+    showNotif('✓ Note sauvegardée !');
+  }
+}
+
 function marquerEffectue(id) {
   const r = rdvs.find(r => r.id === id);
   if (r) {
     r.status = 'done';
     r.deplacement = r.lieu && r.lieu.includes('domicile') ? true : false;
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    if (r.supabase_id) {
+      fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+        method: 'PATCH',
+        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        body: JSON.stringify({ status: 'done' })
+      }).catch(function(e) {});
+    }
     closeRdvModal(); renderAccueil(); updateStats();
     showNotif('✓ Intervention effectuée ! +' + (getPrix(r.type) + (r.deplacement ? 10 : 0)) + '€');
   }
@@ -657,18 +682,15 @@ function marquerNonEffectue(id) {
     const note = document.getElementById('rdvNoteInput') ? document.getElementById('rdvNoteInput').value : '';
     if (note) r.notes = note;
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    if (r.supabase_id) {
+      fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+        method: 'PATCH',
+        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        body: JSON.stringify({ status: 'non_effectue', notes: r.notes || '' })
+      }).catch(function(e) {});
+    }
     closeRdvModal(); renderAccueil(); updateStats();
     showNotif('⚠️ Marqué non effectué', '#ff9500');
-  }
-}
-
-function saveRdvNote(id) {
-  const r = rdvs.find(r => r.id === id);
-  const input = document.getElementById('rdvNoteInput');
-  if (r && input) {
-    r.notes = input.value;
-    localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
-    showNotif('✓ Note sauvegardée !');
   }
 }
 

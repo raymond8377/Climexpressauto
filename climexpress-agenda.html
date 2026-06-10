@@ -606,6 +606,27 @@ function rdvCard(r) {
 
 function callClient(tel) { window.location.href = 'tel:' + tel; }
 
+function envoyerPromoId(id) {
+  const c = clients.find(c => c.id === id);
+  if (c) envoyerPromo(c.tel, c.nom);
+}
+
+function envoyerPromo(tel, nom) {
+  const prenom = nom.split(' ')[0];
+  const msg = `Bonjour ${prenom} ! ❄️ ClimExpress est disponible pour recharger votre climatisation, sur place ou à domicile dans le Var. Réservez en 2 min 👉 climexpressauto.fr/reservation-client.html 📞 06 48 00 85 58`;
+  const smsUrl = `sms:${tel}?body=${encodeURIComponent(msg)}`;
+  const waUrl = `https://wa.me/33${tel.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
+  document.getElementById('modalRdvContent').innerHTML = `
+    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">📣 Envoyer à ${nom}</div>
+    <div style="background:rgba(0,194,255,0.08);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px;line-height:1.5;">${msg}</div>
+    <div style="display:flex;gap:8px;">
+      <a href="${smsUrl}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(0,214,143,0.12);border:1px solid rgba(0,214,143,0.3);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;">📱 SMS</a>
+      <a href="${waUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:12px;color:#25d366;font-weight:700;font-size:14px;text-decoration:none;">💬 WhatsApp</a>
+    </div>
+  `;
+  document.getElementById('rdvModal').classList.add('open');
+}
+
   const prenom = nom.split(' ')[0];
   const msg = `Bonjour ${prenom} ! ❄️ ClimExpress est disponible pour recharger votre climatisation, sur place ou à domicile dans le Var. Réservez en 2 min 👉 climexpressauto.fr/reservation-client.html 📞 06 48 00 85 58`;
   const smsUrl = `sms:${tel}?body=${encodeURIComponent(msg)}`;
@@ -661,7 +682,7 @@ function renderClients() {
       <div class="client-actions">
         <div class="btn-icon" onclick="callClient('${c.tel}')">📞</div>
         <div class="btn-icon" onclick="showClientDetail(${c.id})">ℹ️</div>
-        <div class="btn-icon" onclick="envoyerPromo('${c.tel}','${c.nom.replace(/'/g,"\\'")}')" title="Envoyer promo">📣</div>
+        <div class="btn-icon" onclick="envoyerPromoId(${c.id})" title="Envoyer promo">📣</div>
       </div>
     </div>`;
   }).join('');

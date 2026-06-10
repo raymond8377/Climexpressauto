@@ -606,23 +606,6 @@ function rdvCard(r) {
 
 function callClient(tel) { window.location.href = 'tel:' + tel; }
 
-
-  const prenom = nom.split(' ')[0];
-  const msg = `Bonjour ${prenom} ! ❄️ ClimExpress est disponible pour recharger votre climatisation, sur place ou à domicile dans le Var. Réservez en 2 min 👉 climexpressauto.fr/reservation-client.html 📞 06 48 00 85 58`;
-  const smsUrl = `sms:${tel}?body=${encodeURIComponent(msg)}`;
-  const waUrl = `https://wa.me/33${tel.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
-
-  // Afficher choix SMS ou WhatsApp
-  document.getElementById('modalRdvContent').innerHTML = `
-    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;">📣 Envoyer à ${nom}</div>
-    <div style="background:rgba(0,194,255,0.08);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px;line-height:1.5;">${msg}</div>
-    <div style="display:flex;gap:8px;">
-      <a href="${smsUrl}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(0,214,143,0.12);border:1px solid rgba(0,214,143,0.3);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;">📱 SMS</a>
-      <a href="${waUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:12px;color:#25d366;font-weight:700;font-size:14px;text-decoration:none;">💬 WhatsApp</a>
-    </div>
-  `;
-  document.getElementById('rdvModal').classList.add('open');
-}
 function doneRDV(id) {
   const r = rdvs.find(r => r.id === id);
   if (r) { r.status = 'done'; localStorage.setItem('clim_rdvs', JSON.stringify(rdvs)); renderAccueil(); updateStats(); showNotif('✓ RDV marqué comme fait'); }
@@ -651,19 +634,20 @@ function renderClients() {
   }
   div.innerHTML = filtered.sort((a,b)=>a.nom.localeCompare(b.nom)).map(c => {
     const initials = c.nom.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    return `<div class="client-card">
-      <div class="client-avatar">${initials}</div>
-      <div class="client-info">
-        <div class="client-name">${c.nom}</div>
-        <div class="client-sub">📞 <a class="tel" href="tel:${c.tel}">${c.tel}</a></div>
-        ${c.adresse ? `<div class="client-sub">📍 ${c.adresse}</div>` : ''}
-        <div class="client-tags">${(c.types||[]).map(t=>`<span class="tag">${t.split('—')[0].trim()}</span>`).join('')}</div>
-      </div>
-      <div class="client-actions">
-        <div class="btn-icon" onclick="callClient('${c.tel}')">📞</div>
-        <div class="btn-icon" onclick="showClientDetail(${c.id})">ℹ️</div>
-      </div>
-    </div>`;
+    const adresseHtml = c.adresse ? '<div class="client-sub">📍 ' + c.adresse + '</div>' : '';
+    const tagsHtml = (c.types||[]).map(t=>'<span class="tag">' + t.split('—')[0].trim() + '</span>').join('');
+    return '<div class="client-card">' +
+      '<div class="client-avatar">' + initials + '</div>' +
+      '<div class="client-info">' +
+      '<div class="client-name">' + c.nom + '</div>' +
+      '<div class="client-sub">📞 <a class="tel" href="tel:' + c.tel + '">' + c.tel + '</a></div>' +
+      adresseHtml +
+      '<div class="client-tags">' + tagsHtml + '</div>' +
+      '</div>' +
+      '<div class="client-actions">' +
+      '<div class="btn-icon" onclick="callClient(\'' + c.tel + '\')">📞</div>' +
+      '<div class="btn-icon" onclick="showClientDetail(' + c.id + ')">ℹ️</div>' +
+      '</div></div>';
   }).join('');
 }
 
@@ -697,57 +681,42 @@ function showRdvDetail(id) {
   const r = rdvs.find(r => r.id === id);
   if (!r) return;
   const dateAff = formatDate(r.date);
-  const msgAnnulation = `Bonjour ${r.nom}, votre RDV ClimExpress du ${dateAff} à ${r.heure} a été annulé. Pour reprendre RDV : climexpressauto.fr/reservation-client.html`;
-  const msgDeplacement = `Bonjour ${r.nom}, votre RDV ClimExpress du ${dateAff} à ${r.heure} doit être déplacé. Merci de me rappeler ou de reprendre RDV : climexpressauto.fr/reservation-client.html`;
-  const smsBtnAnn = `sms:${r.tel}?body=${encodeURIComponent(msgAnnulation)}`;
-  const smsBtnDep = `sms:${r.tel}?body=${encodeURIComponent(msgDeplacement)}`;
+  const msgAnn = 'Bonjour ' + r.nom + ', votre RDV ClimExpress du ' + dateAff + ' a ' + r.heure + ' a ete annule. Pour reprendre RDV : climexpressauto.fr/reservation-client.html';
+  const msgDep = 'Bonjour ' + r.nom + ', votre RDV ClimExpress du ' + dateAff + ' a ' + r.heure + ' doit etre deplace. Merci de me rappeler ou de reprendre RDV : climexpressauto.fr/reservation-client.html';
+  const smsBtnAnn = 'sms:' + r.tel + '?body=' + encodeURIComponent(msgAnn);
+  const smsBtnDep = 'sms:' + r.tel + '?body=' + encodeURIComponent(msgDep);
 
-  document.getElementById('modalRdvContent').innerHTML = `
-    <div class="form-group"><label>Client</label><div style="font-size:16px;font-weight:700;color:#fff;">${r.nom}</div></div>
-    <div class="form-group"><label>Téléphone</label><a href="tel:${r.tel}" class="tel" style="font-size:16px;">${r.tel}</a></div>
-    ${r.email ? `<div class="form-group">
-      <label>Email client</label>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="font-size:13px;color:#00c2ff;flex:1;word-break:break-all;">${r.email}</div>
-        <div onclick="navigator.clipboard.writeText('${r.email}');showNotif('✓ Email copié !')" style="font-size:18px;cursor:pointer;padding:6px;">📋</div>
-      </div>
-    </div>` : '<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:8px 0;">📧 Client sans email</div>'}
-    <div class="form-group"><label>Date & Heure</label><div style="font-size:15px;color:#fff;">${dateAff} à ${r.heure}</div></div>
-    <div class="form-group"><label>Lieu</label><div style="font-size:14px;">${r.lieu || r.adresse || 'Non précisé'}</div></div>
-    <div class="form-group"><label>Adresse</label><div style="font-size:13px;">${r.adresse || 'Non précisé'}</div></div>
-    <div class="form-group"><label>Type de recharge</label><div style="font-size:13px;">${r.type}</div></div>
-    ${r.notes ? `<div class="form-group"><label>Notes</label><div style="font-size:13px;">${r.notes}</div></div>` : ''}
+  let html = '';
+  html += '<div class="form-group"><label>Client</label><div style="font-size:16px;font-weight:700;color:#fff;">' + r.nom + '</div></div>';
+  html += '<div class="form-group"><label>Telephone</label><a href="tel:' + r.tel + '" class="tel" style="font-size:16px;">' + r.tel + '</a></div>';
+  if (r.email) html += '<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">' + r.email + '</div></div>';
+  html += '<div class="form-group"><label>Date et Heure</label><div style="font-size:15px;color:#fff;">' + dateAff + ' a ' + r.heure + '</div></div>';
+  html += '<div class="form-group"><label>Lieu</label><div style="font-size:14px;">' + (r.lieu || r.adresse || 'Non precise') + '</div></div>';
+  html += '<div class="form-group"><label>Type de recharge</label><div style="font-size:13px;">' + r.type + '</div></div>';
+  if (r.notes) html += '<div class="form-group"><label>Notes</label><div style="font-size:13px;">' + r.notes + '</div></div>';
+  html += '<div class="divider"></div>';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Contacter le client</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+  html += '<a href="' + smsBtnAnn + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">SMS Annulation</a>';
+  html += '<a href="' + smsBtnDep + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">SMS Deplacement</a>';
+  html += '</div>';
+  if (r.email) {
+    const mailAnn = 'mailto:' + r.email + '?subject=Annulation RDV ClimExpress&body=' + encodeURIComponent(msgAnn);
+    const mailDep = 'mailto:' + r.email + '?subject=Deplacement RDV ClimExpress&body=' + encodeURIComponent(msgDep);
+    const mailLibre = 'mailto:' + r.email + '?subject=ClimExpress';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+    html += '<a href="' + mailAnn + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">Email Annulation</a>';
+    html += '<a href="' + mailDep + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">Email Deplacement</a>';
+    html += '</div>';
+    html += '<a href="' + mailLibre + '" style="display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;margin-bottom:10px;">Email libre (pub, facture...)</a>';
+  }
+  html += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  html += '<button class="btn btn-primary" style="flex:1" onclick="callClient(\'' + r.tel + '\');closeRdvModal()">Appeler</button>';
+  html += '<button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(' + r.id + ')">Annuler RDV</button>';
+  html += '</div>';
+  html += '<button class="btn btn-danger" onclick="deleteRDV(' + r.id + ')">Supprimer le RDV</button>';
 
-    <div class="divider"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Contacter le client</div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-      <a href="${smsBtnAnn}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
-        📱 SMS<br><span style="font-size:10px;font-weight:400;">Annulation</span>
-      </a>
-      <a href="${smsBtnDep}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
-        📱 SMS<br><span style="font-size:10px;font-weight:400;">Déplacement</span>
-      </a>
-    </div>
-
-    ${r.email ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-      <a href="mailto:${r.email}?subject=Annulation RDV ClimExpress&body=${encodeURIComponent(msgAnnulation)}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);border-radius:10px;color:#ff8080;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
-        📧 Email<br><span style="font-size:10px;font-weight:400;">Annulation</span>
-      </a>
-      <a href="mailto:${r.email}?subject=Déplacement RDV ClimExpress&body=${encodeURIComponent(msgDeplacement)}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:12px;text-decoration:none;text-align:center;">
-        📧 Email<br><span style="font-size:10px;font-weight:400;">Déplacement</span>
-      </a>
-    </div>
-    <a href="mailto:${r.email}?subject=ClimExpress — " style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;margin-bottom:10px;">
-      ✉️ Envoyer un email libre (pub, facture...)
-    </a>` : `<div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:12px;">📧 Impossible d'envoyer un email — adresse non renseignée</div>`}
-
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button class="btn btn-primary" style="flex:1" onclick="callClient('${r.tel}');closeRdvModal()">📞 Appeler</button>
-      <button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(${r.id})">✗ Annuler</button>
-    </div>
-    <button class="btn btn-danger" onclick="deleteRDV(${r.id})">🗑 Supprimer le RDV</button>
-  `;
+  document.getElementById('modalRdvContent').innerHTML = html;
   document.getElementById('rdvModal').classList.add('open');
 }
 function closeRdvModal() { document.getElementById('rdvModal').classList.remove('open'); }

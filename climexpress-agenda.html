@@ -764,7 +764,9 @@ function showClientDetail(id) {
   html += '<a href="' + waUrl + '" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:10px;color:#25d366;font-weight:700;font-size:13px;text-decoration:none;">💬 WA</a>';
   html += '</div>';
   if (c.email) {
-    html += '<a href="mailto:' + c.email + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:#00c2ff;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:12px;">📧 Envoyer un email</a>';
+    html += '<a href="mailto:' + c.email + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:#00c2ff;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:8px;">📧 Envoyer un email</a>';
+    const msgDevis = 'Bonjour ' + prenom + ',%0A%0ASuite a votre demande de reservation, je vous contacte concernant votre adresse d\'intervention.%0A%0APour toute intervention au-dela de 15 km de notre base situee a La Foux — 83580 Gassin, Golf de Saint-Tropez, nous etablissons un devis personnalise selon la distance.%0A%0AMerci de me contacter afin que nous convenions ensemble du tarif de deplacement avant votre rendez-vous.%0A%0A📞 06 48 00 85 58%0A📧 rech.raymond@climexpressauto.fr%0A🌐 climexpressauto.fr%0A%0ACordialement,%0A%0ARaymond%0AClimExpress Recharge Auto%0ALa Foux — 83580 Gassin, Golf de Saint-Tropez';
+    html += '<a href="mailto:' + c.email + '?subject=Intervention a domicile — Devis deplacement&body=' + msgDevis + '" style="display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;color:#ff9500;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:12px;">📧 Devis deplacement</a>';
   }
 
   html += '<div class="divider"></div>';

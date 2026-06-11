@@ -694,6 +694,18 @@ function marquerNonEffectue(id) {
   }
 }
 
+function saveClientEmail(id) {
+  const c = clients.find(c => c.id === id);
+  const input = document.getElementById('emailInput_' + id);
+  if (c && input && input.value) {
+    c.email = input.value.trim();
+    localStorage.setItem('clim_clients', JSON.stringify(clients));
+    showNotif('✓ Email sauvegardé !');
+    closeModal();
+    setTimeout(function() { showClientDetail(id); }, 300);
+  }
+}
+
 function callClient(tel) { window.location.href = 'tel:' + tel; }
 
 function doneRDV(id) {
@@ -754,7 +766,15 @@ function showClientDetail(id) {
   let html = '';
   html += '<div class="form-group"><label>Telephone</label><a href="tel:' + c.tel + '" class="tel" style="font-size:18px;">' + c.tel + '</a></div>';
   if (c.adresse) html += '<div class="form-group"><label>Adresse</label><div style="font-size:14px;">' + c.adresse + '</div></div>';
-  if (c.email) html += '<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">' + c.email + '</div></div>';
+  if (c.email) {
+    html += '<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">' + c.email + '</div></div>';
+  } else {
+    html += '<div class="form-group"><label>Email</label>' +
+      '<div style="display:flex;gap:8px;">' +
+      '<input type="email" id="emailInput_' + c.id + '" placeholder="Ajouter email client..." style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:#163260;color:#fff;font-size:13px;">' +
+      '<button onclick="saveClientEmail(' + c.id + ')" style="padding:10px 14px;background:rgba(0,194,255,0.2);border:1px solid rgba(0,194,255,0.4);border-radius:8px;color:#00c2ff;font-weight:700;cursor:pointer;">✓</button>' +
+      '</div></div>';
+  }
   
   html += '<div class="divider"></div>';
   html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Contacter</div>';

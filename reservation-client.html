@@ -138,6 +138,27 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <span class="hero-badge">✓ Confirmation immédiate</span>
     <span class="hero-badge">✓ À domicile</span>
   </div>
+
+  <!-- BOUTON TARIFS -->
+  <div style="margin-top:16px;">
+    <button onclick="toggleTarifs()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">💰 Consulter nos tarifs</button>
+  </div>
+
+  <!-- TARIFS DROPDOWN -->
+  <div id="tarifsBox" style="display:none;margin-top:14px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:16px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto;">
+    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Nos tarifs</div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VL — R134a</span><span style="color:#fff;font-weight:700;">45€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VL — R1234yf</span><span style="color:#fff;font-weight:700;">49€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">Désinfection (option)</span><span style="color:#fff;font-weight:700;">+20€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VU — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 60€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">PL — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 80€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">Diagnostic + Recharge</span><span style="color:#fff;font-weight:700;">50€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#ff9500;">🚗 Déplacement domicile</span><span style="color:#ff9500;font-weight:700;">+10€ / sur devis</span></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Vous habitez à plus de 15 km de La Foux ?</div>
+      <button onclick="demanderDevis()" style="width:100%;padding:12px;background:rgba(255,149,0,0.2);border:1px solid rgba(255,149,0,0.4);border-radius:10px;color:#ff9500;font-weight:700;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">📋 Demander un devis déplacement</button>
+    </div>
+  </div>
 </div>
 
 <div class="container">
@@ -217,6 +238,40 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   <div class="step" id="step3">
     <div class="card">
       <div class="section-title">Type de <span>Recharge</span></div>
+
+      <!-- TARIFS -->
+      <div style="background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">💰 Nos tarifs</div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VL — Recharge R134a</span>
+          <span style="color:#fff;font-weight:700;">45€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VL — Recharge R1234yf</span>
+          <span style="color:#fff;font-weight:700;">49€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">Désinfection (option)</span>
+          <span style="color:#fff;font-weight:700;">+20€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VU — Recharge</span>
+          <span style="color:#fff;font-weight:700;">à partir de 60€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">PL — Recharge</span>
+          <span style="color:#fff;font-weight:700;">à partir de 80€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">Diagnostic + Recharge</span>
+          <span style="color:#fff;font-weight:700;">50€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
+          <span style="color:rgba(255,149,0,0.9);">🚗 Déplacement à domicile</span>
+          <span style="color:#ff9500;font-weight:700;">+10€ / sur devis</span>
+        </div>
+      </div>
+
       <div class="service-grid">
         <div class="service-btn" onclick="selectService(this,'VL Recharge Standard (R134a)')">
           <span class="sico">🚗</span>VL Recharge Standard<br><small style="color:rgba(205,232,255,0.4)">R134a</small>
@@ -282,6 +337,43 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 <footer>ClimExpress Recharge Auto — Var (83) · climexpressauto.fr</footer>
 
 <script>
+function toggleTarifs() {
+  const box = document.getElementById('tarifsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function demanderDevis() {
+  document.getElementById('devisModal').style.display = 'flex';
+}
+
+function fermerDevisModal() {
+  document.getElementById('devisModal').style.display = 'none';
+}
+
+async function envoyerDevis() {
+  const nom = document.getElementById('devisNom').value.trim();
+  const tel = document.getElementById('devisTel').value.trim();
+  const adresse = document.getElementById('devisAdresse').value.trim();
+  const type = document.getElementById('devisType').value;
+  if (!nom || !tel || !adresse) { alert('Merci de remplir tous les champs'); return; }
+
+  try {
+    await fetch('https://formspree.io/f/xvznankq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        nom, tel, adresse, type,
+        _subject: '📋 Demande de devis déplacement — ' + nom,
+        message: 'Demande de devis déplacement au-delà de 15 km'
+      })
+    });
+    fermerDevisModal();
+    alert('✓ Demande envoyée ! ClimExpress vous contactera très rapidement.');
+  } catch(e) {
+    alert('Erreur. Appelez directement le 06 48 00 85 58');
+  }
+}
+
 const SUPABASE_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
 
@@ -499,5 +591,38 @@ async function confirmerRDV() {
 // Init
 loadSlots();
 </script>
+<!-- MODAL DEVIS DEPLACEMENT -->
+<div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(8,26,40,0.95);z-index:500;display:none;align-items:flex-end;">
+  <div style="background:#0d2d45;border-radius:20px 20px 0 0;border:1px solid rgba(0,194,255,0.2);padding:24px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 16px;"></div>
+    <div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#fff;letter-spacing:1px;margin-bottom:4px;">📋 Devis déplacement</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Pour toute intervention au-delà de 15 km de La Foux</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre nom</label>
+      <input type="text" id="devisNom" placeholder="Ex: Jean Dupont" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Téléphone</label>
+      <input type="tel" id="devisTel" placeholder="06 12 34 56 78" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre adresse</label>
+      <input type="text" id="devisAdresse" placeholder="Ex: 8 rue des Pins, Pierrefeu du Var" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Type de véhicule</label>
+      <select id="devisType" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+        <option value="">— Choisir —</option>
+        <option>VL — Voiture particulière (R134a)</option>
+        <option>VL — Voiture particulière (R1234yf)</option>
+        <option>VU — Véhicule utilitaire</option>
+        <option>PL — Poids lourd</option>
+      </select>
+    </div>
+    <button onclick="envoyerDevis()" style="width:100%;padding:14px;background:#00c2ff;color:#0a1e38;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:DM Sans,sans-serif;">📋 Envoyer ma demande</button>
+    <button onclick="fermerDevisModal()" style="width:100%;padding:12px;background:transparent;color:rgba(255,255,255,0.4);border:none;border-radius:12px;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;margin-top:8px;">Annuler</button>
+  </div>
+</div>
+
 </body>
 </html>

@@ -307,6 +307,16 @@
   }
   .caisse-vue-btn.active { background: rgba(0,194,255,0.15); border-color: rgba(0,194,255,0.4); color: var(--accent); }
   .caisse-vue-btn:active { transform: scale(.97); }
+
+  /* TOGGLE SWITCH */
+  .toggle-switch {
+    width:46px;height:26px;border-radius:13px;cursor:pointer;transition:background .25s;
+    position:relative;flex-shrink:0;border:none;outline:none;
+  }
+  .toggle-switch .toggle-knob {
+    position:absolute;top:3px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
 </style>
 </head>
 <body>
@@ -544,6 +554,25 @@
     <div id="tarifsList"></div>
   </div>
 
+  <!-- Services disponibles -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:1px;">🔧 Services <span style="color:var(--accent);">Disponibles</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);">Visible sur la résa</div>
+    </div>
+    <div id="servicesDispo"></div>
+  </div>
+
+  <!-- Prix manuel -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:1px;margin-bottom:12px;">✏️ Prix <span style="color:var(--accent);">Manuel</span></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="number" id="prixManuelMontant" placeholder="Montant €" min="0" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;">
+      <input type="text" id="prixManuelLabel" placeholder="Description" style="flex:2;padding:12px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+    </div>
+    <button onclick="encaisserManuel()" style="width:100%;margin-top:10px;padding:13px;border-radius:12px;border:none;background:var(--accent);color:var(--dark);font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;">+ Encaisser ce montant</button>
+  </div>
+
   <!-- Liste interventions -->
   <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Interventions effectuées</div>
   <div id="interventionsList"></div>
@@ -641,6 +670,7 @@ function init() {
   renderRappels();
   updateStats();
   renderCaisse();
+  renderServicesDispo();
 }
 
 function fillHeures(date) {
@@ -750,7 +780,6 @@ function rdvCard(r) {
       <div class="rdv-detail">📍 ${r.adresse || 'Adresse non précisée'}</div>
       <div class="rdv-detail">📞 <a class="tel" href="tel:${r.tel}" onclick="event.stopPropagation()">${r.tel}</a></div>
       <span class="rdv-badge ${badge}">${label}</span>
-      <div class="itin-bar" id="itin_${r.id}"><span class="itin-loading">⏳ Calcul...</span></div>
     </div>
     <div class="rdv-actions">
       <div class="btn-icon" onclick="event.stopPropagation();callClient('${r.tel}')">📞</div>
@@ -1201,7 +1230,7 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
-  if (name === 'compta') { renderCompta(); renderCaisse(); }
+  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); }
 }
 
 // Démo données si vide
@@ -1510,29 +1539,37 @@ function nettoyerAncienRdvs() {
   }
 }
 
-// =========== ITINÉRAIRES DU JOUR ===========
-const BASE_LA_FOUX = 'La Foux, Gassin, 83580, France';
+// =========== ITINÉRAIRES DU JOUR — Google Maps API ===========
+const GOOGLE_KEY_AGENDA = 'AIzaSyBJRBw9m-Z7VOvR9GpknKEiVuKdhY_fKxM';
+const BASE_LA_FOUX_ADRESSE = 'La Foux, Gassin, 83580, France';
 
 async function geocodeAdresse(adresse) {
   if (!adresse || adresse === 'Sur place — La Foux' || adresse === 'Sur place') return null;
-  const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(adresse + ', France') + '&limit=1', { signal: AbortSignal.timeout(5000) });
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(adresse)}&language=fr&key=${GOOGLE_KEY_AGENDA}`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
   const d = await r.json();
-  if (!d || d.length === 0) return null;
-  return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+  if (d.status !== 'OK' || !d.results.length) return null;
+  const loc = d.results[0].geometry.location;
+  return { lat: loc.lat, lon: loc.lng, adresseComplete: d.results[0].formatted_address };
 }
 
-async function routeEntreDeux(depCoord, arrCoord) {
-  const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${depCoord.lon},${depCoord.lat};${arrCoord.lon},${arrCoord.lat}?overview=false`, { signal: AbortSignal.timeout(6000) });
+async function routeEntreDeux(dep, arr) {
+  const origine = dep.adresseComplete || BASE_LA_FOUX_ADRESSE;
+  const dest = arr.adresseComplete || arr.lat + ',' + arr.lon;
+  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origine)}&destinations=${encodeURIComponent(dest)}&mode=driving&language=fr&key=${GOOGLE_KEY_AGENDA}`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
   const d = await r.json();
-  if (!d.routes || d.routes.length === 0) return null;
-  return { km: Math.round(d.routes[0].distance / 1000), sec: d.routes[0].duration };
+  if (d.status !== 'OK') return null;
+  const el = d.rows[0].elements[0];
+  if (el.status !== 'OK') return null;
+  return { km: Math.round(el.distance.value / 1000), sec: el.duration.value };
 }
 
 function heureDepart(heureRDV, secondesRoute) {
   const [h, m] = heureRDV.split(':').map(Number);
   const rdvMin = h * 60 + m;
   const trajetMin = Math.ceil(secondesRoute / 60);
-  const depMin = rdvMin - trajetMin - 5; // 5 min de marge
+  const depMin = rdvMin - trajetMin - 5;
   const dh = Math.floor(depMin / 60);
   const dm = depMin % 60;
   if (depMin < 0) return null;
@@ -1540,23 +1577,16 @@ function heureDepart(heureRDV, secondesRoute) {
 }
 
 async function calculerItinerairesJour(rdvs) {
-  // Géocode La Foux une fois
-  let depPrecedent = null;
-  try {
-    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(BASE_LA_FOUX) + '&limit=1');
-    const d = await r.json();
-    depPrecedent = { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), label: 'La Foux' };
-  } catch(e) { return; }
+  let depPrecedent = { adresseComplete: BASE_LA_FOUX_ADRESSE, label: 'La Foux' };
 
   for (let i = 0; i < rdvs.length; i++) {
     const r = rdvs[i];
     const barEl = document.getElementById('itin_' + r.id);
     if (!barEl) continue;
 
-    // Sur place : pas de déplacement
     if (!r.adresse || r.adresse === 'Sur place — La Foux' || r.adresse === 'Sur place') {
       barEl.innerHTML = '<span style="color:rgba(0,214,143,0.7);font-size:12px;">🏠 Sur place — La Foux</span>';
-      // Le prochain RDV part de La Foux aussi
+      depPrecedent = { adresseComplete: BASE_LA_FOUX_ADRESSE, label: 'La Foux' };
       continue;
     }
 
@@ -1590,8 +1620,7 @@ async function calculerItinerairesJour(rdvs) {
         ${dep ? `<span class="itin-depart">⏰ Partir à ${dep}</span>` : '<span style="color:#ff8080;font-size:11px;">Départ très tôt</span>'}
       `;
 
-      // Le prochain RDV part de l'adresse de ce client
-      depPrecedent = { ...arrCoord, label: r.nom };
+      depPrecedent = { ...arrCoord, label: r.nom, adresseComplete: r.adresse };
 
     } catch(e) {
       barEl.innerHTML = '<span class="itin-err">⚠️ Erreur réseau</span>';
@@ -1620,6 +1649,15 @@ function getMoisStart() { return getToday().slice(0,7) + '-01'; }
 
 // Vue active : 'jour' | 'semaine' | 'mois' | 'historique'
 let caisseVue = 'jour';
+
+function encaisserManuel() {
+  const montant = parseInt(document.getElementById('prixManuelMontant').value);
+  const label = document.getElementById('prixManuelLabel').value.trim() || 'Prix manuel';
+  if (!montant || montant <= 0) { showNotif('⚠️ Montant invalide', '#ff9500'); return; }
+  encaisser(label, montant);
+  document.getElementById('prixManuelMontant').value = '';
+  document.getElementById('prixManuelLabel').value = '';
+}
 
 function encaisser(type, montant) {
   const all = getAllCaisse();

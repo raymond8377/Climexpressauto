@@ -212,7 +212,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
           <div>
             <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">À domicile</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.5);">Intervention chez vous (max 15 km)</div>
-            <div style="font-size:12px;color:#ff9500;font-weight:600;margin-top:4px;">+ 10€ de déplacement · Au-delà de 15 km : sur devis</div>
+            <div style="font-size:12px;color:#ff9500;font-weight:600;margin-top:4px;">+10€ jusqu'à 15 km · Au-delà : calculé automatiquement</div>
           </div>
         </div>
 
@@ -220,14 +220,17 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 
       <!-- Champ adresse visible seulement si domicile -->
       <div id="adresseGroup" style="display:none;">
-        <div class="form-group">
-          <label>Votre adresse *</label>
-          <input type="text" id="cAdresse" placeholder="Ex: 15 rue des Mimosas, Toulon">
+        <!-- GPS ou adresse manuelle -->
+        <button onclick="utiliserGPS()" id="btnGPS" style="width:100%;padding:14px;border-radius:12px;border:none;background:rgba(0,214,143,0.15);border:1px solid rgba(0,214,143,0.35);color:#00d68f;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
+          📍 Utiliser ma position GPS
+        </button>
+        <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;">— ou saisir manuellement —</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <input type="text" id="cAdresse" placeholder="Ex: 15 rue des Mimosas, Toulon" oninput="resetDeplacementInfo()">
         </div>
-        <div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#ff9500;margin-bottom:14px;">
-          ⚠️ Au-delà de 15 km de La Foux, le tarif sera convenu par téléphone avant l'intervention.
-        </div>
-        <button class="btn btn-primary" onclick="goStep3FromDomicile()">Continuer →</button>
+        <!-- Résultat calcul distance -->
+        <div id="deplacementInfo" style="display:none;margin-bottom:14px;"></div>
+        <button class="btn btn-primary" id="btnCalculerDist" onclick="calculerEtContinuer()">Calculer le déplacement →</button>
       </div>
 
     </div>
@@ -272,25 +275,28 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
         </div>
       </div>
 
-      <div class="service-grid">
-        <div class="service-btn" onclick="selectService(this,'VL Recharge Standard (R134a)')">
+      <div class="service-grid" id="serviceGrid">
+        <div class="service-btn" id="srv_vl_r134a" onclick="selectService(this,'VL Recharge Standard (R134a)')">
           <span class="sico">🚗</span>VL Recharge Standard<br><small style="color:rgba(205,232,255,0.4)">R134a</small>
         </div>
-        <div class="service-btn" onclick="selectService(this,'VL Recharge Standard (R1234yf)')">
+        <div class="service-btn" id="srv_vl_r1234yf" onclick="selectService(this,'VL Recharge Standard (R1234yf)')">
           <span class="sico">🚗</span>VL Recharge Standard<br><small style="color:rgba(205,232,255,0.4)">R1234yf</small>
         </div>
-        <div class="service-btn" onclick="selectService(this,'VL Recharge + Désinfection')">
+        <div class="service-btn" id="srv_vl_desinfec" onclick="selectService(this,'VL Recharge + Désinfection')">
           <span class="sico">✨</span>VL Recharge +<br>Désinfection
         </div>
-        <div class="service-btn" onclick="selectService(this,'VU Recharge Standard')">
+        <div class="service-btn" id="srv_vu_recharge" onclick="selectService(this,'VU Recharge Standard')">
           <span class="sico">🚐</span>VU Recharge<br>Standard
         </div>
-        <div class="service-btn" onclick="selectService(this,'VU Recharge + Désinfection')">
+        <div class="service-btn" id="srv_vu_desinfec" onclick="selectService(this,'VU Recharge + Désinfection')">
           <span class="sico">🚐</span>VU Recharge +<br>Désinfection
         </div>
-        <div class="service-btn" onclick="selectService(this,'Diagnostic + Recharge')">
+        <div class="service-btn" id="srv_diag" onclick="selectService(this,'Diagnostic + Recharge')">
           <span class="sico">🔧</span>Diagnostic +<br>Recharge
         </div>
+      </div>
+      <div id="indispoMsg" style="display:none;margin-top:10px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:12px;font-size:13px;color:#ff9500;">
+        ⚠️ Certaines prestations sont temporairement indisponibles. Appelez le <a href="tel:+33648008558" style="color:var(--accent);font-weight:700;">06 48 00 85 58</a> pour plus d'infos.
       </div>
     </div>
     <button class="btn btn-secondary" onclick="goStep(2)">← Retour</button>
@@ -343,6 +349,25 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 function toggleTarifs() {
   const box = document.getElementById('tarifsBox');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// Lecture disponibilité services depuis localStorage (partagé même domaine)
+function appliquerDispoServices() {
+  const state = JSON.parse(localStorage.getItem('clim_services_dispo') || '{}');
+  const ids = ['vl_r134a','vl_r1234yf','vl_desinfec','vu_recharge','vu_desinfec','diag'];
+  let nbIndispo = 0;
+  ids.forEach(id => {
+    const el = document.getElementById('srv_' + id);
+    if (!el) return;
+    const dispo = state[id] !== false; // true par défaut si jamais modifié
+    if (!dispo) {
+      el.style.display = 'none';
+      nbIndispo++;
+    } else {
+      el.style.display = '';
+    }
+  });
+  document.getElementById('indispoMsg').style.display = nbIndispo > 0 ? 'block' : 'none';
 }
 
 function demanderDevis() {
@@ -526,8 +551,19 @@ function showRecap() {
   const nom = document.getElementById('cNom').value.trim();
   const tel = document.getElementById('cTel').value.trim();
   const adresse = selectedLieu === 'domicile' ? (document.getElementById('cAdresse').value.trim() || 'Non précisée') : 'Sur place — La Foux';
-  const lieuLabel = selectedLieu === 'domicile' ? '🚗 À domicile (+10€)' : '🏠 Sur place — La Foux';
+  const lieuLabel = selectedLieu === 'domicile'
+    ? (distanceKm > 0 ? `🚗 À domicile — ${distanceKm} km` : '🚗 À domicile')
+    : '🏠 Sur place — La Foux';
   const dateStr = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const depBadge = selectedLieu === 'domicile'
+    ? `<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:#ff9500;">🚗 Supplément déplacement${distanceKm > 15 ? ' (carburant inclus)' : ''}</span>
+          <span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#ff9500;">+${deplacementSupplement}€</span>
+        </div>
+        ${distanceKm > 15 ? '<div style="font-size:11px;color:rgba(255,149,0,0.6);margin-top:4px;">Forfait 10€ + coût carburant aller-retour</div>' : ''}
+      </div>`
+    : '';
   document.getElementById('recapContent').innerHTML = `
     <div class="recap-row"><span class="recap-label">Nom</span><span class="recap-value">${nom}</span></div>
     <div class="recap-row"><span class="recap-label">Téléphone</span><span class="recap-value">${tel}</span></div>
@@ -536,7 +572,7 @@ function showRecap() {
     <div class="recap-row"><span class="recap-label">Service</span><span class="recap-value">${selectedService}</span></div>
     <div class="recap-row"><span class="recap-label">Date</span><span class="recap-value">${dateStr}</span></div>
     <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-value" style="color:var(--accent);font-size:20px;">${selectedHeure}</span></div>
-    ${selectedLieu === 'domicile' ? `<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;font-size:12px;color:#ff9500;margin-top:10px;">🚗 Supplément déplacement : +10€</div>` : ''}
+    ${depBadge}
   `;
 }
 
@@ -593,6 +629,7 @@ async function confirmerRDV() {
 
 // Init
 loadSlots();
+appliquerDispoServices();
 </script>
 <!-- MODAL DEVIS DEPLACEMENT -->
 <div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(8,26,40,0.95);z-index:500;display:none;align-items:flex-end;">

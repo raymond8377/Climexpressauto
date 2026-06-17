@@ -260,17 +260,7 @@
 
   .full-rdv-list { }
 
-  /* ITINÉRAIRE */
-  .itin-bar {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(0,194,255,0.07); border: 1px solid rgba(0,194,255,0.2);
-    border-radius: 10px; padding: 8px 12px; margin: 6px 0 4px;
-    font-size: 12px; color: rgba(205,232,255,0.8);
-  }
-  .itin-bar .itin-km { font-family: Bebas Neue, sans-serif; font-size: 18px; color: var(--accent); }
-  .itin-bar .itin-depart { font-family: Bebas Neue, sans-serif; font-size: 16px; color: var(--orange); margin-left: auto; }
-  .itin-bar .itin-loading { color: rgba(255,255,255,0.3); font-style: italic; }
-  .itin-bar .itin-err { color: rgba(255,80,80,0.7); }
+
   .rdv-day-header { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 6px; }
 
   /* CAISSE RAPIDE */
@@ -1539,93 +1529,52 @@ function nettoyerAncienRdvs() {
   }
 }
 
-// =========== ITINÉRAIRES DU JOUR — Google Maps API ===========
-const GOOGLE_KEY_AGENDA = 'AIzaSyBJRBw9m-Z7VOvR9GpknKEiVuKdhY_fKxM';
-const BASE_LA_FOUX_ADRESSE = 'La Foux, Gassin, 83580, France';
 
-async function geocodeAdresse(adresse) {
-  if (!adresse || adresse === 'Sur place — La Foux' || adresse === 'Sur place') return null;
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(adresse)}&language=fr&key=${GOOGLE_KEY_AGENDA}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
-  const d = await r.json();
-  if (d.status !== 'OK' || !d.results.length) return null;
-  const loc = d.results[0].geometry.location;
-  return { lat: loc.lat, lon: loc.lng, adresseComplete: d.results[0].formatted_address };
+// =========== SERVICES DISPONIBLES ===========
+const SERVICES_LIST = [
+  { id: 'vl_r134a',    label: 'VL Recharge Standard (R134a)',  ico: '🚗' },
+  { id: 'vl_r1234yf',  label: 'VL Recharge Standard (R1234yf)',ico: '🚗' },
+  { id: 'vl_desinfec', label: 'VL Recharge + Désinfection',     ico: '✨' },
+  { id: 'vu_recharge', label: 'VU Recharge Standard',           ico: '🚐' },
+  { id: 'vu_desinfec', label: 'VU Recharge + Désinfection',     ico: '🚐' },
+  { id: 'diag',        label: 'Diagnostic + Recharge',          ico: '🔧' },
+];
+
+function getServicesState() {
+  const saved = JSON.parse(localStorage.getItem('clim_services_dispo') || '{}');
+  const state = {};
+  SERVICES_LIST.forEach(s => { state[s.id] = saved[s.id] !== false; });
+  return state;
 }
 
-async function routeEntreDeux(dep, arr) {
-  const origine = dep.adresseComplete || BASE_LA_FOUX_ADRESSE;
-  const dest = arr.adresseComplete || arr.lat + ',' + arr.lon;
-  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origine)}&destinations=${encodeURIComponent(dest)}&mode=driving&language=fr&key=${GOOGLE_KEY_AGENDA}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  const d = await r.json();
-  if (d.status !== 'OK') return null;
-  const el = d.rows[0].elements[0];
-  if (el.status !== 'OK') return null;
-  return { km: Math.round(el.distance.value / 1000), sec: el.duration.value };
+function toggleService(id) {
+  const state = getServicesState();
+  state[id] = !state[id];
+  localStorage.setItem('clim_services_dispo', JSON.stringify(state));
+  renderServicesDispo();
+  showNotif(state[id] ? '✓ Service activé' : '⚠️ Service désactivé', state[id] ? undefined : '#ff9500');
 }
 
-function heureDepart(heureRDV, secondesRoute) {
-  const [h, m] = heureRDV.split(':').map(Number);
-  const rdvMin = h * 60 + m;
-  const trajetMin = Math.ceil(secondesRoute / 60);
-  const depMin = rdvMin - trajetMin - 5;
-  const dh = Math.floor(depMin / 60);
-  const dm = depMin % 60;
-  if (depMin < 0) return null;
-  return dh.toString().padStart(2,'0') + ':' + dm.toString().padStart(2,'0');
-}
-
-async function calculerItinerairesJour(rdvs) {
-  let depPrecedent = { adresseComplete: BASE_LA_FOUX_ADRESSE, label: 'La Foux' };
-
-  for (let i = 0; i < rdvs.length; i++) {
-    const r = rdvs[i];
-    const barEl = document.getElementById('itin_' + r.id);
-    if (!barEl) continue;
-
-    if (!r.adresse || r.adresse === 'Sur place — La Foux' || r.adresse === 'Sur place') {
-      barEl.innerHTML = '<span style="color:rgba(0,214,143,0.7);font-size:12px;">🏠 Sur place — La Foux</span>';
-      depPrecedent = { adresseComplete: BASE_LA_FOUX_ADRESSE, label: 'La Foux' };
-      continue;
-    }
-
-    barEl.innerHTML = '<span class="itin-loading">⏳ Calcul itinéraire...</span>';
-
-    try {
-      const arrCoord = await geocodeAdresse(r.adresse);
-      if (!arrCoord) {
-        barEl.innerHTML = '<span class="itin-err">📍 Adresse introuvable</span>';
-        continue;
-      }
-
-      const route = await routeEntreDeux(depPrecedent, arrCoord);
-      if (!route) {
-        barEl.innerHTML = '<span class="itin-err">⚠️ Route non calculable</span>';
-        continue;
-      }
-
-      const dep = heureDepart(r.heure, route.sec);
-      const trajetMin = Math.ceil(route.sec / 60);
-      const trajetLabel = trajetMin >= 60
-        ? Math.floor(trajetMin/60) + 'h' + (trajetMin%60).toString().padStart(2,'0')
-        : trajetMin + ' min';
-
-      barEl.innerHTML = `
-        <span class="itin-km">${route.km} km</span>
-        <span style="color:rgba(255,255,255,0.4);">·</span>
-        <span>${trajetLabel}</span>
-        <span style="color:rgba(255,255,255,0.4);">·</span>
-        <span style="color:rgba(255,255,255,0.5);font-size:11px;">depuis ${depPrecedent.label}</span>
-        ${dep ? `<span class="itin-depart">⏰ Partir à ${dep}</span>` : '<span style="color:#ff8080;font-size:11px;">Départ très tôt</span>'}
-      `;
-
-      depPrecedent = { ...arrCoord, label: r.nom, adresseComplete: r.adresse };
-
-    } catch(e) {
-      barEl.innerHTML = '<span class="itin-err">⚠️ Erreur réseau</span>';
-    }
-  }
+function renderServicesDispo() {
+  const el = document.getElementById('servicesDispo');
+  if (!el) return;
+  const state = getServicesState();
+  el.innerHTML = SERVICES_LIST.map(s => {
+    const on = state[s.id];
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">${s.ico}</span>
+        <span style="font-size:13px;color:${on ? '#fff' : 'rgba(255,255,255,0.3)'};">${s.label}</span>
+        ${!on ? '<span style="font-size:10px;background:rgba(255,68,68,0.15);color:#ff8080;padding:2px 7px;border-radius:8px;font-weight:700;">INDISPO</span>' : ''}
+      </div>
+      <div onclick="toggleService('${s.id}')" style="
+        width:46px;height:26px;border-radius:13px;cursor:pointer;transition:all .25s;position:relative;flex-shrink:0;
+        background:${on ? 'var(--green)' : 'rgba(255,255,255,0.15)'};
+      ">
+        <div style="position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:all .25s;left:${on ? '24px' : '3px'};box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // =========== CAISSE RAPIDE ===========

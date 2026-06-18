@@ -735,6 +735,7 @@ function renderAccueil() {
     list.innerHTML = '<div class="empty-state"><div class="icon">☀️</div><p>Aucun RDV aujourd\'hui</p></div>';
   } else {
     list.innerHTML = todayRDVs.map(r => rdvCard(r)).join('');
+  renderAlertesZones();
   }
 
   // Free slots
@@ -1557,6 +1558,66 @@ function nettoyerAncienRdvs() {
   }
 }
 
+
+// =========== ALERTES ZONES EN ATTENTE ===========
+function renderAlertesZones() {
+  const el = document.getElementById('alertesZones');
+  if (!el) return;
+
+  const enAttente = rdvs.filter(r => r.status === 'attente_zone');
+  if (enAttente.length === 0) { el.innerHTML = ''; return; }
+
+  // Grouper par zone_ville
+  const zones = {};
+  enAttente.forEach(r => {
+    const z = r.zone_ville || 'Zone inconnue';
+    if (!zones[z]) zones[z] = [];
+    zones[z].push(r);
+  });
+
+  let html = '';
+  Object.keys(zones).forEach(zone => {
+    const clients = zones[zone];
+    const nb = clients.length;
+    const couleur = nb >= 3 ? '#00d68f' : '#ff9500';
+    const icone = nb >= 3 ? '✅' : '⏳';
+    const msg = nb >= 3
+      ? `${nb} clients — Tournée à confirmer !`
+      : `${nb}/3 client${nb > 1 ? 's' : ''} — En attente`;
+
+    // Vérifier si ça fait plus de 2 jours
+    const plusAncien = clients.reduce((a, b) => (a.created_at || a.date) < (b.created_at || b.date) ? a : b);
+    const dateCreation = new Date(plusAncien.date);
+    const joursAttente = Math.floor((new Date() - dateCreation) / (1000*60*60*24));
+    const depasse = joursAttente >= 2;
+
+    html += `<div style="background:rgba(255,149,0,0.08);border:1px solid ${nb >= 3 ? 'rgba(0,214,143,0.4)' : 'rgba(255,149,0,0.3)'};border-radius:12px;padding:12px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:${couleur};">${icone} ${zone}</div>
+        <div style="font-size:12px;font-weight:700;color:${couleur};">${msg}</div>
+      </div>
+      ${depasse && nb < 3 ? `<div style="font-size:11px;color:#ff8080;margin-bottom:6px;">⚠️ Délai de ${joursAttente}j dépassé — appeler les clients pour devis</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${clients.map(c => `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;font-size:11px;color:rgba(255,255,255,0.7);">
+          ${c.nom} · <a href="tel:${c.tel}" style="color:var(--accent);">${c.tel}</a>
+        </div>`).join('')}
+      </div>
+      ${nb >= 3 ? `<button onclick="confirmerTourneeZone('${zone}')" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--green);color:#0a1f2e;font-weight:700;font-size:13px;cursor:pointer;">✅ Confirmer la tournée</button>` : ''}
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function confirmerTourneeZone(zone) {
+  const clients = rdvs.filter(r => r.status === 'attente_zone' && (r.zone_ville || 'Zone inconnue') === zone);
+  if (!confirm(`Confirmer la tournée pour ${clients.length} clients à ${zone} ?`)) return;
+  clients.forEach(r => { r.status = 'confirmed'; });
+  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  showNotif(`✅ ${clients.length} RDV confirmés à ${zone} !`, '#00d68f');
+  renderAlertesZones();
+  renderAccueil();
+}
 
 // =========== SERVICES DISPONIBLES ===========
 const SERVICES_LIST = [

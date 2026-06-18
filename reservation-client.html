@@ -41,6 +41,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   .hero p { font-size: 13px; color: rgba(205,232,255,0.6); margin-top: 8px; line-height: 1.6; }
   .hero-badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .hero-badge { background: rgba(0,214,143,0.1); border: 1px solid rgba(0,214,143,0.3); color: var(--green); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(1.3); } }
 
   .container { padding: 16px; position: relative; z-index: 1; max-width: 500px; margin: 0 auto; }
 
@@ -150,6 +151,17 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <span class="hero-badge">✓ Rapide & Simple</span>
     <span class="hero-badge">✓ Confirmation immédiate</span>
     <span class="hero-badge">✓ À domicile</span>
+  </div>
+
+  <!-- BANNIÈRE LOCALISATION TEMPS RÉEL -->
+  <div id="banniereLocalisation" style="display:none;margin-top:14px;background:rgba(0,214,143,0.12);border:1px solid rgba(0,214,143,0.4);border-radius:14px;padding:12px 16px;max-width:400px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#00d68f;box-shadow:0 0 8px #00d68f;flex-shrink:0;animation:pulse 1.5s infinite;"></div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#00d68f;" id="banniereTitre">Notre technicien est actuellement dans votre secteur</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;" id="banniereDetail"></div>
+      </div>
+    </div>
   </div>
 
   <!-- BOUTONS TARIFS + QUI SOMMES NOUS -->
@@ -269,50 +281,17 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 
       </div>
 
-      <!-- Champ adresse + zone de déplacement -->
+      <!-- Champ adresse + code postal -->
       <div id="adresseGroup" style="display:none;">
-        <div class="form-group" style="margin-bottom:14px;">
+        <div class="form-group" style="margin-bottom:10px;">
           <label>Votre adresse *</label>
           <input type="text" id="cAdresse" placeholder="Ex: 15 rue des Mimosas, Toulon">
         </div>
-
-        <!-- Sélection zone distance -->
-        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">📍 Votre distance depuis La Foux, Gassin</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="zoneGrid">
-          <div class="zone-btn" onclick="selectZone(this, 10)" data-supp="10">
-            <div class="zone-label">Moins de 15 km</div>
-            <div class="zone-prix">+10€</div>
-            <div class="zone-ex">Grimaud, Cogolin, Sainte-Maxime, Ramatuelle...</div>
-          </div>
-          <div class="zone-btn" onclick="selectZone(this, 20)" data-supp="20">
-            <div class="zone-label">15 à 30 km</div>
-            <div class="zone-prix">+20€</div>
-            <div class="zone-ex">Collobrières, Le Muy, Les Arcs...</div>
-          </div>
-          <div class="zone-btn" onclick="selectZone(this, 30)" data-supp="30">
-            <div class="zone-label">30 à 50 km</div>
-            <div class="zone-prix">+30€</div>
-            <div class="zone-ex">Hyères, Le Lavandou, Draguignan...</div>
-          </div>
-          <div class="zone-btn" onclick="selectZone(this, 40)" data-supp="40">
-            <div class="zone-label">50 à 70 km</div>
-            <div class="zone-prix">+40€</div>
-            <div class="zone-ex">Toulon, Brignoles, Fréjus...</div>
-          </div>
-          <div class="zone-btn" style="grid-column:span 2;" onclick="selectZone(this, 50)" data-supp="50">
-            <div class="zone-label">Plus de 70 km</div>
-            <div class="zone-prix">+50€</div>
-            <div class="zone-ex">Marseille, Nice, Aix-en-Provence...</div>
-          </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Code postal *</label>
+          <input type="text" id="cCodePostal" placeholder="Ex: 83990" maxlength="5" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,''); analyserCodePostal()">
         </div>
-
-        <div id="zoneInfo" style="display:none;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:12px;margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span>
-            <span style="font-family:Bebas Neue,sans-serif;font-size:26px;color:#ff9500;" id="zoneSupp">+0€</span>
-          </div>
-        </div>
-
+        <div id="zoneResultat" style="display:none;margin-bottom:14px;"></div>
         <button class="btn btn-primary" id="btnContinuerZone" onclick="goStep3FromDomicile()" style="display:none;">Continuer →</button>
       </div>
 
@@ -429,6 +408,53 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 </footer>
 
 <script>
+async function chargerLocalisationJour() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const heureActuelle = now.getHours() * 60 + now.getMinutes();
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs?date=eq.${today}&status=neq.annule&status=neq.done&select=heure,zone_ville,lieu`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const rdvs = await res.json();
+    if (!Array.isArray(rdvs) || rdvs.length === 0) return;
+
+    // Trouver le RDV en cours ou le prochain
+    let rdvActuel = null;
+    let rdvProchain = null;
+
+    rdvs.sort((a,b) => a.heure.localeCompare(b.heure)).forEach(r => {
+      const [h, m] = r.heure.split(':').map(Number);
+      const rdvMin = h * 60 + m;
+      const diff = heureActuelle - rdvMin;
+      if (diff >= 0 && diff <= 90 && !rdvActuel) rdvActuel = r; // RDV en cours (dans les 1h30)
+      if (diff < 0 && !rdvProchain) rdvProchain = r; // Prochain RDV
+    });
+
+    const rdv = rdvActuel || rdvProchain;
+    if (!rdv) return;
+
+    const zone = rdv.zone_ville || (rdv.lieu && rdv.lieu.includes('domicile') ? 'secteur local' : null);
+    if (!zone || zone === 'Sur place — La Foux') return;
+
+    const banniere = document.getElementById('banniereLocalisation');
+    const titre = document.getElementById('banniereTitre');
+    const detail = document.getElementById('banniereDetail');
+
+    if (rdvActuel) {
+      titre.textContent = `🔧 Notre technicien intervient actuellement à ${zone}`;
+      detail.textContent = `Réservez un créneau dans ce secteur pour optimiser votre intervention !`;
+    } else {
+      const [h, m] = rdvProchain.heure.split(':').map(Number);
+      titre.textContent = `📍 Notre technicien sera à ${zone} aujourd'hui`;
+      detail.textContent = `Prochain passage vers ${rdvProchain.heure} — réservez dans ce secteur !`;
+    }
+
+    banniere.style.display = 'block';
+  } catch(e) {}
+}
+
 function toggleTarifs() {
   const box = document.getElementById('tarifsBox');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -502,6 +528,91 @@ let selectedDate = new Date();
 let selectedHeure = null;
 let selectedService = null;
 let takenSlots = [];
+
+// ====== VARIABLES ZONES ======
+let selectedZoneSupp = 0;
+let selectedZoneKm = 0;
+let selectedZoneVille = '';
+let modeAttente = false;
+const SEUIL_REGROUPEMENT = 23;
+const MIN_CLIENTS_ZONE = 3;
+const DELAI_ATTENTE_JOURS = 2;
+
+const ZONES_CP = {
+  '83580': { ville: 'Gassin / La Foux', km: 0, supp: 0 },
+  '83990': { ville: 'Saint-Tropez', km: 10, supp: 10 },
+  '83350': { ville: 'Ramatuelle', km: 8, supp: 10 },
+  '83310': { ville: 'Cogolin / Grimaud', km: 8, supp: 10 },
+  '83120': { ville: 'Sainte-Maxime', km: 18, supp: 10 },
+  '83240': { ville: 'Cavalaire-sur-Mer', km: 15, supp: 10 },
+  '83420': { ville: 'La Croix-Valmer', km: 10, supp: 10 },
+  '83680': { ville: 'La Garde-Freinet', km: 20, supp: 10 },
+  '83660': { ville: 'Collobrières', km: 28, supp: 20 },
+  '83490': { ville: 'Le Muy', km: 35, supp: 20 },
+  '83460': { ville: 'Les Arcs-sur-Argens', km: 38, supp: 20 },
+  '83370': { ville: 'Saint-Aygulf', km: 45, supp: 30 },
+  '83600': { ville: 'Fréjus', km: 48, supp: 30 },
+  '83400': { ville: 'Hyères', km: 55, supp: 30 },
+  '83980': { ville: 'Le Lavandou', km: 40, supp: 30 },
+  '83250': { ville: 'La Londe-les-Maures', km: 45, supp: 30 },
+  '83300': { ville: 'Draguignan', km: 50, supp: 30 },
+  '83170': { ville: 'Brignoles', km: 65, supp: 40 },
+  '83000': { ville: 'Toulon', km: 70, supp: 40 },
+  '83100': { ville: 'Toulon', km: 70, supp: 40 },
+  '83200': { ville: 'Toulon', km: 72, supp: 40 },
+  '83500': { ville: 'La Seyne-sur-Mer', km: 75, supp: 40 },
+};
+
+const SECTEURS = {
+  'Saint-Tropez':       ['83990', '83350'],
+  'Cogolin/Grimaud':    ['83310'],
+  'Sainte-Maxime':      ['83120'],
+  'La Croix-Valmer':    ['83420', '83240'],
+  'Gassin/La Foux':     ['83580'],
+  'La Garde-Freinet':   ['83680'],
+  'Collobrières':       ['83660'],
+  'Le Muy/Les Arcs':    ['83490', '83460'],
+  'Fréjus':             ['83370', '83600'],
+  'Hyères':             ['83400'],
+  'Le Lavandou':        ['83980', '83250'],
+  'Draguignan':         ['83300'],
+  'Brignoles':          ['83170'],
+  'Toulon':             ['83000', '83100', '83200', '83500'],
+};
+
+function getSecteur(cp) {
+  for (const [secteur, cps] of Object.entries(SECTEURS)) {
+    if (cps.includes(cp)) return secteur;
+  }
+  return null;
+}
+
+function analyserCodePostal() {
+  const cp = document.getElementById('cCodePostal') ? document.getElementById('cCodePostal').value.trim() : '';
+  const resultat = document.getElementById('zoneResultat');
+  const btnContinuer = document.getElementById('btnContinuerZone');
+  if (!resultat || !btnContinuer) return;
+  if (cp.length !== 5) { resultat.style.display = 'none'; btnContinuer.style.display = 'none'; return; }
+  const zone = ZONES_CP[cp];
+  if (!zone) {
+    resultat.style.display = 'block';
+    resultat.innerHTML = '<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:12px;padding:14px;font-size:13px;color:#ff8080;">⚠️ Code postal non reconnu. Appelez le <a href="tel:+33648008558" style="color:var(--accent);">06 48 00 85 58</a></div>';
+    btnContinuer.style.display = 'none'; return;
+  }
+  selectedZoneVille = zone.ville;
+  selectedZoneKm = zone.km;
+  selectedZoneSupp = zone.supp;
+  modeAttente = zone.km >= SEUIL_REGROUPEMENT;
+  resultat.style.display = 'block';
+  if (!modeAttente) {
+    resultat.innerHTML = '<div style="background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span><span style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#00d68f;">' + (zone.supp > 0 ? '+'+zone.supp+'€' : 'Gratuit') + '</span></div><div style="margin-top:8px;font-size:11px;color:rgba(0,214,143,0.7);">✓ Confirmation immédiate après réservation</div></div>';
+    btnContinuer.textContent = 'Continuer →';
+  } else {
+    resultat.innerHTML = '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.35);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span><span style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#ff9500;">+' + zone.supp + '€</span></div><div style="background:rgba(255,149,0,0.15);border-radius:8px;padding:10px;font-size:12px;color:#ff9500;line-height:1.5;">⏳ <strong>Réservation en attente de confirmation.</strong><br>Vous recevrez un SMS sous ' + (DELAI_ATTENTE_JOURS*24) + 'h maximum.</div></div>';
+    btnContinuer.textContent = 'Réserver (en attente) →';
+  }
+  btnContinuer.style.display = 'block';
+}
 
 // Pas de RDV le dimanche
 function skipSunday(d) {
@@ -641,15 +752,13 @@ function showRecap() {
   const nom = document.getElementById('cNom').value.trim();
   const tel = document.getElementById('cTel').value.trim();
   const adresse = selectedLieu === 'domicile' ? (document.getElementById('cAdresse').value.trim() || 'Non précisée') : 'Sur place — La Foux';
-  const lieuLabel = selectedLieu === 'domicile' ? '🚗 À domicile (+10€)' : '🏠 Sur place — La Foux';
+  const lieuLabel = selectedLieu === 'domicile'
+    ? (selectedZoneVille ? '🚗 À domicile — ' + selectedZoneVille : '🚗 À domicile')
+    : '🏠 Sur place — La Foux';
   const dateStr = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const depBadge = selectedLieu === 'domicile' && selectedZoneSupp
-    ? `<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:12px;color:#ff9500;">🚗 Supplément déplacement</span>
-          <span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#ff9500;">+${selectedZoneSupp}€</span>
-        </div>
-      </div>`
+  const attenteMsg = modeAttente ? '<div style="margin-top:6px;font-size:11px;color:#ff9500;">⏳ En attente de confirmation — SMS sous 48h</div>' : '<div style="margin-top:6px;font-size:11px;color:#00d68f;">✓ Confirmation immédiate</div>';
+  const depBadge = selectedLieu === 'domicile'
+    ? '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#ff9500;">🚗 Déplacement — ' + (selectedZoneVille||'domicile') + '</span><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#ff9500;">' + (selectedZoneSupp > 0 ? '+'+selectedZoneSupp+'€' : 'Inclus') + '</span></div>' + attenteMsg + '</div>'
     : '';
   document.getElementById('recapContent').innerHTML = `
     <div class="recap-row"><span class="recap-label">Nom</span><span class="recap-value">${nom}</span></div>
@@ -717,6 +826,7 @@ async function confirmerRDV() {
 // Init
 loadSlots();
 appliquerDispoServices();
+chargerLocalisationJour();
 </script>
 <!-- MODAL DEVIS DEPLACEMENT -->
 <div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(8,26,40,0.95);z-index:500;display:none;align-items:flex-end;">

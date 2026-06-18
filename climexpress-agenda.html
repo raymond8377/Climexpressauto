@@ -666,7 +666,7 @@ function init() {
 function fillHeures(date) {
   const sel = document.getElementById('rdvHeure');
   const d = date || document.getElementById('rdvDate').value;
-  const todayRDVs = rdvs.filter(r => r.date === d && r.status !== 'annule');
+  const todayRDVs = rdvs.filter(r => r.date === d && r.status !== 'annule' && r.status !== 'done');
   const taken = todayRDVs.map(r => r.heure);
   sel.innerHTML = '<option value="">— Choisir un créneau —</option>';
   HEURES.forEach(h => {
@@ -728,7 +728,7 @@ function addClientIfNew(nom, tel, adresse, type) {
 // =========== ACCUEIL ===========
 function renderAccueil() {
   const today = new Date().toISOString().split('T')[0];
-  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule').sort((a,b) => a.heure.localeCompare(b.heure));
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'done').sort((a,b) => a.heure.localeCompare(b.heure));
 
   const list = document.getElementById('todayList');
   if (todayRDVs.length === 0) {

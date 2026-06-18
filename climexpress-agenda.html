@@ -1104,6 +1104,8 @@ function showCalDayMenu(dateStr) {
     menuHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <button class="btn" onclick="bloquerJourDepuisCalendrier('${dateStr}')" style="background:rgba(255,68,68,0.12);color:#ff8080;border:1px solid rgba(255,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🔒 Bloquer<br>le jour entier</button>
       <button class="btn" onclick="ouvrirBlocageHeure('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🕐 Bloquer<br>une heure</button>
+      <button class="btn" onclick="bloquerMatinee('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🌅 Bloquer<br>la matinée</button>
+      <button class="btn" onclick="bloquerApresMidi('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🌆 Bloquer<br>l'après-midi</button>
     </div>`;
   }
   menuHtml += `</div>`;
@@ -1133,6 +1135,32 @@ function debloquerJour(dateStr) {
   renderCalendar();
   showCalDayMenu(dateStr);
   renderAccueil();
+}
+
+function bloquerPlage(dateStr, heures) {
+  // Supprimer d'abord les blocages horaires existants sur ces heures
+  blocages = blocages.filter(b => !(b.date === dateStr && b.type === 'heure' && heures.includes(b.heure)));
+  heures.forEach(h => {
+    const bloc = { id: Date.now() + Math.random(), type: 'heure', date: dateStr, heure: h, raison: 'Indisponible' };
+    blocages.push(bloc);
+    syncBlocageToSupabase(bloc);
+  });
+  localStorage.setItem('clim_blocages', JSON.stringify(blocages));
+  renderCalendar();
+  showCalDayMenu(dateStr);
+  renderAccueil();
+}
+
+function bloquerMatinee(dateStr) {
+  const heures = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30'];
+  bloquerPlage(dateStr, heures);
+  showNotif('🌅 Matinée bloquée !', '#ff9500');
+}
+
+function bloquerApresMidi(dateStr) {
+  const heures = ['13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'];
+  bloquerPlage(dateStr, heures);
+  showNotif('🌆 Après-midi bloquée !', '#ff9500');
 }
 
 function ouvrirBlocageHeure(dateStr) {

@@ -121,6 +121,19 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   .error-msg.show { display: block; }
 
   footer { text-align: center; padding: 20px; font-size: 11px; color: rgba(255,255,255,0.3); position: relative; z-index: 1; background: #1a3a6b; }
+  /* ZONES DEPLACEMENT */
+  .zone-btn {
+    padding: 12px 10px; border-radius: 12px; border: 1px solid rgba(255,149,0,0.25);
+    background: rgba(255,149,0,0.06); cursor: pointer; text-align: center;
+    transition: all .15s;
+  }
+  .zone-btn:active, .zone-btn.selected {
+    background: rgba(255,149,0,0.2); border-color: rgba(255,149,0,0.6);
+    transform: scale(.97);
+  }
+  .zone-label { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .zone-prix { font-family: Bebas Neue, sans-serif; font-size: 24px; color: #ff9500; line-height: 1; margin-bottom: 3px; }
+  .zone-ex { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.3; }
 </style>
 </head>
 <body>
@@ -218,16 +231,51 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 
       </div>
 
-      <!-- Champ adresse visible seulement si domicile -->
+      <!-- Champ adresse + zone de déplacement -->
       <div id="adresseGroup" style="display:none;">
-        <div class="form-group" style="margin-bottom:10px;">
+        <div class="form-group" style="margin-bottom:14px;">
           <label>Votre adresse *</label>
           <input type="text" id="cAdresse" placeholder="Ex: 15 rue des Mimosas, Toulon">
         </div>
-        <div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#ff9500;margin-bottom:14px;">
-          🚗 Supplément déplacement : +10€ jusqu'à 15 km · Au-delà : sur devis
+
+        <!-- Sélection zone distance -->
+        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">📍 Votre distance depuis La Foux, Gassin</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="zoneGrid">
+          <div class="zone-btn" onclick="selectZone(this, 10)" data-supp="10">
+            <div class="zone-label">Moins de 15 km</div>
+            <div class="zone-prix">+10€</div>
+            <div class="zone-ex">Grimaud, Cogolin, Sainte-Maxime, Ramatuelle...</div>
+          </div>
+          <div class="zone-btn" onclick="selectZone(this, 20)" data-supp="20">
+            <div class="zone-label">15 à 30 km</div>
+            <div class="zone-prix">+20€</div>
+            <div class="zone-ex">Collobrières, Le Muy, Les Arcs...</div>
+          </div>
+          <div class="zone-btn" onclick="selectZone(this, 30)" data-supp="30">
+            <div class="zone-label">30 à 50 km</div>
+            <div class="zone-prix">+30€</div>
+            <div class="zone-ex">Hyères, Le Lavandou, Draguignan...</div>
+          </div>
+          <div class="zone-btn" onclick="selectZone(this, 40)" data-supp="40">
+            <div class="zone-label">50 à 70 km</div>
+            <div class="zone-prix">+40€</div>
+            <div class="zone-ex">Toulon, Brignoles, Fréjus...</div>
+          </div>
+          <div class="zone-btn" style="grid-column:span 2;" onclick="selectZone(this, 50)" data-supp="50">
+            <div class="zone-label">Plus de 70 km</div>
+            <div class="zone-prix">+50€</div>
+            <div class="zone-ex">Marseille, Nice, Aix-en-Provence...</div>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="goStep3FromDomicile()">Continuer →</button>
+
+        <div id="zoneInfo" style="display:none;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:12px;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span>
+            <span style="font-family:Bebas Neue,sans-serif;font-size:26px;color:#ff9500;" id="zoneSupp">+0€</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btnContinuerZone" onclick="goStep3FromDomicile()" style="display:none;">Continuer →</button>
       </div>
 
     </div>
@@ -550,9 +598,12 @@ function showRecap() {
   const adresse = selectedLieu === 'domicile' ? (document.getElementById('cAdresse').value.trim() || 'Non précisée') : 'Sur place — La Foux';
   const lieuLabel = selectedLieu === 'domicile' ? '🚗 À domicile (+10€)' : '🏠 Sur place — La Foux';
   const dateStr = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const depBadge = selectedLieu === 'domicile'
-    ? `<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;font-size:12px;color:#ff9500;">
-        🚗 Supplément déplacement : +10€ jusqu'à 15 km · Au-delà : sur devis
+  const depBadge = selectedLieu === 'domicile' && selectedZoneSupp
+    ? `<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:#ff9500;">🚗 Supplément déplacement</span>
+          <span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#ff9500;">+${selectedZoneSupp}€</span>
+        </div>
       </div>`
     : '';
   document.getElementById('recapContent').innerHTML = `

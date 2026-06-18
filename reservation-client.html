@@ -152,9 +152,10 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <span class="hero-badge">✓ À domicile</span>
   </div>
 
-  <!-- BOUTON TARIFS -->
-  <div style="margin-top:16px;">
+  <!-- BOUTONS TARIFS + QUI SOMMES NOUS -->
+  <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
     <button onclick="toggleTarifs()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">💰 Consulter nos tarifs</button>
+    <button onclick="toggleQuiSommesNous()" style="background:rgba(0,194,255,0.15);border:1px solid rgba(0,194,255,0.35);color:var(--accent);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">ℹ️ Qui sommes-nous ?</button>
   </div>
 
   <!-- TARIFS DROPDOWN -->
@@ -171,6 +172,43 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
       <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Vous habitez à plus de 15 km de La Foux ?</div>
       <button onclick="demanderDevis()" style="width:100%;padding:12px;background:rgba(255,149,0,0.2);border:1px solid rgba(255,149,0,0.4);border-radius:10px;color:#ff9500;font-weight:700;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">📋 Demander un devis déplacement</button>
     </div>
+  </div>
+</div>
+
+<!-- QUI SOMMES-NOUS -->
+<div id="quiSommesNousBox" style="display:none;margin:14px auto 0;background:rgba(0,0,0,0.3);border:1px solid rgba(0,194,255,0.2);border-radius:14px;padding:20px;text-align:left;max-width:480px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div style="font-size:32px;">🔧</div>
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);letter-spacing:1px;">ClimExpress</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);">Artisan indépendant — Gassin, Var (83)</div>
+    </div>
+  </div>
+
+  <p style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;margin-bottom:12px;">
+    Diplômé depuis 5 ans et spécialisé dans la recharge de climatisation automobile, j'interviens directement chez vous avec mon équipement homologué. Pas d'établissement fixe, pas de frais de structure — vous payez le service, pas le loyer d'un garage.
+  </p>
+
+  <div style="background:rgba(0,214,143,0.08);border:1px solid rgba(0,214,143,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:700;color:#00d68f;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">✓ 100% de clients satisfaits</div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.5;margin:0;">
+      Là où un garage vous facture 80 à 150€ pour la même prestation, ClimExpress intervient à domicile à partir de 45€ — des tarifs défiant toute concurrence.
+    </p>
+  </div>
+
+  <div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Comment ça se passe</div>
+  <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;margin-bottom:12px;">
+    J'arrive à votre véhicule et j'analyse l'état du circuit. J'évalue la quantité de gaz présente — selon le résultat, soit je complète le niveau, soit je procède à une recharge complète. Pour les interventions plus poussées — récupération totale du gaz, tirage à vide et lubrification du circuit — un devis vous sera proposé.
+  </p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;margin-bottom:12px;">
+    Toutes mes recharges sont effectuées avec du gaz traité aux normes en vigueur, certifié et contrôlé. Pas de gaz recyclé — uniquement du gaz neuf de qualité professionnelle.
+  </p>
+  <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;margin-bottom:0;">
+    Vous êtes présent pendant toute l'intervention — vous voyez exactement ce que je fais. Rapide, simple, efficace. En option, désinfection du circuit disponible.
+  </p>
+
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);font-size:12px;color:rgba(255,255,255,0.4);font-style:italic;text-align:center;">
+    Un artisan de confiance, pas une grande enseigne — c'est souvent ce qui fait la différence.
   </div>
 </div>
 
@@ -394,6 +432,13 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 function toggleTarifs() {
   const box = document.getElementById('tarifsBox');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('quiSommesNousBox').style.display = 'none';
+}
+
+function toggleQuiSommesNous() {
+  const box = document.getElementById('quiSommesNousBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('tarifsBox').style.display = 'none';
 }
 
 // Lecture disponibilité services depuis localStorage (partagé même domaine)

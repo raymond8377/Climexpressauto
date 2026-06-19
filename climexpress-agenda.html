@@ -563,6 +563,24 @@
     <button onclick="encaisserManuel()" style="width:100%;margin-top:10px;padding:13px;border-radius:12px;border:none;background:var(--accent);color:var(--dark);font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;">+ Encaisser ce montant</button>
   </div>
 
+  <!-- Message automatique -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:1px;">💬 Message <span style="color:var(--accent);">Automatique</span></div>
+    </div>
+    <div id="msgAutoTexte" style="background:#163260;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;white-space:pre-wrap;margin-bottom:10px;">Bonjour 👋 Merci de votre intérêt pour ClimExpress Auto !
+
+Pour réserver rapidement, c'est simple et gratuit :
+🔗 climexpressauto.fr/reservation-client.html
+
+Vous choisissez votre créneau directement en ligne, je vous confirme dans les meilleurs délais.
+
+📞 Disponible par téléphone du lundi au samedi, de 9h à 12h et de 13h30 à 18h — 06 48 00 85 58
+
+Ceci est un message automatique, veuillez ne pas y répondre. Nous vous contacterons directement.</div>
+    <button onclick="copierMessageAuto()" id="btnCopierMsg" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--green);color:#0a1f2e;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer;">📋 Copier le message</button>
+  </div>
+
   <!-- Liste interventions -->
   <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Interventions effectuées</div>
   <div id="interventionsList"></div>
@@ -1687,6 +1705,40 @@ function getMoisStart() { return getToday().slice(0,7) + '-01'; }
 
 // Vue active : 'jour' | 'semaine' | 'mois' | 'historique'
 let caisseVue = 'jour';
+
+function copierMessageAuto() {
+  const texte = document.getElementById('msgAutoTexte').innerText;
+  const btn = document.getElementById('btnCopierMsg');
+
+  function succes() {
+    btn.textContent = '✓ Copié !';
+    btn.style.background = 'var(--accent)';
+    setTimeout(() => {
+      btn.textContent = '📋 Copier le message';
+      btn.style.background = 'var(--green)';
+    }, 1800);
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texte).then(succes).catch(() => {
+      fallbackCopy(texte, succes);
+    });
+  } else {
+    fallbackCopy(texte, succes);
+  }
+}
+
+function fallbackCopy(texte, callback) {
+  const ta = document.createElement('textarea');
+  ta.value = texte;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); callback(); } catch(e) { showNotif('⚠️ Copie impossible, sélectionnez le texte manuellement', '#ff9500'); }
+  document.body.removeChild(ta);
+}
 
 function encaisserManuel() {
   const montant = parseInt(document.getElementById('prixManuelMontant').value);

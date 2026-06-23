@@ -625,7 +625,7 @@ async function syncFromSupabase() {
         id: r.id || ('web_' + r.created_at),
         nom: r.nom, tel: r.tel, adresse: r.adresse, type: r.type,
         email: r.email || '', lieu: r.lieu || '',
-        date: r.date, heure: r.heure, notes: r.notes || '',
+        date: (r.date || '').split('T')[0], heure: r.heure, notes: r.notes || '',
         status: r.status || 'confirmed', source: 'web',
         supabase_id: r.id, createdAt: r.created_at
       }));

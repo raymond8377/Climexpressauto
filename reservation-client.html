@@ -768,7 +768,10 @@ async function confirmerRDV() {
       }).catch(e => console.log('Email:', e));
 
       const dateAff = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
-      document.getElementById('confirmSub').innerHTML = `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>ClimExpress vous contactera si besoin au <strong>${tel}</strong>.`;
+      const confirmMsg = email
+        ? `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>📧 Vous allez recevoir un <strong>mail de confirmation</strong> de notre part.<br><br>Pour toute question : <strong>06 48 00 85 58</strong>`
+        : `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>📱 Vous allez recevoir un <strong>SMS de confirmation</strong> de notre part.<br><br>Pour toute question : <strong>06 48 00 85 58</strong>`;
+      document.getElementById('confirmSub').innerHTML = confirmMsg;
       goStep(6);
       updateDots(6);
     } else {

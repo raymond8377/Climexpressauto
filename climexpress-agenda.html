@@ -618,7 +618,6 @@ async function syncFromSupabase() {
     if (!res.ok) return;
     const data = await res.json();
     if (!Array.isArray(data)) return;
-    // Filtrer les RDV supprimés localement
     const webRdvs = data
       .filter(r => !deletedSupabaseIds.includes(r.id))
       .map(r => ({
@@ -630,10 +629,24 @@ async function syncFromSupabase() {
         supabase_id: r.id, createdAt: r.created_at
       }));
     const localOnly = rdvs.filter(r => r.source !== 'web');
-    const merged = [...localOnly, ...webRdvs];
-    rdvs = merged;
+    rdvs = [...localOnly, ...webRdvs];
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
     webRdvs.forEach(r => addClientIfNew(r.nom, r.tel, r.adresse, r.type));
+    try {
+      const resBlo = await fetch(`${SB_URL}/rest/v1/blocages?select=*`, { headers: SB_HEADERS });
+      if (resBlo.ok) {
+        const bdata = await resBlo.json();
+        if (Array.isArray(bdata) && bdata.length > 0) {
+          const today = new Date().toISOString().split('T')[0];
+          blocages = bdata.filter(b => b.date >= today).map(b => ({
+            id: b.id, type: b.type,
+            date: (b.date || '').split('T')[0],
+            heure: b.heure || null, raison: b.raison || 'Indisponible'
+          }));
+          localStorage.setItem('clim_blocages', JSON.stringify(blocages));
+        }
+      }
+    } catch(e) {}
     renderAccueil(); renderCalendar(); renderRappels(); updateStats();
     showSyncBadge(webRdvs.length);
   } catch(e) { console.log('Sync offline'); }

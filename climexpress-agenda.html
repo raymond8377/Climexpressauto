@@ -1017,6 +1017,23 @@ function showRdvDetail(id) {
     html += '</div>';
     html += '<a href="' + mailLibre + '" style="display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;margin-bottom:10px;">Email libre (pub, facture...)</a>';
   }
+  // Bouton confirmation unique
+  const dateAffConf = formatDate(r.date);
+  const lieuConf = r.lieu || r.adresse || 'Sur place — La Foux';
+  const msgConf = 'Bonjour ' + r.nom + ' 👋\n\nVotre rendez-vous ClimExpress est confirmé ✅\n\n📅 ' + dateAffConf + ' à ' + r.heure + '\n🔧 ' + r.type + '\n📍 ' + lieuConf + '\n\nNous serons ponctuels et bien équipés. Pour toute question, contactez-nous au 06 48 00 85 58.\n\nÀ bientôt !\nRaymond — ClimExpress Recharge Auto 🚗❄️';
+  const sujetConf = 'Confirmation RDV ClimExpress — ' + dateAffConf + ' à ' + r.heure;
+
+  html += '<div style="margin-bottom:12px;">';
+  if (r.email) {
+    const mailConf = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujetConf) + '&body=' + encodeURIComponent(msgConf);
+    html += '<a href="' + mailConf + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:8px;">📧 Envoyer confirmation par mail</a>';
+  }
+  if (r.tel) {
+    const smsConf = 'sms:' + r.tel + '?body=' + encodeURIComponent(msgConf);
+    html += '<a href="' + smsConf + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;">📱 Envoyer confirmation par SMS</a>';
+  }
+  html += '</div>';
+
   html += '<div style="display:flex;gap:8px;margin-top:4px;">';
   html += '<button class="btn btn-primary" style="flex:1" onclick="callClient(\'' + r.tel + '\');closeRdvModal()">Appeler</button>';
   html += '<button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(' + r.id + ')">Annuler RDV</button>';

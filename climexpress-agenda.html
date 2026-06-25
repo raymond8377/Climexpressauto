@@ -637,7 +637,7 @@ async function syncFromSupabase() {
       if (resBlo.ok) {
         const bdata = await resBlo.json();
         if (Array.isArray(bdata) && bdata.length > 0) {
-          const today = new Date().toISOString().split('T')[0];
+          const today = toLocalDateStr(new Date());
           blocages = bdata.filter(b => b.date >= today).map(b => ({
             id: b.id, type: b.type,
             date: (b.date || '').split('T')[0],
@@ -758,7 +758,7 @@ function addClientIfNew(nom, tel, adresse, type) {
 
 // =========== ACCUEIL ===========
 function renderAccueil() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'done').sort((a,b) => a.heure.localeCompare(b.heure));
 
   const list = document.getElementById('todayList');
@@ -904,11 +904,11 @@ function doneRDV(id) {
 
 // =========== STATS ===========
 function updateStats() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
-  const ws = weekStart.toISOString().split('T')[0];
-  const we = weekEnd.toISOString().split('T')[0];
+  const ws = toLocalDateStr(weekStart);
+  const we = toLocalDateStr(weekEnd);
   document.getElementById('statToday').textContent = rdvs.filter(r => r.date === today && r.status !== 'annule').length;
   document.getElementById('statWeek').textContent = rdvs.filter(r => r.date >= ws && r.date <= we && r.status !== 'annule').length;
   document.getElementById('statClients').textContent = clients.length;
@@ -1108,7 +1108,7 @@ function renderCalendar() {
   document.getElementById('calMonthTitle').textContent = months[calMonth] + ' ' + calYear;
   const grid = document.getElementById('calGrid');
   const days = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const offset = firstDay === 0 ? 6 : firstDay - 1;
@@ -1240,9 +1240,9 @@ function renderFullRDVList() {
 // =========== RAPPELS ===========
 function renderRappels() {
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  const today = toLocalDateStr(now);
   const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const tomorrowStr = toLocalDateStr(tomorrow);
 
   const upcoming = rdvs.filter(r => r.date >= today && r.status === 'confirmed').sort((a,b) => a.date.localeCompare(b.date) || a.heure.localeCompare(b.heure));
   const div = document.getElementById('rappelList');
@@ -1303,9 +1303,9 @@ function goPage(name, btn) {
 // Démo données si vide
 function loadDemo() {
   if (rdvs.length > 0) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomStr = tomorrow.toISOString().split('T')[0];
+  const tomStr = toLocalDateStr(tomorrow);
   rdvs = [
     { id: 1, nom: 'Marc Lefevre', tel: '0612345678', adresse: '12 rue des Roses, Toulon', type: 'VL Recharge Standard (R134a)', date: today, heure: '09:00', notes: 'Peugeot 308 - 2018', status: 'confirmed', createdAt: new Date().toISOString() },
     { id: 2, nom: 'Sophie Girard', tel: '0698765432', adresse: '5 av du Port, La Seyne', type: 'VL Recharge + Désinfection', date: today, heure: '11:00', notes: 'Renault Clio', status: 'confirmed', createdAt: new Date().toISOString() },
@@ -1429,7 +1429,7 @@ function programmerTousRappels() {
 function checkRappelsAuLancement() {
   if (notifPermission !== 'granted') return;
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  const today = toLocalDateStr(now);
   const rdvAujourdhui = rdvs.filter(r => r.date === today && r.status === 'confirmed');
 
   rdvAujourdhui.forEach(r => {
@@ -1557,7 +1557,7 @@ function supprimerBlocage(id) {
 function renderBlocageList() {
   const div = document.getElementById('blocageListDiv');
   if (blocages.length === 0) { div.innerHTML = ''; return; }
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const futurs = blocages.filter(b => b.date >= today).sort((a,b) => a.date.localeCompare(b.date));
   if (futurs.length === 0) { div.innerHTML = ''; return; }
   div.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Blocages actifs</div>` +
@@ -1723,12 +1723,13 @@ function saveAllCaisse(items) {
   localStorage.setItem('clim_caisse_all', JSON.stringify(items));
 }
 
-function getToday() { return new Date().toISOString().split('T')[0]; }
+function toLocalDateStr(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function getToday() { return toLocalDateStr(new Date()); }
 
 function getWeekStart() {
   const d = new Date(); const day = d.getDay();
   d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(d);
 }
 
 function getMoisStart() { return getToday().slice(0,7) + '-01'; }
@@ -1915,9 +1916,9 @@ function getPrix(type) {
 }
 
 function renderCompta() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = toLocalDateStr(new Date());
   const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-  const ws = weekStart.toISOString().split('T')[0];
+  const ws = toLocalDateStr(weekStart);
   const moisStart = today.slice(0,7) + '-01';
 
   const effectues = rdvs.filter(r => r.status === 'done');

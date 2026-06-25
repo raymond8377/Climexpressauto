@@ -375,7 +375,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 <script>
 async function chargerLocalisationJour() {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     const now = new Date();
     const heureActuelle = now.getHours() * 60 + now.getMinutes();
 
@@ -572,6 +572,13 @@ function analyserCodePostal() {
   btnContinuer.style.display = 'block';
 }
 
+function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const j = String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+j;
+}
+
 // Pas de RDV le dimanche
 function skipSunday(d) {
   while (d.getDay() === 0) d.setDate(d.getDate() + 1);
@@ -648,7 +655,7 @@ function changeDay(d) {
 }
 
 async function loadSlots() {
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = toLocalDateStr(selectedDate);
   document.getElementById('dateLabelDisp').textContent = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   // Récupérer les créneaux pris ET les blocages depuis Supabase
@@ -670,7 +677,7 @@ async function loadSlots() {
     }
 
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = toLocalDateStr(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     grid.innerHTML = HEURES.map(h => {
@@ -736,7 +743,7 @@ async function confirmerRDV() {
   const adresse = selectedLieu === 'domicile' ? (document.getElementById('cAdresse').value.trim() || '') : 'Sur place — La Foux';
   const email = document.getElementById('cEmail').value.trim();
   const lieu = selectedLieu === 'domicile' ? 'À domicile (+10€)' : 'Sur place — La Foux';
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = toLocalDateStr(selectedDate);
 
   const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'confirmed', source: 'web' };
 

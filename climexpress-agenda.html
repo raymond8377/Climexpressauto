@@ -1030,20 +1030,35 @@ function showRdvDetail(id) {
     html += '</div>';
     html += '<a href="' + mailLibre + '" style="display:flex;align-items:center;justify-content:center;padding:11px;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.3);border-radius:10px;color:var(--accent);font-weight:700;font-size:13px;text-decoration:none;margin-bottom:10px;">Email libre (pub, facture...)</a>';
   }
-  // Bouton confirmation unique
+  // Bouton confirmation avec sélecteur de lieu
   const dateAffConf = formatDate(r.date);
-  const lieuConf = r.lieu || r.adresse || 'Sur place — La Foux';
-  const msgConf = 'Bonjour ' + r.nom + ' 👋\n\nVotre rendez-vous ClimExpress est confirmé ✅\n\n📅 ' + dateAffConf + ' à ' + r.heure + '\n🔧 ' + r.type + '\n📍 ' + lieuConf + '\n\nNous serons ponctuels et bien équipés. Pour toute question, contactez-nous au 06 48 00 85 58.\n\nÀ bientôt !\nRaymond — ClimExpress Recharge Auto 🚗❄️';
-  const sujetConf = 'Confirmation RDV ClimExpress — ' + dateAffConf + ' à ' + r.heure;
+  const rdvId = r.id;
+
+  const lieux = [
+    { label: '🛒 Auchan La Foux', adresse: 'Auchan La Foux, Gassin', maps: 'https://maps.google.com/?q=Auchan+La+Foux+Gassin' },
+    { label: '🛒 Auchan Drive La Foux', adresse: 'Auchan Drive La Foux, Gassin', maps: 'https://maps.google.com/?q=Auchan+Drive+La+Foux+Gassin' },
+    { label: "🍔 McDonald's La Foux", adresse: "McDonald's La Foux, Gassin", maps: "https://maps.google.com/?q=McDonalds+La+Foux+Gassin" },
+    { label: '🍔 Burger King La Foux', adresse: 'Burger King La Foux, Gassin', maps: 'https://maps.google.com/?q=Burger+King+La+Foux+Gassin' },
+    { label: '⚓ Les Marines de Gassin', adresse: '21 Allée du Trident, 83580 Gassin', maps: 'https://maps.google.com/?q=21+Allee+du+Trident+83580+Gassin' },
+    { label: '🚢 Port de Cogolin', adresse: 'Parking Rond-point Éole, Cogolin', maps: 'https://maps.google.com/?q=Rond-point+Eole+Cogolin' },
+    { label: '🏢 Derrière le MDA Cogolin', adresse: '2 Rue Alphonse Daudet, Cogolin', maps: 'https://maps.google.com/?q=2+Rue+Alphonse+Daudet+Cogolin' },
+    { label: '🔵 Parking Bertaud Bellieu', adresse: 'C 6, 83580 Gassin', maps: 'https://maps.google.com/?q=Rond-point+Bertaud+Bellieu+Gassin' },
+    { label: '🏖️ Plage Marines de Cogolin', adresse: '638-672 Rue de la Plage, Cogolin', maps: 'https://maps.google.com/?q=638+Rue+de+la+Plage+83310+Cogolin' },
+    { label: '📍 Ma position actuelle', adresse: 'Ma position actuelle', maps: 'geo' },
+  ];
+  window.__lieux_rdv = lieux;
+  window.__rdv_courant = { email: r.email, tel: r.tel, nom: r.nom, dateAff: dateAffConf, heure: r.heure, type: r.type };
 
   html += '<div style="margin-bottom:12px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📍 Lieu de rendez-vous</div>';
+  html += '<select id="lieuRdvSelect" style="width:100%;padding:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:13px;margin-bottom:10px;"><option value="">-- Choisir un lieu --</option>';
+  lieux.forEach(function(l, i) { html += '<option value="' + i + '">' + l.label + '</option>'; });
+  html += '</select>';
   if (r.email) {
-    const mailConf = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujetConf) + '&body=' + encodeURIComponent(msgConf);
-    html += '<a href="' + mailConf + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:8px;">📧 Envoyer confirmation par mail</a>';
+    html += '<button onclick="envoyerConfirmation(\'mail\')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;margin-bottom:8px;cursor:pointer;">📧 Confirmer par mail</button>';
   }
   if (r.tel) {
-    const smsConf = 'sms:' + r.tel + '?body=' + encodeURIComponent(msgConf);
-    html += '<a href="' + smsConf + '" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;text-decoration:none;">📱 Envoyer confirmation par SMS</a>';
+    html += '<button onclick="envoyerConfirmation(\'sms\')" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,rgba(0,214,143,0.25),rgba(0,194,255,0.15));border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;cursor:pointer;">📱 Confirmer par SMS</button>';
   }
   html += '</div>';
 
@@ -1779,6 +1794,45 @@ function encaisserManuel() {
   document.getElementById('prixManuelMontant').value = '';
   document.getElementById('prixManuelLabel').value = '';
 }
+
+function envoyerConfirmation(mode) {
+  const rdv = window.__rdv_courant || {};
+  const lieux = window.__lieux_rdv || [];
+  const sel = document.getElementById('lieuRdvSelect');
+  const idx = sel ? parseInt(sel.value) : NaN;
+  const lieu = (!isNaN(idx) && lieux[idx]) ? lieux[idx] : null;
+
+  function buildEtEnvoyer(lieuAdresse, lieuUrl) {
+    let msg = 'Bonjour ' + rdv.nom + ' 👋\n\nVotre rendez-vous ClimExpress est confirmé ✅\n\n📅 ' + rdv.dateAff + ' à ' + rdv.heure + '\n🔧 ' + rdv.type;
+    if (lieuAdresse) {
+      msg += '\n\n📍 Rendez-vous : ' + lieuAdresse;
+      if (lieuUrl) msg += '\n👉 ' + lieuUrl;
+    }
+    msg += '\n\nNous serons ponctuels et bien équipés. Pour toute question : 06 48 00 85 58.\n\nÀ bientôt !\nRaymond — ClimExpress Recharge Auto 🚗❄️';
+    const sujet = 'Confirmation RDV ClimExpress — ' + rdv.dateAff + ' à ' + rdv.heure;
+    if (mode === 'mail' && rdv.email) {
+      window.location.href = 'mailto:' + rdv.email + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(msg);
+    } else if (rdv.tel) {
+      window.location.href = 'sms:' + rdv.tel + '?body=' + encodeURIComponent(msg);
+    }
+  }
+
+  if (!lieu) { buildEtEnvoyer(null, null); return; }
+
+  if (lieu.maps === 'geo') {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        buildEtEnvoyer('Ma position actuelle', 'https://maps.google.com/?q=' + lat + ',' + lng);
+      }, function() { buildEtEnvoyer('Ma position actuelle', null); });
+    } else { buildEtEnvoyer('Ma position actuelle', null); }
+    return;
+  }
+
+  buildEtEnvoyer(lieu.adresse, lieu.maps);
+}
+
 
 function encaisser(type, montant) {
   const all = getAllCaisse();

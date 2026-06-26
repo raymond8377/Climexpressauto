@@ -373,52 +373,6 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 </footer>
 
 <script>
-async function chargerLocalisationJour() {
-  try {
-    const today = toLocalDateStr(new Date());
-    const now = new Date();
-    const heureActuelle = now.getHours() * 60 + now.getMinutes();
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs?date=eq.${today}&status=neq.annule&status=neq.done&select=heure,zone_ville,lieu`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    });
-    const rdvs = await res.json();
-    if (!Array.isArray(rdvs) || rdvs.length === 0) return;
-
-    // Trouver le RDV en cours ou le prochain
-    let rdvActuel = null;
-    let rdvProchain = null;
-
-    rdvs.sort((a,b) => a.heure.localeCompare(b.heure)).forEach(r => {
-      const [h, m] = r.heure.split(':').map(Number);
-      const rdvMin = h * 60 + m;
-      const diff = heureActuelle - rdvMin;
-      if (diff >= 0 && diff <= 90 && !rdvActuel) rdvActuel = r; // RDV en cours (dans les 1h30)
-      if (diff < 0 && !rdvProchain) rdvProchain = r; // Prochain RDV
-    });
-
-    const rdv = rdvActuel || rdvProchain;
-    if (!rdv) return;
-
-    const zone = rdv.zone_ville || (rdv.lieu && rdv.lieu.includes('domicile') ? 'secteur local' : null);
-    if (!zone || zone === 'Sur place — La Foux') return;
-
-    const banniere = document.getElementById('banniereLocalisation');
-    const titre = document.getElementById('banniereTitre');
-    const detail = document.getElementById('banniereDetail');
-
-    if (rdvActuel) {
-      titre.textContent = `🔧 Notre technicien intervient actuellement à ${zone}`;
-      detail.textContent = `Réservez un créneau dans ce secteur pour optimiser votre intervention !`;
-    } else {
-      const [h, m] = rdvProchain.heure.split(':').map(Number);
-      titre.textContent = `📍 Notre technicien sera à ${zone} aujourd'hui`;
-      detail.textContent = `Prochain passage vers ${rdvProchain.heure} — réservez dans ce secteur !`;
-    }
-
-    banniere.style.display = 'block';
-  } catch(e) {}
-}
 
 function toggleTarifs() {
   const box = document.getElementById('tarifsBox');
@@ -538,12 +492,7 @@ const SECTEURS = {
   'Toulon':             ['83000', '83100', '83200', '83500'],
 };
 
-function getSecteur(cp) {
-  for (const [secteur, cps] of Object.entries(SECTEURS)) {
-    if (cps.includes(cp)) return secteur;
-  }
-  return null;
-}
+
 
 function analyserCodePostal() {
   const cp = document.getElementById('cCodePostal') ? document.getElementById('cCodePostal').value.trim() : '';
@@ -794,6 +743,110 @@ async function confirmerRDV() {
 // Init
 loadSlots();
 appliquerDispoServices();
+
+function getSecteur(adresse) {
+  if (!adresse) return null;
+  const a = adresse.toLowerCase();
+  if (a.includes('cogolin')) return 'Cogolin';
+  if (a.includes('grimaud')) return 'Grimaud';
+  if (a.includes('sainte-maxime') || a.includes('ste maxime') || a.includes('sainte maxime')) return 'Sainte-Maxime';
+  if (a.includes('cavalaire')) return 'Cavalaire-sur-Mer';
+  if (a.includes('saint-tropez') || a.includes('st tropez') || a.includes('saint tropez')) return 'Saint-Tropez';
+  if (a.includes('ramatuelle')) return 'Ramatuelle';
+  if (a.includes('gassin') || a.includes('la foux') || a.includes('foux')) return 'Gassin / La Foux';
+  if (a.includes('hyères') || a.includes('hyeres')) return 'Hyères';
+  if (a.includes('toulon')) return 'Toulon';
+  if (a.includes('le lavandou') || a.includes('lavandou')) return 'Le Lavandou';
+  return null;
+}
+
+async function chargerLocalisationJour() {
+  try {
+    const banniere = document.getElementById('banniereLocalisation');
+    const titre = document.getElementById('banniereTitre');
+    const detail = document.getElementById('banniereDetail');
+    if (!banniere || !titre || !detail) return;
+
+    const now = new Date();
+    const heure = now.getHours();
+
+    // Vérifier si position masquée
+    try {
+      const resMasque = await fetch(SUPABASE_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      if (resMasque.ok) {
+        const masqueData = await resMasque.json();
+        if (Array.isArray(masqueData) && masqueData.length > 0) {
+          // Masqué — afficher message générique selon heure
+          afficherMessageHeure(banniere, titre, detail, heure);
+          return;
+        }
+      }
+    } catch(e) {}
+
+    const today = toLocalDateStr(new Date());
+    const heureActuelle = heure * 60 + now.getMinutes();
+
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rdvs?date=eq.' + today + '&status=neq.annule&status=neq.done&select=heure,zone_ville,lieu,adresse', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const rdvs = await res.json();
+
+    let rdvActuel = null;
+    let rdvProchain = null;
+
+    if (Array.isArray(rdvs) && rdvs.length > 0) {
+      rdvs.sort((a,b) => a.heure.localeCompare(b.heure)).forEach(function(r) {
+        const parts = r.heure.split(':').map(Number);
+        const rdvMin = parts[0] * 60 + parts[1];
+        const diff = heureActuelle - rdvMin;
+        if (diff >= 0 && diff <= 90 && !rdvActuel) rdvActuel = r;
+        if (diff < 0 && !rdvProchain) rdvProchain = r;
+      });
+    }
+
+    const msgFixe = '⚡ Intervention sous 25-30 min après confirmation';
+
+    if (rdvActuel) {
+      const secteur = getSecteur(rdvActuel.adresse) || getSecteur(rdvActuel.zone_ville) || getSecteur(rdvActuel.lieu);
+      banniere.style.display = 'block';
+      titre.textContent = secteur ? '🔧 En intervention — secteur ' + secteur : '🔧 En intervention dans votre secteur';
+      detail.textContent = 'Disponible rapidement après — ' + msgFixe;
+    } else if (rdvProchain) {
+      const secteur = getSecteur(rdvProchain.adresse) || getSecteur(rdvProchain.zone_ville) || getSecteur(rdvProchain.lieu);
+      banniere.style.display = 'block';
+      titre.textContent = secteur ? '📍 Prochain passage — secteur ' + secteur : '📍 Prochain passage prévu';
+      detail.textContent = 'Vers ' + rdvProchain.heure + ' — ' + msgFixe;
+    } else {
+      afficherMessageHeure(banniere, titre, detail, heure);
+    }
+  } catch(e) {
+    try {
+      const banniere = document.getElementById('banniereLocalisation');
+      const titre = document.getElementById('banniereTitre');
+      const detail = document.getElementById('banniereDetail');
+      afficherMessageHeure(banniere, titre, detail, new Date().getHours());
+    } catch(e2) {}
+  }
+}
+
+function afficherMessageHeure(banniere, titre, detail, heure) {
+  if (!banniere || !titre || !detail) return;
+  banniere.style.display = 'block';
+  const msgFixe = '⚡ Intervention sous 25-30 min après confirmation';
+  if (heure >= 8 && heure < 12) {
+    titre.textContent = '🌅 Disponible ce matin — réservez votre créneau maintenant !';
+  } else if (heure >= 12 && heure < 17) {
+    titre.textContent = '☀️ Encore disponible cet après-midi — intervention rapide';
+  } else if (heure >= 17 && heure < 18) {
+    titre.textContent = "🌆 Derniers créneaux disponibles aujourd'hui";
+  } else {
+    titre.textContent = "📅 Réservez maintenant — disponible dès demain matin dès 8h";
+  }
+  detail.textContent = msgFixe;
+}
+
 chargerLocalisationJour();
 </script>
 <!-- MODAL DEVIS DEPLACEMENT -->

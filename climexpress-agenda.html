@@ -359,6 +359,7 @@
 
   <button class="btn btn-primary" onclick="goPage('rdv',document.querySelectorAll('.nav-btn')[1])" style="margin-top:8px;">＋ Nouveau RDV</button>
   <button class="btn" onclick="ouvrirBlocage()" style="margin-top:10px;background:rgba(255,68,68,0.15);color:#ff4444;border:1px solid rgba(255,68,68,0.3);">🔒 Bloquer un créneau / jour</button>
+  <button id="btnMasquerPos" class="btn" onclick="toggleMasquerPosition()" style="margin-top:8px;background:rgba(255,149,0,0.15);color:#ff9500;border:1px solid rgba(255,149,0,0.3);">👁️ Masquer ma position aux clients</button>
 </div>
 
 <!-- PAGE RDV -->
@@ -2044,6 +2045,7 @@ loadDemo();
 init();
 // Sync Supabase au démarrage
 setTimeout(syncFromSupabase, 1000);
+setTimeout(checkMasquerState, 1500);
 
 // Vérification permission et lancement rappels
 if (notifPermission === 'granted' && Notification.permission === 'granted') {
@@ -2055,6 +2057,51 @@ if (notifPermission === 'granted' && Notification.permission === 'granted') {
 setTimeout(() => {
   renderBanniereNotif();
 }, 100);
+
+async function toggleMasquerPosition() {
+  const btn = document.getElementById('btnMasquerPos');
+  const masque = btn.dataset.actif === '1';
+  try {
+    if (masque) {
+      await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position', { method: 'DELETE', headers: SB_HEADERS });
+      btn.dataset.actif = '0';
+      btn.textContent = '👁️ Masquer ma position aux clients';
+      btn.style.background = 'rgba(255,149,0,0.15)';
+      btn.style.color = '#ff9500';
+      btn.style.borderColor = 'rgba(255,149,0,0.3)';
+      showNotif('✅ Position visible sur la page client', '#00d68f');
+    } else {
+      await fetch(SB_URL + '/rest/v1/blocages', {
+        method: 'POST',
+        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        body: JSON.stringify({ type: 'masquer_position', date: toLocalDateStr(new Date()), heure: null, raison: 'masquer' })
+      });
+      btn.dataset.actif = '1';
+      btn.textContent = '✅ Position masquée — appuyer pour afficher';
+      btn.style.background = 'rgba(255,68,68,0.15)';
+      btn.style.color = '#ff4444';
+      btn.style.borderColor = 'rgba(255,68,68,0.3)';
+      showNotif('👁️ Position masquée aux clients', '#ff9500');
+    }
+  } catch(e) { showNotif('⚠️ Erreur réseau', '#ff9500'); }
+}
+
+async function checkMasquerState() {
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', { headers: SB_HEADERS });
+    if (res.ok) {
+      const data = await res.json();
+      const btn = document.getElementById('btnMasquerPos');
+      if (btn && Array.isArray(data) && data.length > 0) {
+        btn.dataset.actif = '1';
+        btn.textContent = '✅ Position masquée — appuyer pour afficher';
+        btn.style.background = 'rgba(255,68,68,0.15)';
+        btn.style.color = '#ff4444';
+        btn.style.borderColor = 'rgba(255,68,68,0.3)';
+      }
+    }
+  } catch(e) {}
+}
 </script>
 <!-- MODAL BLOCAGE -->
 <div class="modal-overlay" id="blocageModal" onclick="closeBlocageModal()">

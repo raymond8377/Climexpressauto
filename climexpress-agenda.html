@@ -876,18 +876,16 @@ function envoyerSatisfaction(r) {
     + 'Merci et a bientot !' + '\n'
     + 'Raymond - ClimExpress';
   var sujet = 'Merci pour votre confiance - ClimExpress';
-  var choix = '';
-  if (r.email && r.tel) {
-    choix = confirm('Envoyer par MAIL a ' + r.nom + ' ?\n\nAppuyez OK pour mail, Annuler pour SMS.') ? 'mail' : 'sms';
-  } else if (r.email) {
-    choix = 'mail';
-  } else if (r.tel) {
-    choix = 'sms';
+  if (r.email) {
+    if (confirm('Envoyer le message de satisfaction par MAIL a ' + r.nom + ' ?')) {
+      window.location.href = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(msg);
+      return;
+    }
   }
-  if (choix === 'mail') {
-    window.location.href = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(msg);
-  } else if (choix === 'sms') {
-    window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+  if (r.tel) {
+    if (confirm('Envoyer le message de satisfaction par SMS a ' + r.nom + ' ?')) {
+      window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+    }
   }
 }
 

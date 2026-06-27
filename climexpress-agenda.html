@@ -862,6 +862,28 @@ function marquerEffectue(id) {
     }
     closeRdvModal(); renderAccueil(); updateStats();
     showNotif('✓ Intervention effectuée ! +' + (getPrix(r.type) + (r.deplacement ? 10 : 0)) + '€');
+    setTimeout(function() { envoyerSatisfaction(r); }, 800);
+  }
+}
+
+function envoyerSatisfaction(r) {
+  var lienAvis = 'https://g.page/r/CWZXe2bSfj6fEAE/review';
+  var msg = 'Bonjour ' + r.nom + ' !' + '\n\n'
+    + 'Merci pour votre confiance !' + '\n'
+    + 'On espere que votre climatisation fonctionne parfaitement.' + '\n\n'
+    + 'Si vous etes satisfait, laissez-nous un avis en 30 secondes, ca nous aide beaucoup :' + '\n'
+    + lienAvis + '\n\n'
+    + 'Merci et a bientot !' + '\n'
+    + 'Raymond - ClimExpress';
+  var sujet = 'Merci pour votre confiance - ClimExpress';
+  if (r.email) {
+    if (confirm('Envoyer un mail de satisfaction a ' + r.nom + ' ?')) {
+      window.location.href = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(msg);
+    }
+  } else if (r.tel) {
+    if (confirm('Envoyer un SMS de satisfaction a ' + r.nom + ' ?')) {
+      window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+    }
   }
 }
 

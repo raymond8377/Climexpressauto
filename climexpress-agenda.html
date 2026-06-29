@@ -348,6 +348,12 @@
       <div class="stat-label">Clients Total</div>
     </div>
   </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 14px;background:rgba(0,214,143,0.08);border:1px solid rgba(0,214,143,0.2);border-radius:12px;">
+    <span style="font-size:18px;">✅</span>
+    <span style="font-size:13px;color:rgba(255,255,255,0.7);">Effectués aujourd'hui :</span>
+    <span id="statDone" style="font-size:16px;font-weight:900;color:#00d68f;">0</span>
+    <span style="font-size:13px;color:rgba(255,255,255,0.4);">client(s)</span>
+  </div>
 
   <div class="today-section">
     <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Planning du jour</div>
@@ -760,7 +766,8 @@ function addClientIfNew(nom, tel, adresse, type) {
 // =========== ACCUEIL ===========
 function renderAccueil() {
   const today = toLocalDateStr(new Date());
-  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'done').sort((a,b) => a.heure.localeCompare(b.heure));
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule').sort((a,b) => a.heure.localeCompare(b.heure));
+  const nbEffectues = todayRDVs.filter(r => r.status === 'done').length;
 
   const list = document.getElementById('todayList');
   if (todayRDVs.length === 0) {
@@ -796,8 +803,12 @@ function rdvCard(r) {
     : r.adresse === 'Sur place — La Foux' || r.lieu === 'Sur place — La Foux'
     ? `<span class="badge-lieu-place">🏠 Sur place</span>`
     : '';
-  return `<div class="today-rdv ${r.status}" onclick="showRdvDetail(${r.id})">
-    <div class="rdv-time">${r.heure}</div>
+  const isDone = r.status === 'done';
+  const montant = isDone ? (getPrix(r.type) + (r.deplacement ? 10 : 0)) : 0;
+  const doneOverlay = isDone ? `<div style="position:absolute;top:8px;right:8px;background:rgba(0,214,143,0.15);border:1px solid rgba(0,214,143,0.4);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#00d68f;">✅ Effectué +${montant}€</div>` : '';
+  return `<div class="today-rdv ${r.status}" onclick="showRdvDetail(${r.id})" style="position:relative;${isDone ? 'opacity:0.7;' : ''}">
+    ${doneOverlay}
+    <div class="rdv-time" style="${isDone ? 'color:rgba(255,255,255,0.4);text-decoration:line-through;' : ''}">${r.heure}</div>
     <div class="rdv-info">
       <div class="rdv-name">${r.nom} ${lieuBadge}</div>
       <div class="rdv-detail">📍 ${r.adresse || 'Adresse non précisée'}</div>
@@ -806,7 +817,7 @@ function rdvCard(r) {
     </div>
     <div class="rdv-actions">
       <div class="btn-icon" onclick="event.stopPropagation();callClient('${r.tel}')">📞</div>
-      <div class="btn-icon" onclick="event.stopPropagation();doneRDV(${r.id})">✓</div>
+      ${!isDone ? `<div class="btn-icon" onclick="event.stopPropagation();doneRDV(${r.id})">✓</div>` : ''}
     </div>
   </div>`;
 }
@@ -860,8 +871,16 @@ function marquerEffectue(id) {
         body: JSON.stringify({ status: 'done' })
       }).catch(function(e) {});
     }
-    closeRdvModal(); renderAccueil(); updateStats();
-    showNotif('✓ Intervention effectuée ! +' + (getPrix(r.type) + (r.deplacement ? 10 : 0)) + '€');
+    // Ajout automatique dans la caisse
+    const montantRdv = getPrix(r.type) + (r.deplacement ? 10 : 0);
+    const all = getAllCaisse();
+    const now = new Date();
+    const heure = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    const label = r.nom + ' — ' + r.type + (r.deplacement ? ' + Dépl.' : '');
+    all.push({ type: label, montant: montantRdv, heure, date: getToday(), id: Date.now(), rdv_id: r.id });
+    saveAllCaisse(all);
+    closeRdvModal(); renderAccueil(); updateStats(); renderCaisse();
+    showNotif('✓ Intervention effectuée ! +' + montantRdv + '€ ajouté en caisse');
     setTimeout(function() { envoyerSatisfaction(r); }, 800);
   }
 }
@@ -934,9 +953,13 @@ function updateStats() {
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
   const ws = toLocalDateStr(weekStart);
   const we = toLocalDateStr(weekEnd);
-  document.getElementById('statToday').textContent = rdvs.filter(r => r.date === today && r.status !== 'annule').length;
+  const nbRdvAujourdhui = rdvs.filter(r => r.date === today && r.status !== 'annule').length;
+  const nbEffectuesAujourdhui = rdvs.filter(r => r.date === today && r.status === 'done').length;
+  document.getElementById('statToday').textContent = nbRdvAujourdhui;
   document.getElementById('statWeek').textContent = rdvs.filter(r => r.date >= ws && r.date <= we && r.status !== 'annule').length;
   document.getElementById('statClients').textContent = clients.length;
+  const statDoneEl = document.getElementById('statDone');
+  if (statDoneEl) statDoneEl.textContent = nbEffectuesAujourdhui;
 }
 
 // =========== CLIENTS ===========

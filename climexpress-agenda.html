@@ -1059,7 +1059,13 @@ function showRdvDetail(id) {
   html += '<div class="form-group"><label>Telephone</label><a href="tel:' + r.tel + '" class="tel" style="font-size:16px;">' + r.tel + '</a></div>';
   if (r.email) html += '<div class="form-group"><label>Email</label><div style="font-size:13px;color:#00c2ff;">' + r.email + '</div></div>';
   html += '<div class="form-group"><label>Date et Heure</label><div style="font-size:15px;color:#fff;">' + dateAff + ' a ' + r.heure + '</div></div>';
-  html += '<div class="form-group"><label>Lieu</label><div style="font-size:14px;">' + (r.lieu || r.adresse || 'Non precise') + '</div></div>';
+  const adresseGPS = r.adresse && r.adresse !== 'Sur place — La Foux' ? r.adresse : (r.lieu || '');
+  const mapsUrl = adresseGPS ? 'https://maps.apple.com/?daddr=' + encodeURIComponent(adresseGPS) + '&dirflg=d' : '';
+  if (mapsUrl) {
+    html += '<div class="form-group"><label>Lieu</label><a href="' + mapsUrl + '" style="font-size:14px;color:#00c2ff;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px;">📍 ' + adresseGPS + '<span style="font-size:11px;background:rgba(0,194,255,0.15);border:1px solid rgba(0,194,255,0.3);border-radius:6px;padding:2px 7px;">Ouvrir Plans →</span></a></div>';
+  } else {
+    html += '<div class="form-group"><label>Lieu</label><div style="font-size:14px;">' + (r.lieu || r.adresse || 'Non precise') + '</div></div>';
+  }
   html += '<div class="form-group"><label>Type de recharge</label><div style="font-size:13px;">' + r.type + '</div></div>';
   if (r.notes) html += '<div class="form-group"><label>Notes</label><div style="font-size:13px;">' + r.notes + '</div></div>';
   html += '<div class="divider"></div>';

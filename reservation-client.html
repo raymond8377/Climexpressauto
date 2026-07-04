@@ -583,7 +583,8 @@ function selectLieu(lieu, el) {
 }
 
 function goStep3FromDomicile() {
-  const adresse = document.getElementById('cAdresse').value.trim();
+  const adresseRue = document.getElementById('cAdresse') ? document.getElementById('cAdresse').value.trim() : '';
+  const villeVal = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
   if (!adresseRue) { showError('⚠️ Merci d\'entrer votre adresse'); return; }
   if (!villeVal) { showError('⚠️ Merci d\'entrer votre ville'); return; }
   goStep(3);

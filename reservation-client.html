@@ -196,6 +196,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <div class="step-dot" id="dot3"></div>
     <div class="step-dot" id="dot4"></div>
     <div class="step-dot" id="dot5"></div>
+    <div class="step-dot" id="dot6"></div>
   </div>
 
   <div class="error-msg" id="errorMsg"></div>
@@ -549,8 +550,9 @@ function showError(msg) {
 let selectedLieu = null;
 
 function updateDots(step) {
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 6; i++) {
     const d = document.getElementById('dot' + i);
+    if (!d) continue;
     d.classList.remove('active', 'done');
     if (i < step) d.classList.add('done');
     else if (i === step) d.classList.add('active');

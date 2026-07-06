@@ -736,9 +736,14 @@ async function confirmerRDV() {
       }).catch(e => console.log('Email:', e));
 
       const dateAff = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
-      const confirmMsg = email
-        ? `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>📧 Vous allez recevoir un <strong>mail de confirmation</strong> de notre part.<br><br>Pour toute question : <strong>06 48 00 85 58</strong>`
-        : `Votre RDV est confirmé pour le<br><strong style="color:#fff;">${dateAff} à ${selectedHeure}</strong><br><br>📱 Vous allez recevoir un <strong>SMS de confirmation</strong> de notre part.<br><br>Pour toute question : <strong>06 48 00 85 58</strong>`;
+
+      const msgDom = ['Bonjour ' + nom + ' !', '', 'Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + selectedHeure + '.', '', 'Intervention a domicile - nous viendrons directement chez vous.', '', 'Pour toute question : 06 48 00 85 58', '', 'A bientot ! Raymond - ClimExpress'].join('\n');
+      const msgPlace = ['Bonjour ' + nom + ' !', '', 'Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + selectedHeure + '.', '', 'ClimExpress est un service mobile - votre point de rendez-vous vous sera envoye 1h a 2h avant intervention.', '', 'Pour toute question : 06 48 00 85 58', '', 'A bientot ! Raymond - ClimExpress'].join('\n');
+      const msgAuto = selectedLieu === 'domicile' ? msgDom : msgPlace;
+      if (email) { fetch('https://formspree.io/f/xvznankq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ _subject: 'Confirmation RDV ClimExpress - ' + dateAff, message: msgAuto, email: email, nom: nom }) }).catch(e => {}); }
+
+      const infLieu = selectedLieu === 'domicile' ? 'Nous viendrons directement chez vous.' : 'Service mobile - votre point de rendez-vous sera envoye 1h a 2h avant.';
+      const confirmMsg = 'RDV confirme le<br><strong style="color:#fff;">' + dateAff + ' a ' + selectedHeure + '</strong><br><br>' + infLieu + '<br><br>Pour toute question : <strong>06 48 00 85 58</strong>';
       document.getElementById('confirmSub').innerHTML = confirmMsg;
       goStep(6);
       updateDots(6);

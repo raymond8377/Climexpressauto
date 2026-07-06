@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ClimExpress — Recharge Clim Auto à Domicile | Golfe de Saint-Tropez & Var</title>
+<meta name="description" content="Recharge climatisation auto à domicile dans le Golfe de Saint-Tropez, de Sainte-Maxime à Hyères. R134a 45€, R1234yf 49€. Technicien certifié, intervention en 30 minutes. Réservation en ligne.">
+<meta name="theme-color" content="#0B0F1E">
+<link rel="canonical" href="https://climexpressauto.fr/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-width='1.9'><rect width='24' height='24' rx='5' fill='%230B0F1E'/><path d='M 10.61 21.9 A 8.6 8.6 0 0 1 10.61 2.1' stroke='%233D8BFF' transform='translate(1.4,1.4) scale(0.885)'/><path d='M 13.39 2.1 A 8.6 8.6 0 0 1 13.39 21.9' stroke='%23FF5470' transform='translate(1.4,1.4) scale(0.885)'/></svg>">
+
+<meta property="og:title" content="ClimExpress — Recharge Clim Auto à Domicile | Var">
+<meta property="og:description" content="Votre clim souffle de l'air tiède ? On vient à vous. Recharge en 30 min, dès 45€. Golfe de Saint-Tropez → Hyères.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://climexpressauto.fr/">
+<meta property="og:locale" content="fr_FR">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutoRepair",
+  "name": "ClimExpress Recharge Auto",
+  "description": "Service mobile de recharge de climatisation automobile à domicile. Golfe de Saint-Tropez et littoral varois, jusqu'à Hyères.",
+  "url": "https://climexpressauto.fr",
+  "telephone": "+33648008558",
+  "email": "rech.raymond@climexpressauto.fr",
+  "priceRange": "45€ - 80€",
+  "address": { "@type": "PostalAddress", "addressLocality": "Gassin", "postalCode": "83580", "addressRegion": "Var", "addressCountry": "FR" },
+  "geo": { "@type": "GeoCoordinates", "latitude": 43.2286, "longitude": 6.5854 },
+  "areaServed": ["Gassin","Saint-Tropez","Cogolin","Grimaud","Sainte-Maxime","Cavalaire-sur-Mer","La Croix-Valmer","Ramatuelle","Le Lavandou","Hyères"],
+  "makesOffer": [
+    { "@type": "Offer", "name": "Recharge climatisation R134a (véhicule léger)", "price": "45", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Recharge climatisation R1234yf (véhicule léger)", "price": "49", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Désinfection du circuit", "price": "20", "priceCurrency": "EUR" }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+/* ============================================================
+   TOKENS — palette 3 accents : cyan (froid), orange (chaud),
+   violet (profondeur). Typo : Plus Jakarta Sans.
+   ============================================================ */
+:root{
+  --bg:            #0B0F1E;
+  --surface:       #131A30;
+  --surface-2:     #1A2342;
+  --border:        rgba(150,170,230,.15);
+  --border-strong: rgba(150,170,230,.32);
+
+  --cold:          #38E1FF;                 /* accent 1 : le froid   */
+  --cold-deep:     #0E7490;
+  --cold-soft:     rgba(56,225,255,.12);
+
+  --hot:           #FF8A3D;                 /* accent 2 : la chaleur */
+  --hot-2:         #FF5470;
+  --hot-soft:      rgba(255,138,61,.13);
+
+  --violet:        #8B7BFF;                 /* accent 3 : profondeur */
+  --violet-soft:   rgba(139,123,255,.14);
+
+  --grad-cold:     linear-gradient(120deg, #38E1FF, #4D7CFF);
+  --grad-hot:      linear-gradient(120deg, #FF8A3D, #FF5470);
+  --grad-title:    linear-gradient(105deg, #38E1FF 15%, #8B7BFF 55%, #FF8A3D 100%);
+
+  --text:          #F0F4FF;
+  --text-2:        #A8B4D6;
+  --on-cold:       #03222B;
+  --success:       #3DDC97;
+
+  --font-display:  "Plus Jakarta Sans", -apple-system, "Segoe UI", sans-serif;
+  --font-body:     "Plus Jakarta Sans", -apple-system, "Segoe UI", sans-serif;
+
+  --radius:        18px;
+  --radius-sm:     13px;
+
+  --s-1: 8px; --s-2: 16px; --s-3: 24px; --s-4: 32px; --s-6: 48px; --s-8: 64px;
+
+  --shadow-card:   0 14px 38px rgba(3,7,22,.5);
+  --dur:           220ms;
+  --ease:          cubic-bezier(.25,.7,.3,1);
+}
+
+/* ============================================================ BASE */
+*{ margin:0; padding:0; box-sizing:border-box; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+body{
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.65;
+  color:var(--text);
+  background:var(--bg);
+  min-height:100dvh;
+  overflow-x:hidden;
+}
+/* trame de fond colorée, très discrète, sur toute la page */
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 88% -6%,  rgba(56,225,255,.10), transparent 60%),
+    radial-gradient(760px 520px at -8% 32%,  rgba(139,123,255,.10), transparent 58%),
+    radial-gradient(820px 560px at 96% 88%,  rgba(255,138,61,.07),  transparent 60%);
+}
+img,svg{ display:block; }
+a{ color:inherit; }
+:focus-visible{ outline:3px solid var(--cold); outline-offset:3px; border-radius:6px; }
+::selection{ background:var(--cold); color:var(--on-cold); }
+
+.skip-link{
+  position:absolute; left:-9999px; top:0; z-index:200;
+  background:var(--cold); color:var(--on-cold);
+  padding:12px 20px; font-weight:600; border-radius:0 0 10px 0;
+}
+.skip-link:focus{ left:0; }
+
+.wrap{ width:100%; max-width:1120px; margin-inline:auto; padding-inline:20px; }
+@media(min-width:768px){ .wrap{ padding-inline:32px; } }
+
+section{ padding-block:var(--s-8); }
+
+.eyebrow{
+  display:inline-flex; align-items:center; gap:10px;
+  font-size:.74rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+}
+.eyebrow::before{ content:""; width:26px; height:3px; border-radius:3px; background:currentColor; }
+.eyebrow-cold{ color:var(--cold); }
+.eyebrow-hot{ color:var(--hot); }
+.eyebrow-violet{ color:var(--violet); }
+
+h2{
+  font-family:var(--font-display); font-weight:800;
+  font-size:clamp(1.65rem,4.4vw,2.4rem); line-height:1.22;
+  letter-spacing:-.02em;
+  margin:var(--s-2) 0 var(--s-1);
+}
+.lead{ color:var(--text-2); max-width:62ch; font-size:1.02rem; }
+
+.reveal{ opacity:0; transform:translateY(18px); transition:opacity 260ms var(--ease), transform 260ms var(--ease); }
+.reveal.in{ opacity:1; transform:none; }
+@media(prefers-reduced-motion:reduce){
+  .reveal{ opacity:1; transform:none; transition:none; }
+  *,*::before,*::after{ animation:none !important; transition:none !important; }
+  html{ scroll-behavior:auto; }
+}
+
+/* ============================================================ BOUTONS */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  min-height:52px; padding:0 26px;
+  font-family:var(--font-body); font-size:1rem; font-weight:600;
+  border-radius:999px; border:1.5px solid transparent;
+  cursor:pointer; text-decoration:none;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease),
+             background-color var(--dur) var(--ease), opacity 120ms, filter var(--dur) var(--ease);
+}
+.btn:active{ opacity:.82; }
+.btn svg{ width:20px; height:20px; flex:none; }
+
+.btn-primary{
+  background:var(--grad-cold); color:var(--on-cold);
+  box-shadow:0 8px 26px rgba(56,225,255,.30);
+}
+.btn-primary:hover{ filter:brightness(1.12); box-shadow:0 8px 32px rgba(56,225,255,.45); }
+.btn-ghost{
+  background:rgba(19,26,48,.6); color:var(--text); border-color:var(--border-strong);
+}
+.btn-ghost:hover{ border-color:var(--cold); background:var(--cold-soft); }
+
+/* ============================================================ HEADER */
+header{
+  position:sticky; top:0; z-index:100;
+  padding-top:env(safe-area-inset-top);
+  background:rgba(11,15,30,.84);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.nav{
+  display:flex; align-items:center; justify-content:space-between;
+  min-height:66px; gap:var(--s-2);
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--font-display); font-weight:800; font-size:1.25rem;
+  text-decoration:none; min-height:44px; letter-spacing:-.02em;
+}
+.brand svg{ width:30px; height:30px; color:var(--cold); }
+.brand em{
+  font-style:normal;
+  background:var(--grad-cold);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.nav-links{ display:none; gap:var(--s-3); list-style:none; }
+.nav-links a{
+  display:inline-flex; align-items:center; min-height:44px;
+  text-decoration:none; color:var(--text-2); font-weight:500; font-size:.95rem;
+  transition:color var(--dur);
+}
+.nav-links a:hover{ color:var(--cold); }
+.nav .btn{ min-height:44px; padding:0 18px; font-size:.92rem; }
+@media(min-width:900px){ .nav-links{ display:flex; } }
+
+/* ============================================================ HERO */
+.hero{
+  position:relative;
+  padding-block:calc(var(--s-6) + 8px) var(--s-8);
+  overflow:hidden;
+}
+.hero-grid{ position:relative; display:grid; gap:var(--s-6); align-items:center; }
+@media(min-width:900px){ .hero-grid{ grid-template-columns:1.12fr .88fr; } }
+
+.hero h1{
+  font-family:var(--font-display); font-weight:800;
+  font-size:clamp(2.2rem,7vw,3.8rem); line-height:1.12;
+  letter-spacing:-.025em;
+  margin:var(--s-2) 0;
+}
+.hero h1 .grad{
+  background:var(--grad-title);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.hero .lead{ font-size:1.06rem; }
+.hero-cta{ display:flex; flex-wrap:wrap; gap:var(--s-2); margin-top:var(--s-4); }
+
+.trust{ display:flex; flex-wrap:wrap; gap:var(--s-1); margin-top:var(--s-4); list-style:none; }
+.trust li{
+  display:inline-flex; align-items:center; gap:8px;
+  min-height:40px; padding:6px 14px;
+  border:1px solid var(--border); border-radius:999px;
+  font-size:.86rem; font-weight:500; color:var(--text-2);
+  background:rgba(19,26,48,.65);
+}
+.trust li:nth-child(1) svg{ color:var(--cold); }
+.trust li:nth-child(2) svg{ color:var(--hot); }
+.trust li:nth-child(3) svg{ color:var(--violet); }
+.trust li:nth-child(4) svg{ color:var(--success); }
+.trust svg{ width:16px; height:16px; flex:none; }
+
+/* Cadran signature : moitié feu, moitié glace */
+.temp-card{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--border); border-radius:26px;
+  box-shadow:var(--shadow-card);
+  padding:var(--s-4);
+  text-align:center;
+  overflow:hidden;
+}
+.temp-card::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(320px 240px at 12% 22%, rgba(255,138,61,.20), transparent 65%),
+    radial-gradient(320px 240px at 88% 22%, rgba(56,225,255,.20), transparent 65%);
+}
+.temp-row{
+  position:relative;
+  display:flex; align-items:center; justify-content:center; gap:clamp(14px,4vw,30px);
+}
+.temp{ font-family:var(--font-display); font-weight:700; line-height:1; }
+.temp .val{ font-size:clamp(2.7rem,9vw,4rem); display:block; letter-spacing:-.02em; }
+.temp .lbl{
+  font-family:var(--font-body); font-size:.78rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; margin-top:12px; display:block;
+  color:var(--text-2);
+}
+.temp-hot .val{
+  background:var(--grad-hot);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.temp-cold .val{
+  background:var(--grad-cold);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:breathe 3.2s var(--ease) infinite;
+}
+.temp-arrow{ width:44px; height:44px; color:var(--text-2); flex:none; }
+@keyframes breathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.05);} }
+.temp-note{
+  position:relative;
+  margin-top:var(--s-3); padding-top:var(--s-3);
+  border-top:1px solid var(--border);
+  color:var(--text-2); font-size:.96rem;
+}
+.temp-note strong{ color:var(--text); }
+
+/* ============================================================ BANDEAU ZONE */
+.zone-banner{ padding-block:0; }
+.zone-inner{
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(90deg, var(--violet-soft), var(--cold-soft) 55%, transparent);
+  border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 18px;
+}
+.zone-dot{
+  width:12px; height:12px; border-radius:50%; background:var(--success); flex:none;
+  box-shadow:0 0 0 0 rgba(61,220,151,.5); animation:pulse 2s infinite;
+}
+@keyframes pulse{ 70%{ box-shadow:0 0 0 10px rgba(61,220,151,0);} 100%{ box-shadow:0 0 0 0 rgba(61,220,151,0);} }
+.zone-inner p{ font-size:.96rem; color:var(--text-2); }
+.zone-inner strong{ color:var(--text); font-weight:600; }
+
+
+/* ============================================================ CARTE ZONE */
+.map-card{
+  margin-top:var(--s-4);
+  border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden; background:var(--surface);
+}
+#carte-zone{ height:380px; width:100%; background:var(--surface); }
+#carte-zone .leaflet-tile-pane{ filter:saturate(.9); }
+.map-legende{
+  display:flex; flex-wrap:wrap; gap:var(--s-2);
+  padding:12px 16px; border-top:1px solid var(--border);
+  font-size:.85rem; color:var(--text-2);
+}
+.map-legende span{ display:inline-flex; align-items:center; gap:8px; min-height:32px; }
+.dot{ width:12px; height:12px; border-radius:50%; flex:none; }
+.dot-base{ background:var(--cold); box-shadow:0 0 8px rgba(56,225,255,.8); }
+.dot-rdv{ background:var(--violet); }
+.dot-zone{ width:14px; height:14px; border-radius:50%; background:transparent; border:2px dashed var(--cold); }
+.pin-base{
+  width:18px; height:18px; border-radius:50%;
+  background:var(--cold); border:3px solid #fff;
+  box-shadow:0 0 0 6px rgba(56,225,255,.25), 0 0 14px rgba(56,225,255,.7);
+}
+.pin-rdv{
+  width:14px; height:14px; border-radius:50%;
+  background:var(--violet); border:2.5px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.leaflet-popup-content-wrapper{
+  background:var(--surface-2); color:var(--text);
+  border:1px solid var(--border); border-radius:12px;
+  font-family:var(--font-body);
+}
+.leaflet-popup-content{ margin:10px 14px; font-size:.9rem; }
+.leaflet-popup-tip{ background:var(--surface-2); }
+.leaflet-container a.leaflet-popup-close-button{ color:var(--text-2); }
+
+/* ============================================================ CARTES & GRILLES */
+.grid{ display:grid; gap:var(--s-2); margin-top:var(--s-4); }
+@media(min-width:640px){ .grid-2{ grid-template-columns:1fr 1fr; } }
+@media(min-width:900px){ .grid-3{ grid-template-columns:repeat(3,1fr); } }
+
+.card{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:var(--s-3);
+  transition:border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.card:hover{ border-color:var(--border-strong); transform:translateY(-3px); }
+@media(prefers-reduced-motion:reduce){ .card:hover{ transform:none; } }
+
+/* Tarifs : chaque carte a sa couleur (liseré haut + badge) */
+.price-card{ position:relative; overflow:hidden; }
+.price-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:4px; }
+.pc-cold::before{ background:var(--grad-cold); }
+.pc-violet::before{ background:linear-gradient(120deg, #8B7BFF, #C86BFF); }
+.pc-hot::before{ background:var(--grad-hot); }
+
+.price-card .tag{
+  display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.12em;
+  text-transform:uppercase; border-radius:999px; padding:5px 12px;
+}
+.pc-cold .tag{ color:var(--cold); background:var(--cold-soft); }
+.pc-violet .tag{ color:var(--violet); background:var(--violet-soft); }
+.pc-hot .tag{ color:var(--hot); background:var(--hot-soft); }
+
+.price-card h3{ font-family:var(--font-display); font-weight:600; font-size:1rem; margin-top:var(--s-2); }
+.price-card .price{
+  font-family:var(--font-display); font-weight:700;
+  font-size:2.1rem; margin-top:var(--s-1); letter-spacing:-.02em;
+}
+.pc-cold .price{ color:var(--cold); }
+.pc-violet .price{ color:var(--violet); }
+.pc-hot .price{ color:var(--hot); }
+.price-card .price small{ font-family:var(--font-body); font-size:.88rem; font-weight:500; color:var(--text-2); letter-spacing:0; }
+.price-card ul{ list-style:none; margin-top:var(--s-2); display:grid; gap:8px; }
+.price-card li{ display:flex; gap:10px; align-items:flex-start; color:var(--text-2); font-size:.94rem; }
+.price-card li svg{ width:18px; height:18px; flex:none; margin-top:3px; }
+.pc-cold li svg{ color:var(--cold); }
+.pc-violet li svg{ color:var(--violet); }
+.pc-hot li svg{ color:var(--hot); }
+
+.pricing-notes{ margin-top:var(--s-3); color:var(--text-2); font-size:.9rem; max-width:70ch; }
+.pricing-notes p + p{ margin-top:6px; }
+
+/* ============================================================ ÉTAPES */
+.step-img{
+  height:160px; border-radius:var(--radius-sm);
+  overflow:hidden;
+  margin-bottom:var(--s-2);
+  border:1px solid var(--border);
+}
+.step-img svg{ width:100%; height:100%; }
+.step:nth-child(1) .step-img{ background:linear-gradient(150deg, rgba(56,225,255,.16), rgba(19,26,48,.4)); }
+.step:nth-child(2) .step-img{ background:linear-gradient(150deg, rgba(139,123,255,.16), rgba(19,26,48,.4)); }
+.step:nth-child(3) .step-img{ background:linear-gradient(150deg, rgba(255,138,61,.16), rgba(19,26,48,.4)); }
+.step .num{
+  display:inline-grid; place-items:center;
+  width:52px; height:52px; border-radius:16px;
+  font-family:var(--font-display); font-weight:700; font-size:1.3rem;
+}
+.step:nth-child(1) .num{ background:var(--cold-soft); color:var(--cold); }
+.step:nth-child(2) .num{ background:var(--violet-soft); color:var(--violet); }
+.step:nth-child(3) .num{ background:var(--hot-soft); color:var(--hot); }
+.step h3{ font-family:var(--font-display); font-weight:600; font-size:1.02rem; margin-top:var(--s-2); }
+.step p{ color:var(--text-2); font-size:.95rem; margin-top:8px; }
+
+/* ============================================================ SIGNES */
+.sign{ display:flex; gap:var(--s-2); align-items:flex-start; }
+.sign .ico{
+  flex:none; width:48px; height:48px; border-radius:var(--radius-sm);
+  display:grid; place-items:center; border:1px solid var(--border);
+}
+.sign .ico svg{ width:24px; height:24px; }
+.ico-hot{ background:var(--hot-soft); }    .ico-hot svg{ color:var(--hot); }
+.ico-cold{ background:var(--cold-soft); }  .ico-cold svg{ color:var(--cold); }
+.ico-violet{ background:var(--violet-soft);}.ico-violet svg{ color:var(--violet); }
+.sign h3{ font-family:var(--font-display); font-weight:600; font-size:.98rem; }
+.sign p{ color:var(--text-2); font-size:.94rem; margin-top:6px; }
+
+/* ============================================================ QUALITÉ (médailles) */
+.quality-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s-2); margin-top:var(--s-4); }
+@media(min-width:900px){ .quality-grid{ grid-template-columns:repeat(3,1fr); } }
+.medal{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  gap:12px; padding:var(--s-3) var(--s-2);
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+}
+.medal .m-ico{
+  width:64px; height:64px; border-radius:50%;
+  display:grid; place-items:center;
+  border:2px solid var(--border-strong);
+}
+.medal .m-ico svg{ width:28px; height:28px; }
+.m-cold{ background:var(--cold-soft); }   .m-cold svg{ color:var(--cold); }
+.m-hot{ background:var(--hot-soft); }     .m-hot svg{ color:var(--hot); }
+.m-violet{ background:var(--violet-soft);} .m-violet svg{ color:var(--violet); }
+.medal strong{ font-weight:800; font-size:.98rem; letter-spacing:-.01em; }
+.medal span{ color:var(--text-2); font-size:.86rem; line-height:1.45; }
+
+/* ============================================================ BLOC DEVIS */
+.devis-block{
+  position:relative; overflow:hidden;
+  display:grid; gap:var(--s-3); align-items:center;
+  background:var(--surface);
+  border:1px solid var(--border); border-radius:26px;
+  padding:var(--s-4);
+  box-shadow:var(--shadow-card);
+}
+@media(min-width:768px){ .devis-block{ grid-template-columns:1.2fr .8fr; } }
+.devis-block::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(520px 300px at 0% 50%, rgba(56,225,255,.14), transparent 65%);
+}
+.devis-block > *{ position:relative; }
+.devis-block h2{ margin-top:0; }
+.devis-tel{
+  display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;
+}
+.devis-tel .big-tel{
+  display:inline-flex; align-items:center; gap:12px;
+  font-family:var(--font-display); font-weight:800;
+  font-size:clamp(1.4rem,4.5vw,1.9rem); letter-spacing:-.01em;
+  text-decoration:none; min-height:56px; padding:8px 24px;
+  border-radius:999px; background:var(--grad-cold); color:var(--on-cold);
+  box-shadow:0 8px 26px rgba(56,225,255,.30);
+  transition:filter var(--dur) var(--ease);
+}
+.devis-tel .big-tel:hover{ filter:brightness(1.12); }
+.devis-tel .big-tel svg{ width:24px; height:24px; }
+.devis-tel small{ color:var(--text-2); font-size:.88rem; }
+
+/* ============================================================ BLOC CONSEIL */
+.advice{
+  display:flex; gap:var(--s-2); align-items:flex-start;
+  background:linear-gradient(120deg, var(--hot-soft), transparent 70%);
+  border:1px solid rgba(255,138,61,.35); border-radius:var(--radius);
+  padding:var(--s-3); margin-top:var(--s-4);
+}
+.advice .a-ico{
+  flex:none; width:48px; height:48px; border-radius:var(--radius-sm);
+  background:var(--hot-soft); display:grid; place-items:center;
+}
+.advice .a-ico svg{ width:26px; height:26px; color:var(--hot); }
+.advice h3{ font-weight:800; font-size:1.05rem; letter-spacing:-.01em; }
+.advice p{ color:var(--text-2); font-size:.95rem; margin-top:6px; }
+.advice strong{ color:var(--text); }
+
+/* ============================================================ VILLES */
+.towns{ display:flex; flex-wrap:wrap; gap:10px; margin-top:var(--s-3); list-style:none; }
+.towns li{
+  display:inline-flex; align-items:center; gap:8px;
+  min-height:44px; padding:8px 16px;
+  background:var(--surface); border:1px solid var(--border); border-radius:999px;
+  font-size:.92rem; color:var(--text-2);
+}
+.towns li svg{ width:15px; height:15px; color:var(--violet); }
+.towns li.hub{
+  border-color:transparent; color:var(--on-cold); font-weight:700;
+  background:var(--grad-cold);
+}
+.towns li.hub svg{ color:var(--on-cold); }
+
+/* ============================================================ AVIS */
+.review-cta{
+  position:relative; overflow:hidden;
+  background:var(--surface);
+  border:1px solid var(--border); border-radius:26px;
+  padding:var(--s-4); text-align:center;
+  box-shadow:var(--shadow-card);
+}
+.review-cta::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(480px 260px at 50% -30%, rgba(255,138,61,.16), transparent 70%);
+}
+.stars{ position:relative; display:flex; justify-content:center; gap:6px; margin-bottom:var(--s-2); }
+.stars svg{ width:26px; height:26px; color:var(--hot); }
+.review-cta h2, .review-cta p, .review-cta a{ position:relative; }
+.review-cta h2{ margin-top:0; }
+.review-cta .btn{ margin-top:var(--s-3); }
+
+/* ============================================================ CONTACT / FOOTER */
+.contact-list{ list-style:none; display:grid; gap:var(--s-1); margin-top:var(--s-3); }
+.contact-list a{
+  display:flex; align-items:center; gap:14px;
+  min-height:56px; padding:10px 16px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+  text-decoration:none; font-weight:500;
+  transition:border-color var(--dur) var(--ease);
+}
+.contact-list li:nth-child(1) svg{ color:var(--cold); }
+.contact-list li:nth-child(2) svg{ color:var(--violet); }
+.contact-list li:nth-child(3) svg{ color:var(--success); }
+.contact-list li:nth-child(4) svg{ color:var(--hot); }
+.contact-list a:hover{ border-color:var(--cold); }
+.contact-list svg{ width:22px; height:22px; flex:none; }
+.contact-list span small{ display:block; font-size:.78rem; font-weight:500; color:var(--text-2); }
+
+footer{
+  border-top:1px solid var(--border);
+  padding:var(--s-6) 0 calc(var(--s-4) + 76px + env(safe-area-inset-bottom));
+  color:var(--text-2); font-size:.9rem;
+}
+@media(min-width:900px){ footer{ padding-bottom:var(--s-4); } }
+footer .wrap{ display:grid; gap:var(--s-4); }
+.foot-cols{ display:grid; gap:var(--s-4); }
+@media(min-width:768px){ .foot-cols{ grid-template-columns:1.3fr 1fr 1fr 1.2fr; gap:var(--s-3); } }
+.foot-brand{
+  font-family:var(--font-display); font-weight:800; font-size:1.3rem;
+  color:var(--text); letter-spacing:-.02em; margin-bottom:10px;
+}
+.foot-brand em{
+  font-style:normal;
+  background:var(--grad-cold);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.foot-cols h3{
+  font-size:.78rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text); margin-bottom:10px;
+}
+footer nav{ display:grid; gap:2px; }
+footer nav a{ min-height:40px; display:inline-flex; align-items:center; text-decoration:none; color:var(--text-2); transition:color var(--dur); }
+footer nav a:hover{ color:var(--cold); }
+.foot-legal{ border-top:1px solid var(--border); padding-top:var(--s-3); font-size:.82rem; }
+
+/* ============================================================ BARRE MOBILE */
+.action-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:100;
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(11,15,30,.9);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+}
+.action-bar .btn{ min-height:50px; font-size:.95rem; padding:0 12px; }
+@media(min-width:900px){ .action-bar{ display:none; } }
+</style>
+</head>
+
+<body>
+<a class="skip-link" href="#contenu">Aller au contenu</a>
+
+<!-- ============================================================ HEADER -->
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#" aria-label="ClimExpress — accueil">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" aria-hidden="true">
+        <path d="M 10.61 21.9 A 10.0 10.0 0 0 1 10.61 2.1" stroke="#3D8BFF" stroke-width="1.9"/>
+        <path d="M 13.39 2.1 A 10.0 10.0 0 0 1 13.39 21.9" stroke="#FF5470" stroke-width="1.9"/>
+        <line x1="13.6" y1="12.0" x2="18.5" y2="12.0" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="10.44" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="13.56" stroke="#FF5470"/><line x1="12.8" y1="13.39" x2="15.25" y2="17.63" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="15.74" y2="15.37" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="13.05" y2="16.92" stroke="#FF5470"/><line x1="11.2" y1="13.39" x2="8.75" y2="17.63" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="10.95" y2="16.92" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="8.26" y2="15.37" stroke="#3D8BFF"/><line x1="10.4" y1="12.0" x2="5.5" y2="12.0" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="13.56" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="10.44" stroke="#3D8BFF"/><line x1="11.2" y1="10.61" x2="8.75" y2="6.37" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="8.26" y2="8.63" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="10.95" y2="7.08" stroke="#3D8BFF"/><line x1="12.8" y1="10.61" x2="15.25" y2="6.37" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="13.05" y2="7.08" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="15.74" y2="8.63" stroke="#FF5470"/>
+      </svg>
+      Clim<em>Express</em>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#tarifs">Tarifs</a></li>
+      <li><a href="#deroulement">Déroulement</a></li>
+      <li><a href="#zone">Zone d'intervention</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a class="btn btn-primary" href="tel:+33648008558">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+      06 48 00 85 58
+    </a>
+  </div>
+</header>
+
+<main id="contenu">
+
+<!-- ============================================================ HERO -->
+<section class="hero" aria-labelledby="hero-titre">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow eyebrow-cold">Recharge clim auto à domicile — Var</p>
+      <h1 id="hero-titre">Rechargez votre A/C.<br><span class="grad">Vite fait. Bien fait.</span></h1>
+      <p class="lead">Votre climatisation souffle de l'air tiède ? Inutile de vous déplacer&nbsp;: ClimExpress intervient chez vous, sur votre lieu de travail ou sur un point de rendez-vous, partout dans le Golfe de Saint-Tropez et le long du littoral, jusqu'à Hyères. Recharge complète en 30&nbsp;minutes.</p>
+
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="reservation-client.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Réserver en ligne
+        </a>
+        <a class="btn btn-ghost" href="https://wa.me/33648008558" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          WhatsApp
+        </a>
+      </div>
+
+      <ul class="trust">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          Technicien certifié
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Intervention 30&nbsp;min
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          On vient à vous
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 6.2A7.7 7.7 0 0 0 13.8 4 8 8 0 0 0 6 12a8 8 0 0 0 7.8 8c2 0 3.9-.8 5.2-2.2"/><line x1="3" y1="10" x2="13" y2="10"/><line x1="3" y1="14" x2="11" y2="14"/></svg>
+          Dès 45&nbsp;€ tout compris
+        </li>
+      </ul>
+    </div>
+
+    <!-- Signature : moitié feu, moitié glace -->
+    <div class="temp-card reveal" role="img" aria-label="38 degrés dehors, 6 degrés en sortie d'aération après recharge">
+      <div class="temp-row" aria-hidden="true">
+        <div class="temp temp-hot">
+          <span class="val">38°</span>
+          <span class="lbl">Dehors</span>
+        </div>
+        <svg class="temp-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <div class="temp temp-cold">
+          <span class="val">6°</span>
+          <span class="lbl">En sortie d'aération</span>
+        </div>
+      </div>
+      <p class="temp-note"><strong>30 minutes</strong> entre les deux. Recharge au gramme près, contrôle des pressions et des performances.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ZONE DU JOUR -->
+<section class="zone-banner" aria-label="Position du jour">
+  <div class="wrap">
+    <div class="zone-inner">
+      <span class="zone-dot" aria-hidden="true"></span>
+      <p id="zone-texte"><strong>Aujourd'hui :</strong> intervention dans le Golfe de Saint-Tropez — appelez pour connaître les disponibilités du jour.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ TARIFS -->
+<section id="tarifs" aria-labelledby="tarifs-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-cold">Tarifs</p>
+    <h2 id="tarifs-titre">Un prix clair, annoncé avant l'intervention</h2>
+    <p class="lead">Le gaz, la main-d'œuvre et le contrôle des performances sont compris. Aucune surprise à la fin.</p>
+
+    <div class="grid grid-3">
+      <article class="card price-card pc-cold reveal">
+        <span class="tag">Véhicule avant 2017</span>
+        <h3>Recharge R134a</h3>
+        <p class="price">45&nbsp;€ <small>tout compris</small></p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Gaz et main-d'œuvre inclus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Contrôle des pressions au manifold</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Recharge à la quantité constructeur</li>
+        </ul>
+      </article>
+
+      <article class="card price-card pc-violet reveal">
+        <span class="tag">Véhicule depuis 2017</span>
+        <h3>Recharge R1234yf</h3>
+        <p class="price">49&nbsp;€ <small>tout compris</small></p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Gaz nouvelle génération</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Même procédure complète</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Contrôle de température en sortie</li>
+        </ul>
+      </article>
+
+      <article class="card price-card pc-hot reveal">
+        <span class="tag">Options & pros</span>
+        <h3>Compléments</h3>
+        <p class="price">+20&nbsp;€ <small>désinfection du circuit</small></p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Utilitaires : à partir de 60&nbsp;€</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Poids lourds : à partir de 80&nbsp;€</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Flottes & pros : devis sur demande</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="pricing-notes">
+      <p>Déplacement à domicile : +10&nbsp;€ jusqu'à 15&nbsp;km, au-delà sur devis. Gratuit sur les points de rendez-vous.</p>
+      <p>TVA non applicable, art. 293&nbsp;B du CGI.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ DÉROULEMENT -->
+<section id="deroulement" aria-labelledby="deroulement-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-violet">Déroulement</p>
+    <h2 id="deroulement-titre">Trois étapes, zéro contrainte</h2>
+
+    <div class="grid grid-3">
+      <div class="card step reveal">
+        <div class="step-img" aria-hidden="true">
+          <svg viewBox="0 0 300 160" preserveAspectRatio="xMidYMid slice">
+            <circle cx="255" cy="30" r="34" fill="rgba(56,225,255,.10)"/>
+            <circle cx="40" cy="135" r="26" fill="rgba(56,225,255,.08)"/>
+            <rect x="110" y="22" width="80" height="150" rx="14" fill="#131A30" stroke="#3C486E" stroke-width="2.5"/>
+            <line x1="138" y1="34" x2="162" y2="34" stroke="#3C486E" stroke-width="3" stroke-linecap="round"/>
+            <rect x="120" y="44" width="60" height="42" rx="6" fill="rgba(56,225,255,.14)"/>
+            <g fill="#38E1FF">
+              <rect x="126" y="52" width="10" height="8" rx="2" opacity=".45"/>
+              <rect x="140" y="52" width="10" height="8" rx="2" opacity=".45"/>
+              <rect x="154" y="52" width="10" height="8" rx="2" opacity=".45"/>
+              <rect x="126" y="64" width="10" height="8" rx="2" opacity=".45"/>
+              <rect x="140" y="64" width="10" height="8" rx="2"/>
+              <rect x="154" y="64" width="10" height="8" rx="2" opacity=".45"/>
+            </g>
+            <rect x="120" y="94" width="60" height="9" rx="4.5" fill="#3C486E"/>
+            <rect x="120" y="109" width="42" height="9" rx="4.5" fill="#3C486E" opacity=".6"/>
+            <rect x="120" y="128" width="60" height="16" rx="8" fill="#38E1FF"/>
+            <circle cx="212" cy="120" r="20" fill="#38E1FF"/>
+            <path d="M203 120 l6 6 l12 -13" fill="none" stroke="#03222B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="num" aria-hidden="true">1</span>
+        <h3>Vous réservez</h3>
+        <p>En ligne en 2 minutes, par téléphone ou WhatsApp. Vous choisissez votre créneau et le lieu : chez vous, au travail, ou l'un de nos points de rendez-vous.</p>
+      </div>
+      <div class="card step reveal">
+        <div class="step-img" aria-hidden="true">
+          <svg viewBox="0 0 300 160" preserveAspectRatio="xMidYMid slice">
+            <circle cx="252" cy="34" r="18" fill="#FF8A3D" opacity=".85"/>
+            <circle cx="60" cy="30" r="30" fill="rgba(139,123,255,.10)"/>
+            <line x1="20" y1="128" x2="280" y2="128" stroke="#3C486E" stroke-width="3" stroke-linecap="round"/>
+            <line x1="40" y1="128" x2="70" y2="128" stroke="#8B7BFF" stroke-width="3" stroke-linecap="round" stroke-dasharray="14 12"/>
+            <g>
+              <path d="M92 70 h86 a6 6 0 0 1 6 6 v44 h-98 v-44 a6 6 0 0 1 6 -6z" fill="#131A30" stroke="#8B7BFF" stroke-width="2.5"/>
+              <path d="M184 84 h26 l14 18 v18 h-40 z" fill="#131A30" stroke="#8B7BFF" stroke-width="2.5"/>
+              <rect x="190" y="88" width="18" height="13" rx="2" fill="rgba(139,123,255,.35)"/>
+              <line x1="100" y1="88" x2="140" y2="88" stroke="#8B7BFF" stroke-width="6" stroke-linecap="round"/>
+              <line x1="100" y1="100" x2="128" y2="100" stroke="#38E1FF" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="116" cy="122" r="12" fill="#0B0F1E" stroke="#A8B4D6" stroke-width="3.5"/>
+              <circle cx="196" cy="122" r="12" fill="#0B0F1E" stroke="#A8B4D6" stroke-width="3.5"/>
+            </g>
+            <g stroke="#8B7BFF" stroke-width="3" stroke-linecap="round" opacity=".7">
+              <line x1="58" y1="80" x2="76" y2="80"/><line x1="50" y1="92" x2="72" y2="92"/><line x1="60" y1="104" x2="74" y2="104"/>
+            </g>
+            <path d="M252 66 c0 8 -10 18 -10 18 s-10 -10 -10 -18 a10 10 0 0 1 20 0z" fill="none" stroke="#38E1FF" stroke-width="2.5"/>
+            <circle cx="242" cy="66" r="3.5" fill="#38E1FF"/>
+          </svg>
+        </div>
+        <span class="num" aria-hidden="true">2</span>
+        <h3>On vient à vous</h3>
+        <p>Le technicien arrive avec la station de recharge professionnelle. Pas de garage, pas d'attente, pas de véhicule immobilisé une journée.</p>
+      </div>
+      <div class="card step reveal">
+        <div class="step-img" aria-hidden="true">
+          <svg viewBox="0 0 300 160" preserveAspectRatio="xMidYMid slice">
+            <circle cx="46" cy="34" r="17" fill="#FF8A3D" opacity=".85"/>
+            <g stroke="#FF8A3D" stroke-width="2.5" stroke-linecap="round" opacity=".7">
+              <line x1="46" y1="7" x2="46" y2="13"/><line x1="69" y1="14" x2="64" y2="19"/><line x1="76" y1="34" x2="70" y2="34"/>
+              <line x1="23" y1="14" x2="28" y2="19"/><line x1="16" y1="34" x2="22" y2="34"/>
+            </g>
+            <line x1="20" y1="132" x2="280" y2="132" stroke="#3C486E" stroke-width="3" stroke-linecap="round"/>
+            <g>
+              <path d="M 86 120 L 86 106 Q 86 95 98 93 L 116 91 Q 133 69 158 68 L 176 68 Q 196 68 207 86 L 222 91 Q 232 93 232 103 L 232 120 Q 232 124 228 124 L 90 124 Q 86 124 86 120 Z"
+                    fill="#131A30" stroke="#38E1FF" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M 124 89 Q 137 72 155 71 L 155 89 Z" fill="rgba(56,225,255,.30)"/>
+              <path d="M 161 71 L 175 71 Q 190 72 199 87 L 161 89 Z" fill="rgba(56,225,255,.30)"/>
+              <line x1="158" y1="92" x2="158" y2="118" stroke="rgba(56,225,255,.45)" stroke-width="2"/>
+              <line x1="165" y1="99" x2="174" y2="99" stroke="#A8B4D6" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="227" cy="99" r="3" fill="#FFCD4A"/>
+              <circle cx="89" cy="100" r="2.6" fill="#FF5470"/>
+              <circle cx="121" cy="122" r="12.5" fill="#0B0F1E" stroke="#A8B4D6" stroke-width="3.5"/>
+              <circle cx="121" cy="122" r="4.5" fill="none" stroke="#A8B4D6" stroke-width="2"/>
+              <circle cx="201" cy="122" r="12.5" fill="#0B0F1E" stroke="#A8B4D6" stroke-width="3.5"/>
+              <circle cx="201" cy="122" r="4.5" fill="none" stroke="#A8B4D6" stroke-width="2"/>
+              <text x="140" y="114" font-family="Plus Jakarta Sans, sans-serif" font-size="17" font-weight="800" fill="#38E1FF" text-anchor="middle">6°</text>
+            </g>
+            <g fill="none" stroke="#38E1FF" stroke-width="3.5" stroke-linecap="round">
+              <path d="M 244 76 q 10 -6 20 0 q 10 6 20 0" opacity=".9"/>
+              <path d="M 248 93 q 10 -6 20 0 q 9 6 17 0" opacity=".6"/>
+              <path d="M 252 110 q 9 -6 17 0 q 8 5 13 0" opacity=".35"/>
+            </g>
+          </svg>
+        </div>
+        <span class="num" aria-hidden="true">3</span>
+        <h3>30 min et c'est froid</h3>
+        <p>Recharge au gramme près, contrôle des pressions, test de performance. Vous repartez avec une clim qui souffle vraiment froid.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ LA QUALITÉ CLIMEXPRESS -->
+<section aria-labelledby="qualite-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-cold">Nos engagements</p>
+    <h2 id="qualite-titre">La qualité ClimExpress</h2>
+
+    <div class="quality-grid">
+      <div class="medal reveal">
+        <span class="m-ico m-cold" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </span>
+        <strong>Proche de chez vous</strong>
+        <span>Basé à Gassin, au cœur du Golfe de Saint-Tropez</span>
+      </div>
+      <div class="medal reveal">
+        <span class="m-ico m-violet" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </span>
+        <strong>Technicien certifié</strong>
+        <span>Attestation de capacité fluides frigorigènes</span>
+      </div>
+      <div class="medal reveal">
+        <span class="m-ico m-hot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </span>
+        <strong>Matériel de pointe</strong>
+        <span>Station professionnelle, recharge au gramme près</span>
+      </div>
+      <div class="medal reveal">
+        <span class="m-ico m-hot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        <strong>Disponible 7j/7 en saison</strong>
+        <span>Réponse rapide, intervention souvent le jour même</span>
+      </div>
+      <div class="medal reveal">
+        <span class="m-ico m-cold" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </span>
+        <strong>Prix annoncé à l'avance</strong>
+        <span>Tarif confirmé avant l'intervention, sans surprise</span>
+      </div>
+      <div class="medal reveal">
+        <span class="m-ico m-violet" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </span>
+        <strong>Suivi après intervention</strong>
+        <span>Un souci après la recharge ? On revient, on vérifie</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ SIGNES -->
+<section aria-labelledby="signes-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-hot">Diagnostic</p>
+    <h2 id="signes-titre">Les signes qui ne trompent pas</h2>
+    <p class="lead">Une clim perd naturellement du gaz avec le temps. Voici les symptômes les plus fréquents d'un circuit sous-chargé.</p>
+
+    <div class="grid grid-2">
+      <div class="card sign reveal">
+        <span class="ico ico-hot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+        </span>
+        <div>
+          <h3>L'air sort tiède</h3>
+          <p>Même réglée au minimum, la clim ne descend plus en température. C'est le signe numéro un d'un manque de gaz.</p>
+        </div>
+      </div>
+      <div class="card sign reveal">
+        <span class="ico ico-cold" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        <div>
+          <h3>Le froid met du temps à venir</h3>
+          <p>L'habitacle met beaucoup plus longtemps qu'avant à se rafraîchir : le circuit compense un niveau de réfrigérant trop bas.</p>
+        </div>
+      </div>
+      <div class="card sign reveal">
+        <span class="ico ico-violet" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 4 18 3-9h6"/></svg>
+        </span>
+        <div>
+          <h3>Bruits inhabituels</h3>
+          <p>Cliquetis ou sifflements à l'activation de la clim : le compresseur travaille à vide et s'use prématurément.</p>
+        </div>
+      </div>
+      <div class="card sign reveal">
+        <span class="ico ico-hot" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+        </span>
+        <div>
+          <h3>Mauvaises odeurs</h3>
+          <p>Une odeur d'humidité à la mise en route signale des bactéries dans le circuit. La désinfection (+20&nbsp;€) règle le problème.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="advice reveal">
+      <span class="a-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+      <div>
+        <h3>Attention aux kits de recharge « pas chers »</h3>
+        <p>Les bombes de recharge vendues en grande surface injectent du gaz <strong>à l'aveugle, sans contrôle des pressions</strong>. Résultat : circuit surchargé, humidité emprisonnée, compresseur qui s'use — et une réparation qui coûte bien plus que les 45&nbsp;€ d'une recharge dans les règles. La manipulation des fluides frigorigènes est d'ailleurs réservée aux professionnels certifiés.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ZONE D'INTERVENTION -->
+<section id="zone" aria-labelledby="zone-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-violet">Zone d'intervention</p>
+    <h2 id="zone-titre">Du Golfe de Saint-Tropez jusqu'à Hyères</h2>
+    <p class="lead">Basé à Gassin / La Foux, ClimExpress se déplace dans tout le golfe et le long du littoral varois.</p>
+
+    <ul class="towns reveal">
+      <li class="hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Gassin / La Foux</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Saint-Tropez</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Cogolin</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Grimaud</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Sainte-Maxime</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Ramatuelle</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Croix-Valmer</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Cavalaire-sur-Mer</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Le Lavandou</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Hyères</li>
+    </ul>
+    <div class="map-card reveal">
+      <div id="carte-zone" role="application" aria-label="Carte de la zone d'intervention et des points de rendez-vous"></div>
+      <div class="map-legende">
+        <span><i class="dot dot-base" aria-hidden="true"></i> Base ClimExpress — La Foux</span>
+        <span><i class="dot dot-rdv" aria-hidden="true"></i> Points de rendez-vous (sans surcoût)</span>
+        <span><i class="dot dot-zone" aria-hidden="true"></i> Déplacement domicile +10&nbsp;€ (15&nbsp;km)</span>
+      </div>
+    </div>
+    <div class="pricing-notes">
+      <p>10 points de rendez-vous sans surcoût sont proposés lors de la réservation en ligne. Votre commune n'apparaît pas ? Appelez : le secteur s'étend régulièrement.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ BLOC DEVIS -->
+<section aria-labelledby="devis-titre">
+  <div class="wrap">
+    <div class="devis-block reveal">
+      <div>
+        <p class="eyebrow eyebrow-cold">Devis gratuit</p>
+        <h2 id="devis-titre">Un doute sur votre clim&nbsp;?</h2>
+        <p class="lead">Utilitaire, poids lourd, flotte d'entreprise ou simple question sur votre véhicule : décrivez votre situation, on vous répond avec un prix ferme. Le diagnostic par téléphone est gratuit.</p>
+      </div>
+      <div class="devis-tel">
+        <a class="big-tel" href="tel:+33648008558">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+          06 48 00 85 58
+        </a>
+        <small>7j/7 en saison — appel, SMS ou WhatsApp</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ AVIS -->
+<section aria-labelledby="avis-titre">
+  <div class="wrap">
+    <div class="review-cta reveal">
+      <div class="stars" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <h2>Votre avis fait vivre un artisan local</h2>
+      <p class="lead" style="margin-inline:auto;">Après chaque intervention, un petit avis Google aide les prochains clients à nous trouver. Merci à tous ceux qui prennent la minute.</p>
+      <a class="btn btn-primary" href="https://g.page/r/ClimExpress/review" rel="noopener">Laisser un avis Google</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CONTACT -->
+<section id="contact" aria-labelledby="contact-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-cold">Contact</p>
+    <h2 id="contact-titre">On s'occupe de votre clim aujourd'hui&nbsp;?</h2>
+    <p class="lead">Réponse rapide 7j/7 en saison. Le plus simple reste la réservation en ligne : vous voyez les créneaux disponibles en direct.</p>
+
+    <ul class="contact-list">
+      <li>
+        <a href="reservation-client.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Réserver un créneau en ligne <small>Disponibilités en temps réel</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="tel:+33648008558">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+          <span>06 48 00 85 58 <small>Appel ou SMS</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="https://wa.me/33648008558" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>WhatsApp <small>Envoyez une photo de votre tableau de bord si besoin</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="mailto:rech.raymond@climexpressauto.fr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>rech.raymond@climexpressauto.fr <small>Devis flottes & professionnels</small></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================ FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-cols">
+      <div>
+        <p class="foot-brand">Clim<em>Express</em></p>
+        <p>Service mobile de climatisation automobile. Technicien titulaire de l'attestation de capacité pour la manipulation des fluides frigorigènes.</p>
+      </div>
+      <div>
+        <h3>Prestations</h3>
+        <nav aria-label="Prestations">
+          <a href="#tarifs">Recharge R134a</a>
+          <a href="#tarifs">Recharge R1234yf</a>
+          <a href="#tarifs">Désinfection du circuit</a>
+          <a href="#tarifs">Utilitaires & poids lourds</a>
+        </nav>
+      </div>
+      <div>
+        <h3>Pratique</h3>
+        <nav aria-label="Liens pratiques">
+          <a href="reservation-client.html">Réserver en ligne</a>
+          <a href="#zone">Zone d'intervention</a>
+          <a href="#deroulement">Comment ça se passe</a>
+          <a href="mailto:rech.raymond@climexpressauto.fr">Contact & devis pros</a>
+        </nav>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <nav aria-label="Contact">
+          <a href="tel:+33648008558">06 48 00 85 58</a>
+          <a href="https://wa.me/33648008558" rel="noopener">WhatsApp</a>
+          <a href="mailto:rech.raymond@climexpressauto.fr">rech.raymond@climexpressauto.fr</a>
+        </nav>
+        <p>Gassin / La Foux — Var (83)</p>
+      </div>
+    </div>
+    <p class="foot-legal">TVA non applicable, art. 293&nbsp;B du CGI. © <span id="annee">2026</span> ClimExpress Recharge Auto — Tous droits réservés.</p>
+  </div>
+</footer>
+
+<!-- ============================================================ BARRE MOBILE -->
+<div class="action-bar" role="group" aria-label="Actions rapides">
+  <a class="btn btn-ghost" href="tel:+33648008558">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+    Appeler
+  </a>
+  <a class="btn btn-primary" href="reservation-client.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Réserver
+  </a>
+</div>
+
+<script>
+document.getElementById('annee').textContent = new Date().getFullYear();
+
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.reveal');
+  if (reduced || !('IntersectionObserver' in window)) {
+    els.forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -8% 0px' });
+  els.forEach(function(el){ io.observe(el); });
+})();
+/* ZONE DU JOUR — appelle majZone("Sainte-Maxime — dispo cet après-midi")
+   depuis ta jauge Supabase pour mettre à jour le bandeau. */
+function majZone(texte){
+  var el = document.getElementById('zone-texte');
+  if (el && texte) el.innerHTML = '<strong>Aujourd\u2019hui :</strong> ' + texte;
+}
+
+/* ============================================================
+   CARTE ZONE — points de rendez-vous
+   >>> MODIFIE ICI tes points : [nom, latitude, longitude] <<<
+   Pour un point précis : ouvre Google Maps, appui long sur
+   l'endroit, copie les deux nombres affichés.
+   ============================================================ */
+var BASE_CLIMEXPRESS = ["Base ClimExpress — La Foux / Gassin", 43.2712, 6.5789];
+var POINTS_RDV = [
+  ["Saint-Tropez",        43.2727, 6.6407],
+  ["Cogolin",             43.2523, 6.5299],
+  ["Grimaud",             43.2735, 6.5223],
+  ["Port Grimaud",        43.2743, 6.5799],
+  ["Sainte-Maxime",       43.3092, 6.6386],
+  ["Ramatuelle",          43.2167, 6.6119],
+  ["La Croix-Valmer",     43.2081, 6.5683],
+  ["Cavalaire-sur-Mer",   43.1737, 6.5290],
+  ["Le Lavandou",         43.1378, 6.3667],
+  ["Hyères",              43.1198, 6.1285]
+];
+
+(function(){
+  var el = document.getElementById('carte-zone');
+  if (!el) return;
+  var lancee = false;
+
+  function initCarte(){
+    if (lancee) return; lancee = true;
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    s.onload = function(){
+      var map = L.map('carte-zone', { scrollWheelZoom:false, zoomControl:true })
+                 .setView([43.22, 6.45], 10);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        maxZoom: 18
+      }).addTo(map);
+
+      /* cercle 15 km autour de la base (déplacement domicile +10€) */
+      L.circle([BASE_CLIMEXPRESS[1], BASE_CLIMEXPRESS[2]], {
+        radius: 15000, color: '#38E1FF', weight: 2, dashArray: '6 8',
+        fillColor: '#38E1FF', fillOpacity: 0.06
+      }).addTo(map);
+
+      /* base */
+      L.marker([BASE_CLIMEXPRESS[1], BASE_CLIMEXPRESS[2]], {
+        icon: L.divIcon({ className:'', html:'<div class="pin-base"></div>', iconSize:[18,18], iconAnchor:[9,9] })
+      }).addTo(map).bindPopup('<strong>' + BASE_CLIMEXPRESS[0] + '</strong>');
+
+      /* points de rendez-vous */
+      POINTS_RDV.forEach(function(p){
+        L.marker([p[1], p[2]], {
+          icon: L.divIcon({ className:'', html:'<div class="pin-rdv"></div>', iconSize:[14,14], iconAnchor:[7,7] })
+        }).addTo(map).bindPopup('<strong>' + p[0] + '</strong><br>Point de rendez-vous — sans surcoût');
+      });
+    };
+    document.head.appendChild(s);
+  }
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function(e, o){
+      if (e[0].isIntersecting){ initCarte(); o.disconnect(); }
+    }, { rootMargin:'400px' }).observe(el);
+  } else { initCarte(); }
+})();
+
+</script>
+</body>
+</html>

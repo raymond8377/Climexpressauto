@@ -2,145 +2,199 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F1E">
+<meta name="color-scheme" content="dark">
 <title>ClimExpress — Réserver une intervention</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-width='1.9'><rect width='24' height='24' rx='5' fill='%230B0F1E'/><path d='M 10.61 21.9 A 8.6 8.6 0 0 1 10.61 2.1' stroke='%233D8BFF' transform='translate(1.4,1.4) scale(0.885)'/><path d='M 13.39 2.1 A 8.6 8.6 0 0 1 13.39 21.9' stroke='%23FF5470' transform='translate(1.4,1.4) scale(0.885)'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
 const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 </script>
 <style>
   :root {
-    --accent: #00c2ff; --green: #00d68f; --orange: #ff9500; --red: #ff4444;
-    --dark: #081a28; --deep: #0d2d45; --card: rgba(13,45,69,0.9); --border: rgba(0,194,255,0.15);
+    /* nouveaux tokens — les anciens noms sont conservés pour les styles inline */
+    --bg: #0B0F1E; --surface: #131A30; --surface-2: #1A2342;
+    --accent: #38E1FF; --green: #3DDC97; --orange: #FF8A3D; --red: #FF5470;
+    --violet: #8B7BFF;
+    --dark: #04222B; --deep: #131A30; --card: #131A30;
+    --border: rgba(150,170,230,.16); --border-strong: rgba(150,170,230,.32);
+    --text: #F0F4FF; --text-2: #A8B4D6;
+    --grad-cold: linear-gradient(120deg, #38E1FF, #4D7CFF);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html { background: #1a3a6b !important; }
-  body { font-family: 'DM Sans', sans-serif; background: #1a3a6b !important; color: #ffffff; min-height: 100vh; }
+  html { background: #0B0F1E !important; color-scheme: dark; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background: #0B0F1E !important; color: var(--text); min-height: 100dvh;
+  }
   body::before {
-    content: ''; position: fixed; inset: 0;
-    background: #1a3a6b;
-    pointer-events: none; z-index: 0;
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(700px 420px at 90% -5%, rgba(56,225,255,.10), transparent 60%),
+      radial-gradient(600px 420px at -5% 40%, rgba(139,123,255,.09), transparent 58%),
+      radial-gradient(640px 460px at 95% 95%, rgba(255,138,61,.06), transparent 60%),
+      #0B0F1E;
   }
 
   header {
-    background: #0f2d52; backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.15); padding: 16px;
+    background: rgba(11,15,30,.85);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
     text-align: center; position: relative; z-index: 10;
   }
-  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); letter-spacing: 3px; }
-  .logo span { color: #fff; }
-  .tagline { font-size: 12px; color: rgba(205,232,255,0.5); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+  .logo {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    font-weight: 800; font-size: 22px; letter-spacing: -.02em; color: var(--text);
+  }
+  .logo svg { width: 26px; height: 26px; }
+  .logo span {
+    background: var(--grad-cold);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { font-size: 11px; color: var(--text-2); margin-top: 3px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
 
   .hero {
-    background: #163260;
-    border-bottom: 1px solid rgba(255,255,255,0.15); padding: 24px 16px; text-align: center; position: relative; z-index: 1;
+    border-bottom: 1px solid var(--border);
+    padding: 26px 16px; text-align: center; position: relative; z-index: 1;
   }
-  .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #fff; letter-spacing: 2px; line-height: 1.1; }
-  .hero h1 span { color: var(--accent); }
-  .hero p { font-size: 13px; color: rgba(205,232,255,0.6); margin-top: 8px; line-height: 1.6; }
-  .hero-badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .hero-badge { background: rgba(0,214,143,0.1); border: 1px solid rgba(0,214,143,0.3); color: var(--green); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .hero h1 { font-weight: 800; font-size: 30px; color: var(--text); letter-spacing: -.02em; line-height: 1.15; }
+  .hero h1 span {
+    background: linear-gradient(105deg, #38E1FF 15%, #8B7BFF 60%, #FF8A3D 105%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { font-size: 14px; color: var(--text-2); margin-top: 8px; line-height: 1.6; }
+  .hero-badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .hero-badge {
+    background: rgba(61,220,151,.10); border: 1px solid rgba(61,220,151,.32);
+    color: var(--green); font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 999px;
+  }
   @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(1.3); } }
 
-  .container { padding: 16px; position: relative; z-index: 1; max-width: 500px; margin: 0 auto; }
+  .container { padding: 16px; position: relative; z-index: 1; max-width: 520px; margin: 0 auto; }
 
   .step { display: none; }
-  .step.active { display: block; animation: fadeIn .3s ease; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .step.active { display: block; animation: fadeIn .26s cubic-bezier(.25,.7,.3,1); }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 
-  .card { background: #22487a; border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 14px; }
 
-  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; letter-spacing: 2px; margin-bottom: 16px; }
+  .section-title { font-weight: 800; font-size: 21px; color: var(--text); letter-spacing: -.02em; margin-bottom: 16px; }
   .section-title span { color: var(--accent); }
 
   .form-group { margin-bottom: 14px; }
-  label { display: block; font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+  label { display: block; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 7px; }
   input, select, textarea {
-    width: 100%; padding: 13px 14px; border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.2); background: #163260;
-    color: #ffffff; font-family: 'DM Sans', sans-serif; font-size: 15px;
+    width: 100%; min-height: 50px; padding: 13px 15px; border-radius: 12px;
+    border: 1px solid var(--border-strong); background: var(--bg);
+    color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px;
     outline: none; transition: border-color .2s; -webkit-appearance: none;
   }
   input:focus, select:focus { border-color: var(--accent); }
-  input::placeholder { color: rgba(255,255,255,0.35); }
-  select option { background: #163260; color: #fff; }
+  input::placeholder { color: rgba(168,180,214,.45); }
+  select option { background: var(--surface); color: var(--text); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-  .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; transition: all .2s; }
-  .btn-primary { background: var(--accent); color: var(--dark); }
-  .btn-primary:active { transform: scale(.98); }
-  .btn-secondary { background: rgba(0,194,255,0.1); color: var(--accent); border: 1px solid var(--border); margin-top: 8px; }
+  .btn {
+    width: 100%; min-height: 52px; padding: 14px; border-radius: 999px; border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: opacity .12s, filter .2s;
+    touch-action: manipulation;
+  }
+  .btn-primary { background: var(--grad-cold); color: var(--dark); box-shadow: 0 6px 20px rgba(56,225,255,.28); }
+  .btn-primary:active { opacity: .85; }
+  .btn-secondary { background: rgba(19,26,48,.6); color: var(--text); border: 1.5px solid var(--border-strong); margin-top: 8px; box-shadow: none; }
+  .btn-secondary:active { opacity: .85; }
 
   /* CRÉNEAUX */
   .date-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .date-nav button { background: rgba(0,194,255,0.1); border: 1px solid var(--border); color: var(--accent); width: 36px; height: 36px; border-radius: 8px; font-size: 18px; cursor: pointer; flex-shrink: 0; }
-  .date-label { flex: 1; text-align: center; font-weight: 700; font-size: 14px; color: #fff; }
+  .date-nav button {
+    background: rgba(56,225,255,.10); border: 1px solid var(--border); color: var(--accent);
+    width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .date-label { flex: 1; text-align: center; font-weight: 700; font-size: 15px; color: var(--text); text-transform: capitalize; }
 
   .slots-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
   .slot-btn {
-    padding: 12px 6px; border-radius: 10px; border: 1px solid var(--border);
-    background: rgba(0,214,143,0.08); color: var(--green); font-size: 14px; font-weight: 700;
+    min-height: 46px; padding: 12px 6px; border-radius: 12px; border: 1px solid var(--border);
+    background: rgba(61,220,151,.08); color: var(--green); font-size: 15px; font-weight: 700;
     cursor: pointer; text-align: center; transition: all .15s;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
   }
-  .slot-btn:active, .slot-btn.selected { background: var(--accent); color: var(--dark); border-color: var(--accent); }
-  .slot-btn.taken { background: rgba(255,68,68,0.08); color: rgba(205,232,255,0.3); border-color: rgba(255,68,68,0.15); cursor: not-allowed; font-size: 12px; }
-  .slot-btn.taken::after { content: ' ✗'; }
+  .slot-btn:active, .slot-btn.selected { background: var(--grad-cold); color: var(--dark); border-color: transparent; }
+  .slot-btn.taken { background: rgba(255,84,112,.07); color: rgba(168,180,214,.35); border-color: rgba(255,84,112,.14); cursor: not-allowed; font-size: 13px; }
 
   /* SERVICES */
   .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .service-btn {
-    padding: 14px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
-    background: #163260; color: #ffffff; font-size: 12px; font-weight: 600;
-    cursor: pointer; text-align: center; transition: all .15s; line-height: 1.4;
+    min-height: 44px; padding: 14px 10px; border-radius: 14px; border: 1px solid var(--border-strong);
+    background: var(--bg); color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; text-align: center; transition: all .15s; line-height: 1.45;
+    touch-action: manipulation;
   }
-  .service-btn .sico { font-size: 24px; display: block; margin-bottom: 6px; }
-  .service-btn.selected { background: rgba(0,194,255,0.25); border-color: var(--accent); color: var(--accent); }
+  .service-btn .sico { display: flex; justify-content: center; margin-bottom: 8px; }
+  .service-btn .sico svg { width: 26px; height: 26px; color: var(--accent); }
+  .service-btn.selected { background: rgba(56,225,255,.14); border-color: var(--accent); color: var(--accent); }
+  .service-btn.selected .sico svg { color: var(--accent); }
 
   /* RECAP */
-  .recap-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .recap-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--border); }
   .recap-row:last-child { border-bottom: none; }
-  .recap-label { font-size: 11px; color: rgba(205,232,255,0.5); text-transform: uppercase; letter-spacing: .5px; }
-  .recap-value { font-size: 14px; font-weight: 600; color: #fff; text-align: right; max-width: 60%; }
+  .recap-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .recap-value { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; max-width: 60%; }
 
   /* CONFIRM */
   .confirm-box { text-align: center; padding: 30px 20px; }
-  .confirm-icon { font-size: 60px; margin-bottom: 16px; }
-  .confirm-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--green); letter-spacing: 2px; }
-  .confirm-sub { font-size: 14px; color: rgba(205,232,255,0.6); margin-top: 8px; line-height: 1.6; }
+  .confirm-icon { display: flex; justify-content: center; margin-bottom: 18px; }
+  .confirm-icon svg { width: 72px; height: 72px; }
+  .confirm-title { font-weight: 800; font-size: 26px; letter-spacing: -.02em; color: var(--green); }
+  .confirm-sub { font-size: 14px; color: var(--text-2); margin-top: 10px; line-height: 1.65; }
 
   /* STEPS INDICATOR */
   .steps-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 14px 0 0; margin-bottom: 4px; }
-  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(205,232,255,0.2); transition: all .3s; }
-  .step-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(168,180,214,.22); transition: all .3s; }
+  .step-dot.active { background: var(--accent); width: 26px; border-radius: 4px; }
   .step-dot.done { background: var(--green); }
 
   .loading { text-align: center; padding: 30px; }
-  .spinner { width: 40px; height: 40px; border: 3px solid rgba(0,194,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgba(56,225,255,.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .error-msg { background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3); color: var(--red); padding: 12px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; display: none; }
+  .error-msg { background: rgba(255,84,112,.10); border: 1px solid rgba(255,84,112,.32); color: var(--red); padding: 13px; border-radius: 12px; font-size: 13.5px; margin-bottom: 12px; display: none; }
   .error-msg.show { display: block; }
 
-  footer { text-align: center; padding: 20px; font-size: 11px; color: rgba(255,255,255,0.3); position: relative; z-index: 1; background: #1a3a6b; }
+  footer { text-align: center; padding: 22px 16px calc(22px + env(safe-area-inset-bottom)); font-size: 11.5px; color: rgba(168,180,214,.5); position: relative; z-index: 1; }
+
   /* ZONES DEPLACEMENT */
   .zone-btn {
-    padding: 12px 10px; border-radius: 12px; border: 1px solid rgba(255,149,0,0.25);
-    background: rgba(255,149,0,0.06); cursor: pointer; text-align: center;
-    transition: all .15s;
+    padding: 12px 10px; border-radius: 14px; border: 1px solid rgba(255,138,61,.28);
+    background: rgba(255,138,61,.06); cursor: pointer; text-align: center;
+    transition: all .15s; touch-action: manipulation;
   }
   .zone-btn:active, .zone-btn.selected {
-    background: rgba(255,149,0,0.2); border-color: rgba(255,149,0,0.6);
-    transform: scale(.97);
+    background: rgba(255,138,61,.18); border-color: rgba(255,138,61,.6);
   }
-  .zone-label { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-  .zone-prix { font-family: Bebas Neue, sans-serif; font-size: 24px; color: #ff9500; line-height: 1; margin-bottom: 3px; }
-  .zone-ex { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.3; }
+  .zone-label { font-size: 11px; color: var(--text-2); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .zone-prix { font-weight: 800; font-size: 22px; color: var(--orange); line-height: 1; margin-bottom: 3px; }
+  .zone-ex { font-size: 10px; color: rgba(168,180,214,.4); line-height: 1.3; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Clim<span>Express</span></div>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" aria-hidden="true">
+        <path d="M 10.61 21.9 A 10.0 10.0 0 0 1 10.61 2.1" stroke="#3D8BFF" stroke-width="1.9"/>
+        <path d="M 13.39 2.1 A 10.0 10.0 0 0 1 13.39 21.9" stroke="#FF5470" stroke-width="1.9"/>
+        <line x1="13.6" y1="12.0" x2="18.5" y2="12.0" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="10.44" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="13.56" stroke="#FF5470"/><line x1="12.8" y1="13.39" x2="15.25" y2="17.63" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="15.74" y2="15.37" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="13.05" y2="16.92" stroke="#FF5470"/><line x1="11.2" y1="13.39" x2="8.75" y2="17.63" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="10.95" y2="16.92" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="8.26" y2="15.37" stroke="#3D8BFF"/><line x1="10.4" y1="12.0" x2="5.5" y2="12.0" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="13.56" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="10.44" stroke="#3D8BFF"/><line x1="11.2" y1="10.61" x2="8.75" y2="6.37" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="8.26" y2="8.63" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="10.95" y2="7.08" stroke="#3D8BFF"/><line x1="12.8" y1="10.61" x2="15.25" y2="6.37" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="13.05" y2="7.08" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="15.74" y2="8.63" stroke="#FF5470"/>
+      </svg>Clim<span>Express</span></div>
   <div class="tagline">Recharge climatisation — Var (83)</div>
 </header>
 
@@ -154,11 +208,11 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   </div>
 
   <!-- BANNIÈRE LOCALISATION TEMPS RÉEL -->
-  <div id="banniereLocalisation" style="display:none;margin-top:14px;background:rgba(0,214,143,0.12);border:1px solid rgba(0,214,143,0.4);border-radius:14px;padding:12px 16px;max-width:400px;margin-left:auto;margin-right:auto;">
+  <div id="banniereLocalisation" style="display:none;margin-top:14px;background:rgba(61,220,151,0.12);border:1px solid rgba(61,220,151,0.4);border-radius:14px;padding:12px 16px;max-width:400px;margin-left:auto;margin-right:auto;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#00d68f;box-shadow:0 0 8px #00d68f;flex-shrink:0;animation:pulse 1.5s infinite;"></div>
+      <div style="width:10px;height:10px;border-radius:50%;background:#3DDC97;box-shadow:0 0 8px #3DDC97;flex-shrink:0;animation:pulse 1.5s infinite;"></div>
       <div>
-        <div style="font-size:13px;font-weight:700;color:#00d68f;" id="banniereTitre">Notre technicien est actuellement dans votre secteur</div>
+        <div style="font-size:13px;font-weight:700;color:#3DDC97;" id="banniereTitre">Notre technicien est actuellement dans votre secteur</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;" id="banniereDetail"></div>
       </div>
     </div>
@@ -166,7 +220,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 
   <!-- BOUTONS TARIFS + QUI SOMMES NOUS -->
   <div style="margin-top:16px;">
-    <button onclick="toggleTarifs()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">💰 Consulter nos tarifs</button>
+    <button onclick="toggleTarifs()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;">Consulter nos tarifs</button>
   </div>
 
   <!-- TARIFS DROPDOWN -->
@@ -178,16 +232,16 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VU — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 60€</span></div>
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">PL — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 80€</span></div>
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">Diagnostic + Recharge</span><span style="color:#fff;font-weight:700;">50€</span></div>
-    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#ff9500;">🚗 Déplacement domicile</span><span style="color:#ff9500;font-weight:700;">selon votre zone — voir étape réservation</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#FF8A3D;">Déplacement domicile</span><span style="color:#FF8A3D;font-weight:700;">selon votre zone — voir étape réservation</span></div>
   </div>
 </div>
 
 <!-- QUI SOMMES-NOUS -->
-<table width="100%" style="position:relative;z-index:5;max-width:420px;margin:16px auto 0;background-color:#1f4577;border-collapse:collapse;">
-<tr><td style="padding:16px;text-align:center;">
-<span style="font-size:14px;color:#ffffff;font-family:Arial,sans-serif;line-height:1.7;">🔧 Artisan indépendant diplômé depuis 5 ans — 100% clients satisfaits<br>Gaz neuf certifié, jamais recyclé — Vous êtes présent pendant toute l'intervention</span>
-</td></tr>
-</table>
+<div style="position:relative;z-index:5;max-width:440px;margin:16px auto 0;padding:0 16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;font-size:13.5px;color:var(--text-2);line-height:1.7;">
+    <strong style="color:var(--text);">Artisan indépendant diplômé depuis 5 ans</strong> — 100% clients satisfaits<br>Gaz neuf certifié, jamais recyclé — Vous êtes présent pendant toute l'intervention
+  </div>
+</div>
 
 <div class="container">
   <div class="steps-bar">
@@ -228,20 +282,20 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:8px;">
 
         <div class="service-btn" id="btnSurPlace" onclick="selectLieu('sur_place',this)" style="padding:20px 16px;text-align:left;display:flex;align-items:center;gap:14px;">
-          <span style="font-size:36px;">🏠</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#38E1FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;flex:none;"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
           <div>
             <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">Sur place</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.5);">Je viens à La Foux</div>
-            <div style="font-size:12px;color:#00d68f;font-weight:600;margin-top:4px;">✓ Tarif normal</div>
+            <div style="font-size:12px;color:#3DDC97;font-weight:600;margin-top:4px;">Tarif normal</div>
           </div>
         </div>
 
         <div class="service-btn" id="btnDomicile" onclick="selectLieu('domicile',this)" style="padding:20px 16px;text-align:left;display:flex;align-items:center;gap:14px;">
-          <span style="font-size:36px;">🚗</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FF8A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;flex:none;"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg>
           <div>
             <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">À domicile</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.5);">Intervention chez vous (max 15 km)</div>
-            <div style="font-size:12px;color:#ff9500;font-weight:600;margin-top:4px;">+10€ jusqu'à 15 km · Au-delà : sur devis</div>
+            <div style="font-size:12px;color:#FF8A3D;font-weight:600;margin-top:4px;">+10€ jusqu'à 15 km · Au-delà : sur devis</div>
           </div>
         </div>
 
@@ -275,8 +329,8 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
       <div class="section-title">Type de <span>Recharge</span></div>
 
       <!-- TARIFS -->
-      <div style="background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
-        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">💰 Nos tarifs</div>
+      <div style="background:rgba(56,225,255,0.06);border:1px solid rgba(56,225,255,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Nos tarifs</div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
           <span style="color:rgba(255,255,255,0.7);">VL — Recharge R134a</span>
           <span style="color:#fff;font-weight:700;">45€</span>
@@ -302,33 +356,33 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
           <span style="color:#fff;font-weight:700;">50€</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
-          <span style="color:rgba(255,149,0,0.9);">🚗 Déplacement à domicile</span>
-          <span style="color:#ff9500;font-weight:700;">+10€ / sur devis</span>
+          <span style="color:rgba(255,138,61,0.9);">Déplacement à domicile</span>
+          <span style="color:#FF8A3D;font-weight:700;">+10€ / sur devis</span>
         </div>
       </div>
 
       <div class="service-grid" id="serviceGrid">
         <div class="service-btn" id="srv_vl_r134a" onclick="selectService(this,'VL Recharge Standard (R134a)')">
-          <span class="sico">🚗</span>VL Recharge Standard<br><small style="color:rgba(205,232,255,0.4)">R134a</small>
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg></span>VL Recharge Standard<br><small style="color:rgba(168,180,214,0.4)">R134a</small>
         </div>
         <div class="service-btn" id="srv_vl_r1234yf" onclick="selectService(this,'VL Recharge Standard (R1234yf)')">
-          <span class="sico">🚗</span>VL Recharge Standard<br><small style="color:rgba(205,232,255,0.4)">R1234yf</small>
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg></span>VL Recharge Standard<br><small style="color:rgba(168,180,214,0.4)">R1234yf</small>
         </div>
         <div class="service-btn" id="srv_vl_desinfec" onclick="selectService(this,'VL Recharge + Désinfection')">
-          <span class="sico">✨</span>VL Recharge +<br>Désinfection
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>VL Recharge +<br>Désinfection
         </div>
         <div class="service-btn" id="srv_vu_recharge" onclick="selectService(this,'VU Recharge Standard')">
-          <span class="sico">🚐</span>VU Recharge<br>Standard
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a1 1 0 0 1 1-1h11v9H2z"/><path d="M14 9h4l3 3.5V16h-7z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>VU Recharge<br>Standard
         </div>
         <div class="service-btn" id="srv_vu_desinfec" onclick="selectService(this,'VU Recharge + Désinfection')">
-          <span class="sico">🚐</span>VU Recharge +<br>Désinfection
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a1 1 0 0 1 1-1h11v9H2z"/><path d="M14 9h4l3 3.5V16h-7z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>VU Recharge +<br>Désinfection
         </div>
         <div class="service-btn" id="srv_diag" onclick="selectService(this,'Diagnostic + Recharge')">
-          <span class="sico">🔧</span>Diagnostic +<br>Recharge
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>Diagnostic +<br>Recharge
         </div>
       </div>
-      <div id="indispoMsg" style="display:none;margin-top:10px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:12px;font-size:13px;color:#ff9500;">
-        ⚠️ Certaines prestations sont temporairement indisponibles. Appelez le <a href="tel:+33648008558" style="color:var(--accent);font-weight:700;">06 48 00 85 58</a> pour plus d'infos.
+      <div id="indispoMsg" style="display:none;margin-top:10px;background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.3);border-radius:10px;padding:12px;font-size:13px;color:#FF8A3D;">
+        Certaines prestations sont temporairement indisponibles. Appelez le <a href="tel:+33648008558" style="color:var(--accent);font-weight:700;">06 48 00 85 58</a> pour plus d'infos.
       </div>
     </div>
     <button class="btn btn-secondary" onclick="goStep(2)">← Retour</button>
@@ -353,7 +407,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
     <div class="card">
       <div class="section-title">Récap <span>RDV</span></div>
       <div id="recapContent"></div>
-      <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmerRDV()">✓ Confirmer ma réservation</button>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmerRDV()">Confirmer ma réservation</button>
     </div>
     <button class="btn btn-secondary" onclick="goStep(4)">← Retour</button>
   </div>
@@ -361,11 +415,11 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   <!-- CONFIRMATION -->
   <div class="step" id="step6">
     <div class="card confirm-box">
-      <div class="confirm-icon">🎉</div>
+      <div class="confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16.5 9.5"/></svg></div>
       <div class="confirm-title">Réservation confirmée !</div>
       <div class="confirm-sub" id="confirmSub"></div>
-      <div style="margin-top:20px;padding:14px;background:rgba(0,214,143,0.08);border:1px solid rgba(0,214,143,0.2);border-radius:12px;font-size:13px;color:rgba(205,232,255,0.7);">
-        📞 En cas de problème, appelez directement :<br>
+      <div style="margin-top:20px;padding:14px;background:rgba(61,220,151,0.08);border:1px solid rgba(61,220,151,0.2);border-radius:12px;font-size:13px;color:rgba(168,180,214,0.7);">
+        En cas de problème, appelez directement :<br>
         <a href="tel:+33648008558" style="color:var(--accent);font-weight:700;font-size:16px;">06 48 00 85 58</a>
       </div>
     </div>
@@ -373,7 +427,7 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
 </div>
 
 <footer>
-  <div style="font-size:11px;color:rgba(205,232,255,0.3);margin-bottom:6px;">⚠️ Tout rendez-vous non honoré sans annulation préalable pourra entraîner la facturation des frais de déplacement.</div>
+  <div style="font-size:11px;color:rgba(168,180,214,0.3);margin-bottom:6px;">Tout rendez-vous non honoré sans annulation préalable pourra entraîner la facturation des frais de déplacement.</div>
   ClimExpress Recharge Auto — Var (83) · climexpressauto.fr
 </footer>
 
@@ -429,7 +483,7 @@ async function envoyerDevis() {
       })
     });
     fermerDevisModal();
-    alert('✓ Demande envoyée ! ClimExpress vous contactera très rapidement.');
+    alert('Demande envoyée ! ClimExpress vous contactera très rapidement.');
   } catch(e) {
     alert('Erreur. Appelez directement le 06 48 00 85 58');
   }
@@ -508,7 +562,7 @@ function analyserCodePostal() {
   const zone = ZONES_CP[cp];
   if (!zone) {
     resultat.style.display = 'block';
-    resultat.innerHTML = '<div style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:12px;padding:14px;font-size:13px;color:#ff8080;">⚠️ Code postal non reconnu. Appelez le <a href="tel:+33648008558" style="color:var(--accent);">06 48 00 85 58</a></div>';
+    resultat.innerHTML = '<div style="background:rgba(255,84,112,0.1);border:1px solid rgba(255,84,112,0.3);border-radius:12px;padding:14px;font-size:13px;color:#FF8CA0;">Code postal non reconnu. Appelez le <a href="tel:+33648008558" style="color:var(--accent);">06 48 00 85 58</a></div>';
     btnContinuer.style.display = 'none'; return;
   }
   selectedZoneVille = zone.ville;
@@ -517,10 +571,10 @@ function analyserCodePostal() {
   modeAttente = zone.km >= SEUIL_REGROUPEMENT;
   resultat.style.display = 'block';
   if (!modeAttente) {
-    resultat.innerHTML = '<div style="background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span><span style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#00d68f;">' + (zone.supp > 0 ? '+'+zone.supp+'€' : 'Gratuit') + '</span></div><div style="margin-top:8px;font-size:11px;color:rgba(0,214,143,0.7);">✓ Confirmation immédiate après réservation</div></div>';
+    resultat.innerHTML = '<div style="background:rgba(61,220,151,0.1);border:1px solid rgba(61,220,151,0.3);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">Supplément déplacement</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#3DDC97;">' + (zone.supp > 0 ? '+'+zone.supp+'€' : 'Gratuit') + '</span></div><div style="margin-top:8px;font-size:11px;color:rgba(61,220,151,0.7);">Confirmation immédiate après réservation</div></div>';
     btnContinuer.textContent = 'Continuer →';
   } else {
-    resultat.innerHTML = '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.35);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">📍 ' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">🚗 Supplément déplacement</span><span style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#ff9500;">+' + zone.supp + '€</span></div><div style="background:rgba(255,149,0,0.15);border-radius:8px;padding:10px;font-size:12px;color:#ff9500;line-height:1.5;">⏳ <strong>Réservation en attente de confirmation.</strong><br>Vous recevrez un SMS sous ' + (DELAI_ATTENTE_JOURS*24) + 'h maximum.</div></div>';
+    resultat.innerHTML = '<div style="background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.35);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">Supplément déplacement</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#FF8A3D;">+' + zone.supp + '€</span></div><div style="background:rgba(255,138,61,0.15);border-radius:8px;padding:10px;font-size:12px;color:#FF8A3D;line-height:1.5;"><strong>Réservation en attente de confirmation.</strong><br>Vous recevrez un SMS sous ' + (DELAI_ATTENTE_JOURS*24) + 'h maximum.</div></div>';
     btnContinuer.textContent = 'Réserver (en attente) →';
   }
   btnContinuer.style.display = 'block';
@@ -570,7 +624,7 @@ function goStep(n) {
 function goStep2() {
   const nom = document.getElementById('cNom').value.trim();
   const tel = document.getElementById('cTel').value.trim();
-  if (!nom || !tel) { showError('⚠️ Merci de remplir nom et téléphone'); return; }
+  if (!nom || !tel) { showError('Merci de remplir nom et téléphone'); return; }
   goStep(2);
 }
 
@@ -587,8 +641,8 @@ function selectLieu(lieu, el) {
 function goStep3FromDomicile() {
   const adresseRue = document.getElementById('cAdresse') ? document.getElementById('cAdresse').value.trim() : '';
   const villeVal = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
-  if (!adresseRue) { showError('⚠️ Merci d\'entrer votre adresse'); return; }
-  if (!villeVal) { showError('⚠️ Merci d\'entrer votre ville'); return; }
+  if (!adresseRue) { showError('Merci d\'entrer votre adresse'); return; }
+  if (!villeVal) { showError('Merci d\'entrer votre ville'); return; }
   goStep(3);
 }
 
@@ -629,7 +683,7 @@ async function loadSlots() {
 
     const grid = document.getElementById('slotsGrid');
     if (jourBloque) {
-      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#ff8080;font-weight:700;">🔒 Complet pour cette journée</div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#FF8CA0;font-weight:700;">Complet pour cette journée</div>`;
       return;
     }
 
@@ -653,7 +707,7 @@ async function loadSlots() {
       });
       const isBlocked = taken || isPast || tooClose;
       const sel = h === selectedHeure;
-      const label = isPast ? h + ' ✗' : (taken || tooClose) ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' 🔒' : h;
+      const label = isPast ? h + ' ✗' : (taken || tooClose) ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' —' : h;
       return `<div class="slot-btn ${isBlocked?'taken':''} ${sel&&!isBlocked?'selected':''}" onclick="${isBlocked?'':'selectSlot(\''+h+'\')'}">${label}</div>`;
     }).join('');
   } catch(e) {
@@ -677,12 +731,12 @@ function showRecap() {
   const villeVal = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
   const adresse = selectedLieu === 'domicile' ? ((adresseRue + (villeVal ? ', ' + villeVal : '')) || 'Non précisée') : 'Sur place — La Foux';
   const lieuLabel = selectedLieu === 'domicile'
-    ? (selectedZoneVille ? '🚗 À domicile — ' + selectedZoneVille : '🚗 À domicile')
-    : '🏠 Sur place — La Foux';
+    ? (selectedZoneVille ? 'À domicile — ' + selectedZoneVille : 'À domicile')
+    : 'Sur place — La Foux';
   const dateStr = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const attenteMsg = modeAttente ? '<div style="margin-top:6px;font-size:11px;color:#ff9500;">⏳ En attente de confirmation — SMS sous 48h</div>' : '<div style="margin-top:6px;font-size:11px;color:#00d68f;">✓ Confirmation immédiate</div>';
+  const attenteMsg = modeAttente ? '<div style="margin-top:6px;font-size:11px;color:#FF8A3D;">En attente de confirmation — SMS sous 48h</div>' : '<div style="margin-top:6px;font-size:11px;color:#3DDC97;">✓ Confirmation immédiate</div>';
   const depBadge = selectedLieu === 'domicile'
-    ? '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;padding:10px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#ff9500;">🚗 Déplacement — ' + (selectedZoneVille||'domicile') + '</span><span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#ff9500;">' + (selectedZoneSupp > 0 ? '+'+selectedZoneSupp+'€' : 'Inclus') + '</span></div>' + attenteMsg + '</div>'
+    ? '<div style="background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.3);border-radius:10px;padding:10px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#FF8A3D;">Déplacement — ' + (selectedZoneVille||'domicile') + '</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:22px;color:#FF8A3D;">' + (selectedZoneSupp > 0 ? '+'+selectedZoneSupp+'€' : 'Inclus') + '</span></div>' + attenteMsg + '</div>'
     : '';
   document.getElementById('recapContent').innerHTML = `
     <div class="recap-row"><span class="recap-label">Nom</span><span class="recap-value">${nom}</span></div>
@@ -823,17 +877,17 @@ async function chargerLocalisationJour() {
       });
     }
 
-    const msgFixe = '⚡ Intervention sous 25-30 min après confirmation';
+    const msgFixe = 'Intervention sous 25-30 min après confirmation';
 
     if (rdvActuel) {
       const secteur = getSecteur(rdvActuel.adresse) || getSecteur(rdvActuel.zone_ville) || getSecteur(rdvActuel.lieu);
       banniere.style.display = 'block';
-      titre.textContent = secteur ? '🔧 En intervention — secteur ' + secteur : '🔧 En intervention dans votre secteur';
+      titre.textContent = secteur ? 'En intervention — secteur ' + secteur : 'En intervention dans votre secteur';
       detail.textContent = 'Disponible rapidement après — ' + msgFixe;
     } else if (rdvProchain) {
       const secteur = getSecteur(rdvProchain.adresse) || getSecteur(rdvProchain.zone_ville) || getSecteur(rdvProchain.lieu);
       banniere.style.display = 'block';
-      titre.textContent = secteur ? '📍 Prochain passage — secteur ' + secteur : '📍 Prochain passage prévu';
+      titre.textContent = secteur ? 'Prochain passage — secteur ' + secteur : 'Prochain passage prévu';
       detail.textContent = 'Vers ' + rdvProchain.heure + ' — ' + msgFixe;
     } else {
       afficherMessageHeure(banniere, titre, detail, heure);
@@ -851,15 +905,15 @@ async function chargerLocalisationJour() {
 function afficherMessageHeure(banniere, titre, detail, heure) {
   if (!banniere || !titre || !detail) return;
   banniere.style.display = 'block';
-  const msgFixe = '⚡ Intervention sous 25-30 min après confirmation';
+  const msgFixe = 'Intervention sous 25-30 min après confirmation';
   if (heure >= 8 && heure < 12) {
-    titre.textContent = '🌅 Disponible ce matin — réservez votre créneau maintenant !';
+    titre.textContent = 'Disponible ce matin — réservez votre créneau maintenant !';
   } else if (heure >= 12 && heure < 17) {
-    titre.textContent = '☀️ Encore disponible cet après-midi — intervention rapide';
+    titre.textContent = 'Encore disponible cet après-midi — intervention rapide';
   } else if (heure >= 17 && heure < 18) {
-    titre.textContent = "🌆 Derniers créneaux disponibles aujourd'hui";
+    titre.textContent = "Derniers créneaux disponibles aujourd'hui";
   } else {
-    titre.textContent = "📅 Réservez maintenant — disponible dès demain matin dès 8h";
+    titre.textContent = "Réservez maintenant — disponible dès demain matin dès 8h";
   }
   detail.textContent = msgFixe;
 }
@@ -867,26 +921,26 @@ function afficherMessageHeure(banniere, titre, detail, heure) {
 chargerLocalisationJour();
 </script>
 <!-- MODAL DEVIS DEPLACEMENT -->
-<div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(8,26,40,0.95);z-index:500;display:none;align-items:flex-end;">
-  <div style="background:#0d2d45;border-radius:20px 20px 0 0;border:1px solid rgba(0,194,255,0.2);padding:24px;width:100%;max-height:85vh;overflow-y:auto;">
+<div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(7,10,22,0.94);z-index:500;display:none;align-items:flex-end;">
+  <div style="background:#131A30;border-radius:20px 20px 0 0;border:1px solid rgba(56,225,255,0.2);padding:24px;width:100%;max-height:85vh;overflow-y:auto;">
     <div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 16px;"></div>
-    <div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#fff;letter-spacing:1px;margin-bottom:4px;">📋 Devis déplacement</div>
+    <div style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#fff;letter-spacing:1px;margin-bottom:4px;">Devis déplacement</div>
     <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Pour toute intervention au-delà de 15 km de La Foux</div>
     <div style="margin-bottom:12px;">
-      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre nom</label>
-      <input type="text" id="devisNom" placeholder="Ex: Jean Dupont" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre nom</label>
+      <input type="text" id="devisNom" placeholder="Ex: Jean Dupont" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
     </div>
     <div style="margin-bottom:12px;">
-      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Téléphone</label>
-      <input type="tel" id="devisTel" placeholder="06 12 34 56 78" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Téléphone</label>
+      <input type="tel" id="devisTel" placeholder="06 12 34 56 78" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
     </div>
     <div style="margin-bottom:12px;">
-      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre adresse</label>
-      <input type="text" id="devisAdresse" placeholder="Ex: 8 rue des Pins, Pierrefeu du Var" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre adresse</label>
+      <input type="text" id="devisAdresse" placeholder="Ex: 8 rue des Pins, Pierrefeu du Var" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
     </div>
     <div style="margin-bottom:16px;">
-      <label style="font-size:11px;font-weight:700;color:#00c2ff;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Type de véhicule</label>
-      <select id="devisType" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.2);background:rgba(13,45,69,0.8);color:#fff;font-size:14px;font-family:DM Sans,sans-serif;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Type de véhicule</label>
+      <select id="devisType" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
         <option value="">— Choisir —</option>
         <option>VL — Voiture particulière (R134a)</option>
         <option>VL — Voiture particulière (R1234yf)</option>
@@ -894,8 +948,8 @@ chargerLocalisationJour();
         <option>PL — Poids lourd</option>
       </select>
     </div>
-    <button onclick="envoyerDevis()" style="width:100%;padding:14px;background:#00c2ff;color:#0a1e38;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:DM Sans,sans-serif;">📋 Envoyer ma demande</button>
-    <button onclick="fermerDevisModal()" style="width:100%;padding:12px;background:transparent;color:rgba(255,255,255,0.4);border:none;border-radius:12px;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;margin-top:8px;">Annuler</button>
+    <button onclick="envoyerDevis()" style="width:100%;padding:14px;background:#38E1FF;color:#04222B;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;">Envoyer ma demande</button>
+    <button onclick="fermerDevisModal()" style="width:100%;padding:12px;background:transparent;color:rgba(255,255,255,0.4);border:none;border-radius:12px;font-size:13px;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;margin-top:8px;">Annuler</button>
   </div>
 </div>
 

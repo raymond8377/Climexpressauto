@@ -663,6 +663,7 @@ async function syncFromSupabase() {
     } catch(e) {}
     renderAccueil(); renderCalendar(); renderRappels(); updateStats();
     showSyncBadge(webRdvs.length);
+    verifierNouveauxRdvs(webRdvs);
   } catch(e) { console.log('Sync offline'); }
 }
 
@@ -1147,6 +1148,80 @@ function showRdvDetail(id) {
   document.getElementById('rdvModal').classList.add('open');
 }
 
+
+
+// ===== POPUP NOUVEAU RDV =====
+var derniersIdsConnus = JSON.parse(localStorage.getItem('clim_ids_connus') || '[]');
+var rdvEnAttente = null;
+
+function verifierNouveauxRdvs(webRdvs) {
+  var nouveaux = webRdvs.filter(function(r) {
+    return !derniersIdsConnus.includes(r.supabase_id) && r.status !== 'annule' && r.status !== 'done';
+  });
+  derniersIdsConnus = webRdvs.map(function(r) { return r.supabase_id; });
+  localStorage.setItem('clim_ids_connus', JSON.stringify(derniersIdsConnus));
+  if (nouveaux.length > 0) afficherModalNouveauRdv(nouveaux[0]);
+}
+
+function afficherModalNouveauRdv(r) {
+  rdvEnAttente = r;
+  var info = document.getElementById('nouveauRdvInfo');
+  var modal = document.getElementById('modalNouveauRdv');
+  if (!info || !modal) return;
+  info.innerHTML = '<strong>' + r.nom + '</strong><br>📅 ' + formatDate(r.date) + ' a ' + r.heure + '<br>🔧 ' + r.type + '<br>📍 ' + (r.adresse || r.lieu || 'Non precise') + '<br>📞 ' + r.tel;
+  var btnMail = document.getElementById('btnNRMail');
+  if (btnMail) btnMail.style.display = r.email ? 'block' : 'none';
+  modal.style.display = 'flex';
+}
+
+function fermerModalNouveauRdv() {
+  var modal = document.getElementById('modalNouveauRdv');
+  if (modal) modal.style.display = 'none';
+  rdvEnAttente = null;
+}
+
+function confirmerNouveauRdv(mode) {
+  if (!rdvEnAttente) return;
+  var r = rdvEnAttente;
+  var dateAff = formatDate(r.date);
+  var isDomicile = r.lieu && r.lieu.indexOf('domicile') >= 0;
+  var msg = isDomicile
+    ? 'Bonjour ' + r.nom + ' ! Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + r.heure + '. Nous viendrons directement chez vous. Pour toute question : 06 48 00 85 58. A bientot ! - Raymond ClimExpress'
+    : 'Bonjour ' + r.nom + ' ! Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + r.heure + '. ClimExpress est un service mobile - votre point de rendez-vous vous sera envoye 1h a 2h avant. Pour toute question : 06 48 00 85 58. A bientot ! - Raymond ClimExpress';
+  var sujet = 'Confirmation RDV ClimExpress - ' + dateAff + ' a ' + r.heure;
+  fermerModalNouveauRdv();
+  if (mode === 'sms' && r.tel) {
+    window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+  } else if (mode === 'mail' && r.email) {
+    window.location.href = 'mailto:' + r.email + '?subject=' + encodeURIComponent(sujet) + '&body=' + encodeURIComponent(msg);
+  }
+}
+
+function annulerNouveauRdv() {
+  if (!rdvEnAttente) return;
+  var r = rdvEnAttente;
+  var msg = 'Bonjour ' + r.nom + ', nous sommes desoles mais votre RDV ClimExpress du ' + formatDate(r.date) + ' a ' + r.heure + ' ne peut pas etre confirme. Merci de reserver un autre creneau sur climexpressauto.fr - 06 48 00 85 58';
+  if (confirm('Annuler ce RDV et prevenir ' + r.nom + ' ?')) {
+    if (r.supabase_id) {
+      fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+        method: 'PATCH',
+        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        body: JSON.stringify({ status: 'annule' })
+      }).catch(function(e) {});
+    }
+    fermerModalNouveauRdv();
+    if (r.tel) window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+  }
+}
+
+function fermerModalModifHeure(btn) {
+  var modal = btn;
+  while (modal && modal.style && !modal.style.position.includes('fixed')) {
+    modal = modal.parentElement;
+  }
+  if (modal) modal.remove();
+}
+
 function modifierHeure(id) {
   const r = rdvs.find(r => r.id === id);
   if (!r) return;
@@ -1158,7 +1233,7 @@ function modifierHeure(id) {
     '<div style="font-size:15px;font-weight:900;color:#00c2ff;margin-bottom:16px;text-align:center;">✏️ Modifier heure — ' + r.nom + '</div>' +
     '<select id="selectNouvelleHeure" style="width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:16px;margin-bottom:16px;">' + opts + '</select>' +
     '<div style="display:flex;gap:8px;">' +
-    '<button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-weight:700;cursor:pointer;">Annuler</button>' +
+    '<button onclick="fermerModalModifHeure(this)" style="flex:1;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-weight:700;cursor:pointer;">Annuler</button>' +
     '<button onclick="validerModifHeure(' + id + ')" style="flex:2;padding:12px;background:linear-gradient(135deg,#00c2ff,#0055ff);border:none;border-radius:10px;color:#fff;font-weight:900;font-size:14px;cursor:pointer;">✓ Confirmer</button>' +
     '</div></div>';
   document.body.appendChild(modal);
@@ -2264,5 +2339,22 @@ async function checkMasquerState() {
   </div>
 </div>
 
+
+<!-- MODAL NOUVEAU RDV -->
+<div id="modalNouveauRdv" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0d2244;border:2px solid rgba(0,214,143,0.4);border-radius:20px;padding:24px;width:100%;max-width:380px;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:32px;">🔔</div>
+      <div style="font-size:16px;font-weight:900;color:#00d68f;text-transform:uppercase;">Nouveau RDV !</div>
+    </div>
+    <div id="nouveauRdvInfo" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:16px;font-size:14px;line-height:1.8;color:#fff;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button id="btnNRSMS" onclick="confirmerNouveauRdv('sms')" style="padding:14px;background:rgba(0,214,143,0.2);border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;cursor:pointer;">📱 Confirmer par SMS</button>
+      <button id="btnNRMail" onclick="confirmerNouveauRdv('mail')" style="padding:14px;background:rgba(0,214,143,0.2);border:1.5px solid rgba(0,214,143,0.5);border-radius:12px;color:#00d68f;font-weight:700;font-size:14px;cursor:pointer;display:none;">📧 Confirmer par Mail</button>
+      <button onclick="annulerNouveauRdv()" style="padding:14px;background:rgba(255,68,68,0.15);border:1.5px solid rgba(255,68,68,0.4);border-radius:12px;color:#ff6b6b;font-weight:700;font-size:14px;cursor:pointer;">❌ Annuler ce RDV</button>
+      <button onclick="fermerModalNouveauRdv()" style="padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;">Plus tard</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

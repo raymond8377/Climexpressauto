@@ -612,6 +612,13 @@ Ceci est un message automatique, veuillez ne pas y répondre. Nous vous contacte
 </div>
 
 <script>
+// Gestionnaire d'erreurs global pour debug
+window.addEventListener('error', function(e) {
+  var msg = (e.message || '') + ' | ' + (e.filename || '') + ':' + (e.lineno || '');
+  document.title = 'ERR: ' + msg.substring(0, 50);
+  console.error('GLOBAL ERROR:', msg, e.error);
+});
+
 // =========== SUPABASE ===========
 const SB_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
@@ -817,7 +824,7 @@ function rdvCard(r) {
     </div>
     <div class="rdv-actions">
       <div class="btn-icon" onclick="event.stopPropagation();callClient('${r.tel}')">📞</div>
-      ${!isDone ? `<div class="btn-icon" onclick="event.stopPropagation();doneRDV(${r.id})">✓</div>` : ''}
+      ${!isDone ? '<div class="btn-icon" onclick="event.stopPropagation();doneRDV('+r.id+')">OK</div>' : ''}
     </div>
   </div>`;
 }
@@ -1120,6 +1127,9 @@ function showRdvDetail(id) {
   html += '<button class="btn btn-primary" style="flex:1" onclick="callClient(\'' + r.tel + '\');closeRdvModal()">Appeler</button>';
   html += '<button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(' + r.id + ')">Annuler RDV</button>';
   html += '</div>';
+  html += '<div style="margin-top:8px;">';
+  html += '<button class="btn" style="width:100%;background:rgba(0,194,255,0.15);color:#00c2ff;border:1px solid rgba(0,194,255,0.3);" onclick="modifierHeure(' + r.id + ')">✏️ Modifier heure</button>';
+  html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-top:8px;">';
   html += '<button class="btn" style="flex:1;background:rgba(0,214,143,0.15);color:var(--green);border:1px solid rgba(0,214,143,0.3);" onclick="marquerEffectue(' + r.id + ')">✓ Effectué</button>';
   html += '<button class="btn" style="flex:1;background:rgba(255,149,0,0.15);color:var(--orange);border:1px solid rgba(255,149,0,0.3);" onclick="marquerNonEffectue(' + r.id + ')">⚠️ Non effectué</button>';
@@ -1136,6 +1146,53 @@ function showRdvDetail(id) {
   document.getElementById('modalRdvContent').innerHTML = html;
   document.getElementById('rdvModal').classList.add('open');
 }
+
+function modifierHeure(id) {
+  const r = rdvs.find(r => r.id === id);
+  if (!r) return;
+  const creneaux = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  let opts = creneaux.map(h => '<option value="' + h + '"' + (h === r.heure ? ' selected' : '') + '>' + h + '</option>').join('');
+  modal.innerHTML = '<div style="background:#0d2244;border:2px solid rgba(0,194,255,0.3);border-radius:20px;padding:24px;width:100%;max-width:340px;">' +
+    '<div style="font-size:15px;font-weight:900;color:#00c2ff;margin-bottom:16px;text-align:center;">✏️ Modifier heure — ' + r.nom + '</div>' +
+    '<select id="selectNouvelleHeure" style="width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:16px;margin-bottom:16px;">' + opts + '</select>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-weight:700;cursor:pointer;">Annuler</button>' +
+    '<button onclick="validerModifHeure(' + id + ')" style="flex:2;padding:12px;background:linear-gradient(135deg,#00c2ff,#0055ff);border:none;border-radius:10px;color:#fff;font-weight:900;font-size:14px;cursor:pointer;">✓ Confirmer</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+}
+
+function validerModifHeure(id) {
+  const nouvelleHeure = document.getElementById('selectNouvelleHeure').value;
+  const r = rdvs.find(r => r.id === id);
+  if (!r || !nouvelleHeure) return;
+  const ancienneHeure = r.heure;
+  r.heure = nouvelleHeure;
+  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  if (r.supabase_id) {
+    fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+      method: 'PATCH',
+      headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+      body: JSON.stringify({ heure: nouvelleHeure })
+    }).catch(function(e) {});
+  }
+  // Fermer le modal de modification
+  const modals = document.querySelectorAll('div[style*="position:fixed"]');
+  modals.forEach(m => m.remove());
+  closeRdvModal();
+  renderAccueil(); renderCalendar(); renderRappels();
+  showNotif('Heure modifiee : ' + ancienneHeure + ' -> ' + nouvelleHeure, '#00c2ff');
+  // Proposer de prevenir le client
+  setTimeout(function() {
+    const msg = 'Bonjour ' + r.nom + ', votre RDV ClimExpress du ' + formatDate(r.date) + ' a ete modifie. Nouvelle heure : ' + nouvelleHeure + '. Pour toute question : 06 48 00 85 58. A bientot !';
+    if (confirm('Prevenir ' + r.nom + ' du changement heure ?')) {
+      if (r.tel) window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
+    }
+  }, 500);
+}
+
 function closeRdvModal() { document.getElementById('rdvModal').classList.remove('open'); }
 function deleteRDV(id) {
   if (!confirm('Supprimer ce RDV ?')) return;
@@ -1223,13 +1280,13 @@ function showCalDayMenu(dateStr) {
       <button class="btn" onclick="bloquerJourDepuisCalendrier('${dateStr}')" style="background:rgba(255,68,68,0.12);color:#ff8080;border:1px solid rgba(255,68,68,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🔒 Bloquer<br>le jour entier</button>
       <button class="btn" onclick="ouvrirBlocageHeure('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🕐 Bloquer<br>une heure</button>
       <button class="btn" onclick="bloquerMatinee('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🌅 Bloquer<br>la matinée</button>
-      <button class="btn" onclick="bloquerApresMidi('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">🌆 Bloquer<br>l'après-midi</button>
+      <button class="btn" onclick="bloquerApresMidi('${dateStr}')" style="background:rgba(255,149,0,0.12);color:#ff9500;border:1px solid rgba(255,149,0,0.3);padding:10px;border-radius:10px;font-weight:700;font-size:12px;">Bloquer apres-midi</button>
     </div>`;
   }
   menuHtml += `</div>`;
 
   if (dayRdvs.length > 0) {
-    div.innerHTML = menuHtml + `<div class="section-title" style="font-size:18px;margin-bottom:10px;">${dateLabel}</div>` + dayRdvs.map(r => rdvCard(r)).join('');
+    div.innerHTML = menuHtml + '<div class="section-title" style="font-size:18px;margin-bottom:10px;">' + dateLabel + '</div>' + dayRdvs.map(function(r) { return rdvCard(r); }).join('');
   } else {
     div.innerHTML = menuHtml;
   }
@@ -1418,7 +1475,7 @@ function renderBanniereNotif() {
     banner.id = 'notifBanner';
     banner.style.cssText = 'background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;';
     banner.innerHTML = `<span style="font-size:22px;">🔔</span><div style="flex:1"><div style="font-weight:700;font-size:13px;color:var(--green);">Notifications activées</div><div style="font-size:11px;color:rgba(205,232,255,0.5);margin-top:2px;">Tu reçois des rappels automatiques pour chaque RDV</div></div>`;
-    document.getElementById('rappelList').before(banner);
+    const rl = document.getElementById('rappelList'); if (rl) rl.before(banner);
   } else {
     const banner = document.createElement('div');
     banner.id = 'notifBanner';
@@ -1433,7 +1490,7 @@ function renderBanniereNotif() {
       </div>
       <button class="btn btn-primary" onclick="demanderPermissionNotif()" style="font-size:13px;padding:10px;">🔔 Activer les rappels</button>
     `;
-    document.getElementById('rappelList').before(banner);
+    const rl2 = document.getElementById('rappelList'); if (rl2) rl2.before(banner);
   }
 }
 
@@ -1681,60 +1738,59 @@ function renderAlertesZones() {
   const el = document.getElementById('alertesZones');
   if (!el) return;
 
-  const enAttente = rdvs.filter(r => r.status === 'attente_zone');
+  const enAttente = rdvs.filter(function(r) { return r.status === 'attente_zone'; });
   if (enAttente.length === 0) { el.innerHTML = ''; return; }
 
-  // Grouper par zone_ville
   const zones = {};
-  enAttente.forEach(r => {
+  enAttente.forEach(function(r) {
     const z = r.zone_ville || 'Zone inconnue';
     if (!zones[z]) zones[z] = [];
     zones[z].push(r);
   });
 
   let html = '';
-  Object.keys(zones).forEach(zone => {
+  Object.keys(zones).forEach(function(zone) {
     const clients = zones[zone];
     const nb = clients.length;
     const couleur = nb >= 3 ? '#00d68f' : '#ff9500';
-    const icone = nb >= 3 ? '✅' : '⏳';
-    const msg = nb >= 3
-      ? `${nb} clients — Tournée à confirmer !`
-      : `${nb}/3 client${nb > 1 ? 's' : ''} — En attente`;
-
-    // Vérifier si ça fait plus de 2 jours
-    const plusAncien = clients.reduce((a, b) => (a.created_at || a.date) < (b.created_at || b.date) ? a : b);
+    const icone = nb >= 3 ? 'OK' : '...';
+    const msg = nb >= 3 ? nb + ' clients — Tournee a confirmer !' : nb + '/3 client' + (nb > 1 ? 's' : '') + ' — En attente';
+    const plusAncien = clients.reduce(function(a, b) { return (a.created_at || a.date) < (b.created_at || b.date) ? a : b; });
     const dateCreation = new Date(plusAncien.date);
     const joursAttente = Math.floor((new Date() - dateCreation) / (1000*60*60*24));
     const depasse = joursAttente >= 2;
 
-    html += `<div style="background:rgba(255,149,0,0.08);border:1px solid ${nb >= 3 ? 'rgba(0,214,143,0.4)' : 'rgba(255,149,0,0.3)'};border-radius:12px;padding:12px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:${couleur};">${icone} ${zone}</div>
-        <div style="font-size:12px;font-weight:700;color:${couleur};">${msg}</div>
-      </div>
-      ${depasse && nb < 3 ? `<div style="font-size:11px;color:#ff8080;margin-bottom:6px;">⚠️ Délai de ${joursAttente}j dépassé — appeler les clients pour devis</div>` : ''}
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${clients.map(c => `<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;font-size:11px;color:rgba(255,255,255,0.7);">
-          ${c.nom} · <a href="tel:${c.tel}" style="color:var(--accent);">${c.tel}</a>
-        </div>`).join('')}
-      </div>
-      ${nb >= 3 ? `<button onclick="confirmerTourneeZone('${zone}')" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--green);color:#0a1f2e;font-weight:700;font-size:13px;cursor:pointer;">✅ Confirmer la tournée</button>` : ''}
-    </div>`;
+    html += '<div style="background:rgba(255,149,0,0.08);border:1px solid ' + (nb >= 3 ? 'rgba(0,214,143,0.4)' : 'rgba(255,149,0,0.3)') + ';border-radius:12px;padding:12px;margin-bottom:10px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<div style="font-size:16px;color:' + couleur + ';">' + icone + ' ' + zone + '</div>';
+    html += '<div style="font-size:12px;font-weight:700;color:' + couleur + ';">' + msg + '</div></div>';
+    if (depasse && nb < 3) {
+      html += '<div style="font-size:11px;color:#ff8080;margin-bottom:6px;">Delai de ' + joursAttente + 'j depasse</div>';
+    }
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    clients.forEach(function(c) {
+      html += '<div style="background:rgba(255,255,255,0.06);border-radius:8px;padding:5px 8px;font-size:11px;color:rgba(255,255,255,0.7);">' + c.nom + ' · <a href="tel:' + c.tel + '" style="color:var(--accent);">' + c.tel + '</a></div>';
+    });
+    html += '</div>';
+    if (nb >= 3) {
+      html += '<button onclick="confirmerTourneeZone(\'' + zone + '\')" style="margin-top:10px;width:100%;padding:10px;border-radius:10px;border:none;background:var(--green);color:#0a1f2e;font-weight:700;font-size:13px;cursor:pointer;">Confirmer la tournee</button>';
+    }
+    html += '</div>';
   });
 
   el.innerHTML = html;
 }
 
 function confirmerTourneeZone(zone) {
-  const clients = rdvs.filter(r => r.status === 'attente_zone' && (r.zone_ville || 'Zone inconnue') === zone);
-  if (!confirm(`Confirmer la tournée pour ${clients.length} clients à ${zone} ?`)) return;
-  clients.forEach(r => { r.status = 'confirmed'; });
+  const clients = rdvs.filter(function(r) { return r.status === 'attente_zone' && (r.zone_ville || 'Zone inconnue') === zone; });
+  if (!confirm('Confirmer la tournee pour ' + clients.length + ' clients a ' + zone + ' ?')) return;
+  clients.forEach(function(r) { r.status = 'confirmed'; });
   localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
-  showNotif(`✅ ${clients.length} RDV confirmés à ${zone} !`, '#00d68f');
+  showNotif(clients.length + ' RDV confirmes a ' + zone + ' !', '#00d68f');
   renderAlertesZones();
   renderAccueil();
 }
+
 
 // =========== SERVICES DISPONIBLES ===========
 const SERVICES_LIST = [

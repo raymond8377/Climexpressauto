@@ -492,7 +492,15 @@ async function envoyerDevis() {
 const SUPABASE_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
 
-const HEURES = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+const HEURES_SEMAINE = ['09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+const HEURES_SAM = ['09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00'];
+function getHeuresDuJour(d) {
+  var jour = d ? d.getDay() : new Date().getDay();
+  if (jour === 0) return [];
+  if (jour === 6) return HEURES_SAM;
+  return HEURES_SEMAINE;
+}
+const HEURES = HEURES_SEMAINE;
 
 let currentStep = 1;
 let selectedDate = new Date();
@@ -691,7 +699,7 @@ async function loadSlots() {
     const todayStr = toLocalDateStr(now);
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-    grid.innerHTML = HEURES.map(h => {
+    grid.innerHTML = getHeuresDuJour(selectedDate).map(h => {
       const taken = takenSlots.includes(h) || heuresBloquees.includes(h);
       // Bloquer automatiquement les créneaux passés si c'est aujourd'hui
       const [hh, mm] = h.split(':').map(Number);
@@ -713,7 +721,7 @@ async function loadSlots() {
   } catch(e) {
     takenSlots = [];
     const grid = document.getElementById('slotsGrid');
-    grid.innerHTML = HEURES.map(h => `<div class="slot-btn" onclick="selectSlot('${h}')">${h}</div>`).join('');
+    grid.innerHTML = getHeuresDuJour(selectedDate).map(h => '<div class="slot-btn" onclick="selectSlot(\'' + h + '\')">' + h + '</div>').join('');
   }
 }
 
@@ -906,14 +914,36 @@ function afficherMessageHeure(banniere, titre, detail, heure) {
   if (!banniere || !titre || !detail) return;
   banniere.style.display = 'block';
   const msgFixe = 'Intervention sous 25-30 min après confirmation';
-  if (heure >= 8 && heure < 12) {
-    titre.textContent = 'Disponible ce matin — réservez votre créneau maintenant !';
-  } else if (heure >= 12 && heure < 17) {
-    titre.textContent = 'Encore disponible cet après-midi — intervention rapide';
-  } else if (heure >= 17 && heure < 18) {
-    titre.textContent = "Derniers créneaux disponibles aujourd'hui";
+  const now = new Date();
+  const jour = now.getDay(); // 0=dim, 6=sam
+
+  // Samedi : on finit à 13h
+  if (jour === 6) {
+    if (heure < 9) {
+      titre.textContent = 'Disponible ce matin — réservez votre créneau !';
+    } else if (heure >= 9 && heure < 13) {
+      titre.textContent = 'Disponible ce matin — dernier créneau à 13h !';
+    } else {
+      titre.textContent = 'Fermé pour le week-end — réservez dès lundi à 9h30';
+    }
+  // Dimanche : fermé
+  } else if (jour === 0) {
+    titre.textContent = 'Fermé le dimanche — réservez dès demain à 9h30';
+  // Semaine : 9h30-17h30
   } else {
-    titre.textContent = "Réservez maintenant — disponible dès demain matin dès 8h";
+    if (heure < 9) {
+      titre.textContent = 'Disponible dès 9h30 ce matin — réservez maintenant !';
+    } else if (heure >= 9 && heure < 12) {
+      titre.textContent = 'Disponible ce matin — réservez votre créneau !';
+    } else if (heure >= 12 && heure < 13) {
+      titre.textContent = 'Disponible cet après-midi dès 13h — réservez vite !';
+    } else if (heure >= 13 && heure < 17) {
+      titre.textContent = 'Encore disponible cet après-midi — intervention rapide';
+    } else if (heure >= 17 && heure < 18) {
+      titre.textContent = 'Dernier créneau à 17h30 — réservez pour demain !';
+    } else {
+      titre.textContent = 'Fermé pour ce soir — réservez dès demain à 9h30';
+    }
   }
   detail.textContent = msgFixe;
 }

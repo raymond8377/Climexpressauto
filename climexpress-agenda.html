@@ -815,6 +815,17 @@ function quickBook(h) {
   goPage('rdv', document.querySelectorAll('.nav-btn')[1]);
 }
 
+function quickBookDate(h, dateStr) {
+  document.getElementById('rdvDate').value = dateStr;
+  document.getElementById('rdvHeure').value = h;
+  fillHeures(dateStr);
+  setTimeout(function() {
+    document.getElementById('rdvHeure').value = h;
+  }, 100);
+  goPage('rdv', document.querySelectorAll('.nav-btn')[1]);
+  showNotif('Créneau ' + h + ' pré-sélectionné');
+}
+
 function rdvCard(r) {
   const badge = r.type.startsWith('VL') ? 'badge-vl' : r.type.startsWith('VU') ? 'badge-vu' : 'badge-pl';
   const label = r.type.startsWith('VL') ? 'VL' : r.type.startsWith('VU') ? 'VU' : r.type.startsWith('PL') ? 'PL' : '🔧';
@@ -1372,11 +1383,42 @@ function showCalDayMenu(dateStr) {
   }
   menuHtml += `</div>`;
 
-  if (dayRdvs.length > 0) {
-    div.innerHTML = menuHtml + '<div class="section-title" style="font-size:18px;margin-bottom:10px;">' + dateLabel + '</div>' + dayRdvs.map(function(r) { return rdvCard(r); }).join('');
+  // Grille créneaux du jour
+  var heuresDuJour = getHeuresDuJour(dateStr);
+  var grillHtml = '';
+  if (heuresDuJour.length === 0) {
+    grillHtml = '<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:13px;">🚫 Fermé ce jour</div>';
   } else {
-    div.innerHTML = menuHtml;
+    grillHtml = '<div style="margin-bottom:10px;">';
+    grillHtml += '<div style="font-size:11px;font-weight:700;color:rgba(205,232,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Créneaux du jour</div>';
+    grillHtml += '<div style="display:flex;flex-direction:column;gap:6px;">';
+    heuresDuJour.forEach(function(h) {
+      var rdv = dayRdvs.find(function(r) { return r.heure === h && r.status !== 'annule'; });
+      var bloque = isHeureBloquee(dateStr, h) || isJourBloque(dateStr);
+      if (rdv) {
+        grillHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:10px;cursor:pointer;" onclick="showRdvDetail(' + rdv.id + ')">';
+        grillHtml += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#ff9500;min-width:48px;">' + h + '</div>';
+        grillHtml += '<div style="flex:1;"><div style="font-weight:700;font-size:13px;color:#fff;">' + rdv.nom + '</div>';
+        grillHtml += '<div style="font-size:11px;color:rgba(255,255,255,0.5);">' + rdv.type + '</div></div>';
+        grillHtml += '<div style="font-size:10px;background:rgba(255,149,0,0.2);color:#ff9500;padding:2px 7px;border-radius:8px;font-weight:700;">RDV</div>';
+        grillHtml += '</div>';
+      } else if (bloque) {
+        grillHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:10px;">';
+        grillHtml += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#ff4444;min-width:48px;">' + h + '</div>';
+        grillHtml += '<div style="font-size:13px;color:rgba(255,255,255,0.3);">🔒 Bloqué</div>';
+        grillHtml += '</div>';
+      } else {
+        grillHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,214,143,0.07);border:1px solid rgba(0,214,143,0.2);border-radius:10px;cursor:pointer;" onclick="quickBookDate(\'' + h + '\',\'' + dateStr + '\')">';
+        grillHtml += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#00d68f;min-width:48px;">' + h + '</div>';
+        grillHtml += '<div style="flex:1;font-size:13px;color:rgba(0,214,143,0.7);">Libre</div>';
+        grillHtml += '<div style="font-size:10px;background:rgba(0,214,143,0.15);color:#00d68f;padding:2px 7px;border-radius:8px;font-weight:700;">+ RDV</div>';
+        grillHtml += '</div>';
+      }
+    });
+    grillHtml += '</div></div>';
   }
+
+  div.innerHTML = menuHtml + grillHtml;
 }
 
 function bloquerJourDepuisCalendrier(dateStr) {

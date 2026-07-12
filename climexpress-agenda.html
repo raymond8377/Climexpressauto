@@ -689,8 +689,20 @@ let calMonth = new Date().getMonth();
 let calYear = new Date().getFullYear();
 let selectedCalDay = null;
 
-const HEURES = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+const HEURES = ['09:30','10:00','10:30','11:00','11:30',
   '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+const HEURES_SAM = ['09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00'];
+const HEURES_SEMAINE = ['09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+function getHeuresDuJour(dateStr) {
+  var d = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+  var jour = d.getDay();
+  if (jour === 0) return []; // dimanche fermé
+  if (jour === 6) return HEURES_SAM; // samedi 9h30-13h
+  return HEURES_SEMAINE; // lundi-vendredi 9h30-17h30
+}
+
 
 // =========== INIT ===========
 function init() {
@@ -715,7 +727,7 @@ function fillHeures(date) {
   const todayRDVs = rdvs.filter(r => r.date === d && r.status !== 'annule' && r.status !== 'done');
   const taken = todayRDVs.map(r => r.heure);
   sel.innerHTML = '<option value="">— Choisir un créneau —</option>';
-  HEURES.forEach(h => {
+  getHeuresDuJour(d).forEach(h => {
     const opt = document.createElement('option');
     opt.value = h;
     opt.textContent = taken.includes(h) ? h + ' — Occupé ✗' : h + ' — Libre ✓';
@@ -789,7 +801,7 @@ function renderAccueil() {
   const taken = todayRDVs.map(r => r.heure);
   const slotsDiv = document.getElementById('todaySlots');
   const todayBloc = isJourBloque(today);
-  slotsDiv.innerHTML = HEURES.map(h => {
+  slotsDiv.innerHTML = getHeuresDuJour(today).map(h => {
     const isTaken = taken.includes(h);
     const isBloc = isHeureBloquee(today, h) || todayBloc;
     const cls = (isTaken || isBloc) ? 'taken' : 'free';
@@ -1402,13 +1414,13 @@ function bloquerPlage(dateStr, heures) {
 }
 
 function bloquerMatinee(dateStr) {
-  const heures = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30'];
+  const heures = ['09:30','10:00','10:30','11:00','11:30'];
   bloquerPlage(dateStr, heures);
   showNotif('🌅 Matinée bloquée !', '#ff9500');
 }
 
 function bloquerApresMidi(dateStr) {
-  const heures = ['13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'];
+  const heures = ['13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
   bloquerPlage(dateStr, heures);
   showNotif('🌆 Après-midi bloquée !', '#ff9500');
 }
@@ -2310,7 +2322,7 @@ async function checkMasquerState() {
       <label>Heure à bloquer</label>
       <select id="blocHeure">
         <option value="">— Choisir —</option>
-        <option>08:00</option><option>08:30</option><option>09:00</option><option>09:30</option>
+        <option>09:30</option>
         <option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option>
         <option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option>
         <option>15:00</option><option>15:30</option><option>16:00</option><option>16:30</option>

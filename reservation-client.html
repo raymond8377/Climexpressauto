@@ -849,6 +849,25 @@ async function chargerLocalisationJour() {
     const now = new Date();
     const heure = now.getHours();
 
+    // Vérifier mode complet
+    try {
+      const resComplet = await fetch(SUPABASE_URL + '/rest/v1/blocages?type=eq.mode_complet&select=id', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      if (resComplet.ok) {
+        const compData = await resComplet.json();
+        if (Array.isArray(compData) && compData.length > 0) {
+          banniere.style.display = 'block';
+          banniere.style.background = 'rgba(255,100,0,0.12)';
+          banniere.style.borderColor = 'rgba(255,149,0,0.4)';
+          titre.style.color = '#ff9500';
+          titre.textContent = 'Fort afflux en ce moment — créneaux temporairement complets';
+          detail.textContent = 'Revenez bientôt, nous reprendrons les réservations dès que possible. Pour urgence : 06 48 00 85 58';
+          return;
+        }
+      }
+    } catch(e) {}
+
     // Vérifier si position masquée
     try {
       const resMasque = await fetch(SUPABASE_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', {

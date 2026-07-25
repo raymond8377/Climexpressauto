@@ -1426,12 +1426,26 @@ function validerModifRDV(id) {
   if (r.supabase_id) {
     fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
       method: 'PATCH',
-      headers: Object.assign({}, SB_HEADERS, { 'Prefer': 'return=minimal' }),
+      headers: Object.assign({}, SB_HEADERS, { 'Prefer': 'return=representation' }),
       body: JSON.stringify({
         nom: nom, tel: tel, adresse: adresse, type: type,
         date: date, heure: heure, notes: notes
       })
-    }).catch(function(e) {});
+    }).then(function(res) {
+      return res.json().then(function(data) { return { ok: res.ok, status: res.status, data: data }; });
+    }).then(function(out) {
+      if (!out.ok) {
+        showNotif('⚠️ Supabase a refusé (' + out.status + ') — modif locale seulement', '#ff4444');
+        console.error('PATCH refusé :', out.data);
+      } else if (!Array.isArray(out.data) || out.data.length === 0) {
+        showNotif('⚠️ 0 ligne modifiée sur le serveur — vérifie la policy UPDATE', '#ff9500');
+      } else {
+        showNotif('✓ RDV modifié et synchronisé', '#00d68f');
+      }
+    }).catch(function(e) {
+      showNotif('⚠️ Hors ligne — modif enregistrée en local', '#ff9500');
+      console.error('PATCH erreur réseau :', e);
+    });
   }
 
   fermerModifRDV();

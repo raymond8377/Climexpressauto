@@ -1153,7 +1153,7 @@ function showRdvDetail(id) {
   html += '<button class="btn btn-secondary" style="flex:1" onclick="cancelRDV(' + r.id + ')">Annuler RDV</button>';
   html += '</div>';
   html += '<div style="margin-top:8px;">';
-  html += '<button class="btn" style="width:100%;background:rgba(0,194,255,0.15);color:#00c2ff;border:1px solid rgba(0,194,255,0.3);" onclick="modifierHeure(' + r.id + ')">✏️ Modifier heure</button>';
+  html += '<button class="btn" style="width:100%;background:rgba(0,194,255,0.15);color:#00c2ff;border:1px solid rgba(0,194,255,0.3);" onclick="modifierRDV(\'' + r.id + '\')">✏️ Modifier le RDV</button>';
   html += '</div>';
   html += '<div style="display:flex;gap:8px;margin-top:8px;">';
   html += '<button class="btn" style="flex:1;background:rgba(0,214,143,0.15);color:var(--green);border:1px solid rgba(0,214,143,0.3);" onclick="marquerEffectue(' + r.id + ')">✓ Effectué</button>';
@@ -1290,6 +1290,164 @@ function validerModifHeure(id) {
       if (r.tel) window.location.href = 'sms:' + r.tel + '?body=' + encodeURIComponent(msg);
     }
   }, 500);
+}
+
+// ===== MODIFICATION COMPLETE D'UN RDV =====
+var TYPES_RDV = [
+  'VL Recharge Standard (R134a)',
+  'VL Recharge Standard (R1234yf)',
+  'VL Recharge + Désinfection',
+  'VU Recharge Standard',
+  'VU Recharge + Désinfection',
+  'PL Recharge Standard',
+  'Diagnostic + Recharge',
+  'Contrôle étanchéité'
+];
+
+function trouverRdv(id) {
+  return rdvs.find(function(x) { return String(x.id) === String(id); });
+}
+
+function escAttr(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function remplirHeuresModif(id) {
+  var r = trouverRdv(id);
+  var sel = document.getElementById('modifHeure');
+  if (!r || !sel) return;
+  var dateStr = document.getElementById('modifDate').value;
+  var heures = getHeuresDuJour(dateStr);
+  var pris = rdvs.filter(function(x) {
+    return x.date === dateStr && String(x.id) !== String(id) && x.status !== 'annule' && x.status !== 'done';
+  }).map(function(x) { return x.heure; });
+
+  var html = '<option value="">— Choisir un créneau —</option>';
+  if (dateStr === r.date && heures.indexOf(r.heure) === -1 && r.heure) {
+    html += '<option value="' + escAttr(r.heure) + '" selected>' + escAttr(r.heure) + ' — heure actuelle</option>';
+  }
+  if (heures.length === 0) {
+    html += '<option value="" disabled>Jour fermé (dimanche)</option>';
+  }
+  heures.forEach(function(h) {
+    var occupe = pris.indexOf(h) !== -1;
+    var bloque = isHeureBloquee(dateStr, h);
+    var label = h + (occupe ? ' — Occupé ✗' : (bloque ? ' — Bloqué 🔒' : ' — Libre ✓'));
+    var sel2 = (dateStr === r.date && h === r.heure) ? ' selected' : '';
+    var dis = (occupe || bloque) ? ' disabled' : '';
+    html += '<option value="' + h + '"' + sel2 + dis + '>' + label + '</option>';
+  });
+  sel.innerHTML = html;
+
+  var warn = document.getElementById('modifWarnJour');
+  if (warn) warn.style.display = isJourBloque(dateStr) ? 'block' : 'none';
+}
+
+function modifierRDV(id) {
+  var r = trouverRdv(id);
+  if (!r) return;
+  fermerModifRDV();
+
+  var champ = 'width:100%;padding:11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;margin-bottom:12px;font-family:inherit;box-sizing:border-box;';
+  var lab = 'display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;';
+
+  var optsType = '';
+  if (r.type && TYPES_RDV.indexOf(r.type) === -1) {
+    optsType += '<option value="' + escAttr(r.type) + '" selected>' + escAttr(r.type) + '</option>';
+  }
+  TYPES_RDV.forEach(function(t) {
+    optsType += '<option value="' + escAttr(t) + '"' + (t === r.type ? ' selected' : '') + '>' + escAttr(t) + '</option>';
+  });
+
+  var modal = document.createElement('div');
+  modal.id = 'modalModifRdv';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  modal.innerHTML =
+    '<div style="background:#0d2244;border:2px solid rgba(0,194,255,0.3);border-radius:20px;padding:22px;width:100%;max-width:400px;margin:auto;">' +
+      '<div style="font-size:16px;font-weight:900;color:#00c2ff;margin-bottom:18px;text-align:center;">✏️ Modifier le RDV</div>' +
+      '<label style="' + lab + '">Nom du client</label>' +
+      '<input type="text" id="modifNom" value="' + escAttr(r.nom) + '" style="' + champ + '">' +
+      '<label style="' + lab + '">Téléphone</label>' +
+      '<input type="tel" id="modifTel" value="' + escAttr(r.tel) + '" style="' + champ + '">' +
+      '<label style="' + lab + '">Adresse / Lieu</label>' +
+      '<input type="text" id="modifAdresse" value="' + escAttr(r.adresse) + '" style="' + champ + '">' +
+      '<label style="' + lab + '">Type de prestation</label>' +
+      '<select id="modifType" style="' + champ + '">' + optsType + '</select>' +
+      '<label style="' + lab + '">Date</label>' +
+      '<input type="date" id="modifDate" value="' + escAttr(r.date) + '" onchange="remplirHeuresModif(\'' + r.id + '\')" style="' + champ + '">' +
+      '<div id="modifWarnJour" style="display:none;font-size:12px;color:#ff9500;background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.3);border-radius:8px;padding:8px;margin-bottom:12px;">🔒 Attention : ce jour est bloqué dans ton agenda.</div>' +
+      '<label style="' + lab + '">Heure</label>' +
+      '<select id="modifHeure" style="' + champ + '"></select>' +
+      '<label style="' + lab + '">Notes</label>' +
+      '<textarea id="modifNotes" rows="2" style="' + champ + 'resize:vertical;">' + escAttr(r.notes) + '</textarea>' +
+      '<div style="display:flex;gap:8px;margin-top:6px;">' +
+        '<button onclick="fermerModifRDV()" style="flex:1;padding:13px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.55);font-weight:700;font-family:inherit;cursor:pointer;">Annuler</button>' +
+        '<button onclick="validerModifRDV(\'' + r.id + '\')" style="flex:2;padding:13px;background:linear-gradient(135deg,#00c2ff,#0055ff);border:none;border-radius:10px;color:#fff;font-weight:900;font-size:14px;font-family:inherit;cursor:pointer;">✓ Enregistrer</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  remplirHeuresModif(r.id);
+}
+
+function fermerModifRDV() {
+  var m = document.getElementById('modalModifRdv');
+  if (m) m.remove();
+}
+
+function validerModifRDV(id) {
+  var r = trouverRdv(id);
+  if (!r) return;
+  var nom = document.getElementById('modifNom').value.trim();
+  var tel = document.getElementById('modifTel').value.trim();
+  var adresse = document.getElementById('modifAdresse').value.trim();
+  var type = document.getElementById('modifType').value;
+  var date = document.getElementById('modifDate').value;
+  var heure = document.getElementById('modifHeure').value;
+  var notes = document.getElementById('modifNotes').value.trim();
+
+  if (!nom || !tel || !date || !heure) {
+    showNotif('⚠️ Nom, téléphone, date et heure sont requis', '#ff9500');
+    return;
+  }
+
+  var conflit = rdvs.some(function(x) {
+    return String(x.id) !== String(id) && x.date === date && x.heure === heure &&
+           x.status !== 'annule' && x.status !== 'done';
+  });
+  if (conflit && !confirm('⚠️ Un autre RDV occupe déjà ce créneau. Enregistrer quand même ?')) return;
+
+  var ancienneDate = r.date, ancienneHeure = r.heure;
+  r.nom = nom; r.tel = tel; r.adresse = adresse; r.type = type;
+  r.date = date; r.heure = heure; r.notes = notes;
+  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+
+  if (r.supabase_id) {
+    fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+      method: 'PATCH',
+      headers: Object.assign({}, SB_HEADERS, { 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({
+        nom: nom, tel: tel, adresse: adresse, type: type,
+        date: date, heure: heure, notes: notes
+      })
+    }).catch(function(e) {});
+  }
+
+  fermerModifRDV();
+  closeRdvModal();
+  renderAccueil(); renderCalendar(); renderRappels(); updateStats(); renderClients();
+  showNotif('✓ RDV modifié', '#00d68f');
+
+  if (ancienneDate !== date || ancienneHeure !== heure) {
+    setTimeout(function() {
+      var msg = 'Bonjour ' + nom + ', votre RDV ClimExpress a ete modifie. Nouveau creneau : ' +
+                formatDate(date) + ' a ' + heure + '. Pour toute question : 06 48 00 85 58. A bientot !';
+      if (confirm('Prevenir ' + nom + ' du changement par SMS ?') && tel) {
+        window.location.href = 'sms:' + tel + '?body=' + encodeURIComponent(msg);
+      }
+    }, 400);
+  }
 }
 
 function closeRdvModal() { document.getElementById('rdvModal').classList.remove('open'); }

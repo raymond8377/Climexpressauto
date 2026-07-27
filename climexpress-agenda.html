@@ -424,6 +424,7 @@
     <span class="search-icon">🔍</span>
     <input type="text" id="searchClient" placeholder="Rechercher un client..." oninput="renderClients()">
   </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="secteurFiltres"></div>
   <div id="clientList"></div>
 </div>
 
@@ -995,15 +996,78 @@ function updateStats() {
 }
 
 // =========== CLIENTS ===========
+
+var secteurActif = 'Tous';
+
+function getSecteurClient(c) {
+  var adresse = ((c.adresse || '') + ' ' + (c.ville || '')).toLowerCase();
+  if (adresse.includes('saint-tropez') || adresse.includes('st tropez') || adresse.includes('saint tropez')) return 'Saint-Tropez';
+  if (adresse.includes('ramatuelle')) return 'Ramatuelle';
+  if (adresse.includes('gassin')) return 'Gassin';
+  if (adresse.includes('la foux') || adresse.includes('foux')) return 'La Foux';
+  if (adresse.includes('cogolin')) return 'Cogolin';
+  if (adresse.includes('grimaud')) return 'Grimaud';
+  if (adresse.includes('sainte-maxime') || adresse.includes('ste maxime') || adresse.includes('sainte maxime')) return 'Sainte-Maxime';
+  if (adresse.includes('cavalaire')) return 'Cavalaire';
+  if (adresse.includes('le lavandou') || adresse.includes('lavandou')) return 'Le Lavandou';
+  if (adresse.includes('hyères') || adresse.includes('hyeres')) return 'Hyères';
+  if (adresse.includes('toulon')) return 'Toulon';
+  if (adresse.includes('la seyne') || adresse.includes('seyne')) return 'La Seyne';
+  if (adresse) return 'Autre';
+  return 'Sans adresse';
+}
+
+function setSecteur(s) {
+  secteurActif = s;
+  renderClients();
+}
+
+function renderSecteurFiltres(clientsListe) {
+  var el = document.getElementById('secteurFiltres');
+  if (!el) return;
+  var secteurs = {};
+  clientsListe.forEach(function(c) {
+    var s = getSecteurClient(c);
+    secteurs[s] = (secteurs[s] || 0) + 1;
+  });
+  var tous = ['Tous'];
+  var html = tous.concat(Object.keys(secteurs).sort()).map(function(s) {
+    var actif = s === secteurActif;
+    var count = s === 'Tous' ? clientsListe.length : (secteurs[s] || 0);
+    return '<button onclick="setSecteur(\'' + s + '\')" style="padding:6px 12px;border-radius:20px;border:1px solid ' + (actif ? 'var(--accent)' : 'rgba(255,255,255,0.2)') + ';background:' + (actif ? 'rgba(0,194,255,0.2)' : 'rgba(255,255,255,0.05)') + ';color:' + (actif ? 'var(--accent)' : 'rgba(255,255,255,0.6)') + ';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">' + s + ' <span style="opacity:0.6;">(' + count + ')</span></button>';
+  }).join('');
+  el.innerHTML = html;
+}
+
 function renderClients() {
   const q = (document.getElementById('searchClient')?.value || '').toLowerCase();
-  const filtered = clients.filter(c => c.nom.toLowerCase().includes(q) || c.tel.includes(q) || (c.adresse||'').toLowerCase().includes(q));
+  var tous = clients.filter(c => c.nom.toLowerCase().includes(q) || c.tel.includes(q) || (c.adresse||'').toLowerCase().includes(q));
+  renderSecteurFiltres(tous);
+  const filtered = secteurActif === 'Tous' ? tous : tous.filter(c => getSecteurClient(c) === secteurActif);
   const div = document.getElementById('clientList');
   if (filtered.length === 0) {
     div.innerHTML = '<div class="empty-state"><div class="icon">👤</div><p>Aucun client trouvé</p></div>';
     return;
   }
-  div.innerHTML = filtered.sort((a,b)=>a.nom.localeCompare(b.nom)).map(c => {
+  // Grouper par secteur si "Tous" sélectionné
+  var clientsAffiches = filtered.sort((a,b)=>a.nom.localeCompare(b.nom));
+  if (secteurActif === 'Tous' && clientsAffiches.length > 0) {
+    var groupes = {};
+    clientsAffiches.forEach(function(c) {
+      var s = getSecteurClient(c);
+      if (!groupes[s]) groupes[s] = [];
+      groupes[s].push(c);
+    });
+    var secteursTries = Object.keys(groupes).sort();
+    var htmlGroupes = '';
+    secteursTries.forEach(function(s) {
+      htmlGroupes += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:6px;">📍 ' + s + ' <span style="opacity:0.5;font-weight:400;">(' + groupes[s].length + ')</span></div>';
+      htmlGroupes += groupes[s].map(c => renderClientCard(c)).join('');
+    });
+    div.innerHTML = htmlGroupes;
+    return;
+  }
+  div.innerHTML = clientsAffiches.map(c => {
     const initials = c.nom.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const adresseHtml = c.adresse ? '<div class="client-sub">📍 ' + c.adresse + '</div>' : '';
     const tagsHtml = (c.types||[]).map(t=>'<span class="tag">' + t.split('—')[0].trim() + '</span>').join('');
@@ -1019,7 +1083,26 @@ function renderClients() {
       '<div class="btn-icon" onclick="callClient(\'' + c.tel + '\')">📞</div>' +
       '<div class="btn-icon" onclick="showClientDetail(' + c.id + ')">ℹ️</div>' +
       '</div></div>';
+    return renderClientCard(c);
   }).join('');
+}
+
+function renderClientCard(c) {
+  const initials = c.nom.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const adresseHtml = c.adresse ? '<div class="client-sub">📍 ' + c.adresse + '</div>' : '';
+  const tagsHtml = (c.types||[]).map(t=>'<span class="tag">' + t.split('—')[0].trim() + '</span>').join('');
+  return '<div class="client-card">' +
+    '<div class="client-avatar">' + initials + '</div>' +
+    '<div class="client-info">' +
+    '<div class="client-name">' + c.nom + '</div>' +
+    '<div class="client-sub">📞 <a class="tel" href="tel:' + c.tel + '">' + c.tel + '</a></div>' +
+    adresseHtml +
+    '<div class="client-tags">' + tagsHtml + '</div>' +
+    '</div>' +
+    '<div class="client-actions">' +
+    '<div class="btn-icon" onclick="callClient(\'' + c.tel + '\')">📞</div>' +
+    '<div class="btn-icon" onclick="showClientDetail(' + c.id + ')">ℹ️</div>' +
+    '</div></div>';
 }
 
 function showClientDetail(id) {

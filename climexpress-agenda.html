@@ -190,7 +190,7 @@
   .notif {
     position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
     background: var(--green); color: var(--dark); padding: 10px 20px; border-radius: 20px;
-    font-weight: 700; font-size: 13px; z-index: 999; opacity: 0;
+    font-weight: 700; font-size: 13px; z-index: 10001; opacity: 0;
     transition: all .3s; pointer-events: none; white-space: nowrap;
   }
   .notif.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -1407,22 +1407,37 @@ function remplirHeuresModif(id) {
     return x.date === dateStr && String(x.id) !== String(id) && x.status !== 'annule' && x.status !== 'done';
   }).map(function(x) { return x.heure; });
 
-  var html = '<option value="">— Choisir un créneau —</option>';
-  if (dateStr === r.date && heures.indexOf(r.heure) === -1 && r.heure) {
-    html += '<option value="' + escAttr(r.heure) + '" selected>' + escAttr(r.heure) + ' — heure actuelle</option>';
+  // On garde l'heure deja choisie si l'utilisateur en avait selectionne une
+  var heureVoulue = sel.value || r.heure;
+
+  var liste = heures.slice();
+  // L'heure actuelle du RDV doit TOUJOURS etre proposee, meme hors grille
+  if (r.heure && liste.indexOf(r.heure) === -1) {
+    liste.push(r.heure);
+    liste.sort();
   }
-  if (heures.length === 0) {
+
+  var html = '<option value="">— Choisir un créneau —</option>';
+  if (liste.length === 0) {
     html += '<option value="" disabled>Jour fermé (dimanche)</option>';
   }
-  heures.forEach(function(h) {
-    var occupe = pris.indexOf(h) !== -1;
-    var bloque = isHeureBloquee(dateStr, h);
-    var label = h + (occupe ? ' — Occupé ✗' : (bloque ? ' — Bloqué 🔒' : ' — Libre ✓'));
-    var sel2 = (dateStr === r.date && h === r.heure) ? ' selected' : '';
+
+  var dejaSelectionne = false;
+  liste.forEach(function(h) {
+    var estSonCreneau = (dateStr === r.date && h === r.heure);
+    var occupe = !estSonCreneau && pris.indexOf(h) !== -1;
+    var bloque = !estSonCreneau && isHeureBloquee(dateStr, h);
+    var label = h + (estSonCreneau ? ' — heure actuelle ✓'
+                    : (occupe ? ' — Occupé ✗'
+                    : (bloque ? ' — Bloqué 🔒' : ' — Libre ✓')));
+    var choisir = (!dejaSelectionne && h === heureVoulue && !occupe && !bloque);
+    if (choisir) dejaSelectionne = true;
+    // Jamais "selected" sur une option "disabled" : Safari la ignore et vide le select
     var dis = (occupe || bloque) ? ' disabled' : '';
-    html += '<option value="' + h + '"' + sel2 + dis + '>' + label + '</option>';
+    html += '<option value="' + h + '"' + (choisir ? ' selected' : '') + dis + '>' + label + '</option>';
   });
   sel.innerHTML = html;
+  if (!dejaSelectionne) sel.value = '';
 
   var warn = document.getElementById('modifWarnJour');
   if (warn) warn.style.display = isJourBloque(dateStr) ? 'block' : 'none';
@@ -1465,6 +1480,7 @@ function modifierRDV(id) {
       '<select id="modifHeure" style="' + champ + '"></select>' +
       '<label style="' + lab + '">Notes</label>' +
       '<textarea id="modifNotes" rows="2" style="' + champ + 'resize:vertical;">' + escAttr(r.notes) + '</textarea>' +
+      '<div id="modifErreur" style="display:none;font-size:13px;font-weight:700;color:#ff4444;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.35);border-radius:10px;padding:10px;margin-bottom:10px;"></div>' +
       '<div style="display:flex;gap:8px;margin-top:6px;">' +
         '<button onclick="fermerModifRDV()" style="flex:1;padding:13px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.55);font-weight:700;font-family:inherit;cursor:pointer;">Annuler</button>' +
         '<button onclick="validerModifRDV(\'' + r.id + '\')" style="flex:2;padding:13px;background:linear-gradient(135deg,#00c2ff,#0055ff);border:none;border-radius:10px;color:#fff;font-weight:900;font-size:14px;font-family:inherit;cursor:pointer;">✓ Enregistrer</button>' +
@@ -1479,9 +1495,17 @@ function fermerModifRDV() {
   if (m) m.remove();
 }
 
+function erreurModif(msg) {
+  var e = document.getElementById('modifErreur');
+  if (e) { e.textContent = '⚠️ ' + msg; e.style.display = 'block'; }
+  showNotif('⚠️ ' + msg, '#ff4444');
+}
+
 function validerModifRDV(id) {
   var r = trouverRdv(id);
-  if (!r) return;
+  if (!r) { erreurModif('RDV introuvable — recharge la page.'); return; }
+  var e0 = document.getElementById('modifErreur');
+  if (e0) e0.style.display = 'none';
   var nom = document.getElementById('modifNom').value.trim();
   var tel = document.getElementById('modifTel').value.trim();
   var adresse = document.getElementById('modifAdresse').value.trim();
@@ -1490,8 +1514,13 @@ function validerModifRDV(id) {
   var heure = document.getElementById('modifHeure').value;
   var notes = document.getElementById('modifNotes').value.trim();
 
-  if (!nom || !tel || !date || !heure) {
-    showNotif('⚠️ Nom, téléphone, date et heure sont requis', '#ff9500');
+  var manque = [];
+  if (!nom) manque.push('le nom');
+  if (!tel) manque.push('le téléphone');
+  if (!date) manque.push('la date');
+  if (!heure) manque.push('l\'heure');
+  if (manque.length) {
+    erreurModif('Il manque ' + manque.join(', ') + '. Choisis un créneau dans la liste "Heure".');
     return;
   }
 

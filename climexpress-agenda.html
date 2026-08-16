@@ -2803,20 +2803,20 @@ function majAlerteSauvegarde() {
 // Valeurs de depart a ajuster via le bouton "Bareme depl."
 var BAREME_DEP_DEFAULT = [
   // ---- Golfe ----
-  { ville: 'Gassin', cp: '83580', sect: 'Golfe', km: 6, prix: 0 },
-  { ville: 'La Foux', cp: '83580', sect: 'Golfe', km: 0, prix: 0 },
-  { ville: 'Cogolin', cp: '83310', sect: 'Golfe', km: 6, prix: 0 },
-  { ville: 'Grimaud', cp: '83310', sect: 'Golfe', km: 7, prix: 0 },
-  { ville: 'Port Grimaud', cp: '83310', sect: 'Golfe', km: 2, prix: 0 },
-  { ville: 'La Mole', cp: '83310', sect: 'Golfe', km: 16, prix: 0 },
-  { ville: 'Saint-Tropez', cp: '83990', sect: 'Golfe', km: 7, prix: 0 },
-  { ville: 'Ramatuelle', cp: '83350', sect: 'Golfe', km: 9, prix: 0 },
-  { ville: 'La Croix-Valmer', cp: '83420', sect: 'Golfe', km: 9, prix: 0 },
-  { ville: 'Sainte-Maxime', cp: '83120', sect: 'Golfe', km: 11, prix: 0 },
-  { ville: 'Cavalaire-sur-Mer', cp: '83240', sect: 'Golfe', km: 15, prix: 0 },
-  { ville: 'Le Plan-de-la-Tour', cp: '83120', sect: 'Golfe', km: 14, prix: 0 },
-  { ville: 'La Garde-Freinet', cp: '83680', sect: 'Golfe', km: 16, prix: 0 },
-  { ville: 'Le Rayol-Canadel', cp: '83820', sect: 'Golfe', km: 21, prix: 0 },
+  { ville: 'Gassin', cp: '83580', sect: 'Golfe', km: 6, prix: 10 },
+  { ville: 'La Foux', cp: '83580', sect: 'Golfe', km: 0, prix: 10 },
+  { ville: 'Cogolin', cp: '83310', sect: 'Golfe', km: 6, prix: 10 },
+  { ville: 'Grimaud', cp: '83310', sect: 'Golfe', km: 7, prix: 10 },
+  { ville: 'Port Grimaud', cp: '83310', sect: 'Golfe', km: 2, prix: 10 },
+  { ville: 'La Mole', cp: '83310', sect: 'Golfe', km: 16, prix: 10 },
+  { ville: 'Saint-Tropez', cp: '83990', sect: 'Golfe', km: 7, prix: 10 },
+  { ville: 'Ramatuelle', cp: '83350', sect: 'Golfe', km: 9, prix: 10 },
+  { ville: 'La Croix-Valmer', cp: '83420', sect: 'Golfe', km: 9, prix: 10 },
+  { ville: 'Sainte-Maxime', cp: '83120', sect: 'Golfe', km: 11, prix: 10 },
+  { ville: 'Cavalaire-sur-Mer', cp: '83240', sect: 'Golfe', km: 15, prix: 10 },
+  { ville: 'Le Plan-de-la-Tour', cp: '83120', sect: 'Golfe', km: 14, prix: 10 },
+  { ville: 'La Garde-Freinet', cp: '83680', sect: 'Golfe', km: 16, prix: 10 },
+  { ville: 'Le Rayol-Canadel', cp: '83820', sect: 'Golfe', km: 21, prix: 10 },
 
   // ---- Maures ----
   { ville: 'Collobrieres', cp: '83610', sect: 'Maures', km: 32, prix: 35 },
@@ -2934,7 +2934,7 @@ var ALIAS_DEP = {
   'Les Adrets-de-l Esterel': ['les adrets', 'adrets'],
   'Bagnols-en-Foret':        ['bagnols'],
   'Trans-en-Provence':       ['trans'],
-  'Le Cannet-des-Maures':    ['le cannet', 'cannet des maures'],
+  'Le Cannet-des-Maures':    ['le cannet', 'cannet des maures', 'canet des maures', 'canet'],
   'Vinon-sur-Verdon':        ['vinon'],
   'Nans-les-Pins':           ['nans'],
   'Comps-sur-Artuby':        ['comps'],
@@ -2999,7 +2999,40 @@ function trouverZone(saisie) {
       if (al2[k].length >= 4 && q.indexOf(al2[k]) !== -1) return bareme[i];
     }
   }
+  // 5. Rattrapage des fautes de frappe et de dictee vocale
+  //    ("Canet des Maures", "Ste Maximin", "Frejusse"...)
+  if (q.length >= 4) {
+    var meilleur = null, meilleureDist = 99;
+    for (i = 0; i < bareme.length; i++) {
+      var cands = [normTxt(bareme[i].ville)].concat(aliasDe(bareme[i].ville));
+      for (var c = 0; c < cands.length; c++) {
+        if (cands[c].length < 4) continue;
+        var d = distanceMots(q, cands[c]);
+        // Tolerance proportionnelle : ~1 faute pour 5 caracteres, plafonnee a 3
+        var seuil = Math.min(3, Math.max(1, Math.floor(cands[c].length / 5)));
+        if (d <= seuil && d < meilleureDist) { meilleureDist = d; meilleur = bareme[i]; }
+      }
+    }
+    if (meilleur) return meilleur;
+  }
   return null;
+}
+
+// Distance de Levenshtein : nombre de corrections pour passer d'un mot a l'autre
+function distanceMots(a, b) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 3) return 99;
+  var prev = [], cur = [], i, j;
+  for (j = 0; j <= b.length; j++) prev[j] = j;
+  for (i = 1; i <= a.length; i++) {
+    cur[0] = i;
+    for (j = 1; j <= b.length; j++) {
+      var cout = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      cur[j] = Math.min(cur[j - 1] + 1, prev[j] + 1, prev[j - 1] + cout);
+    }
+    for (j = 0; j <= b.length; j++) prev[j] = cur[j];
+  }
+  return prev[b.length];
 }
 
 function initCalculette() {

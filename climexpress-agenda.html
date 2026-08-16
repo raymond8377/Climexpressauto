@@ -351,11 +351,18 @@
 
     <div id="calcBody" style="display:none;padding:4px 14px 14px;">
 
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+        <button id="btnDep1" onclick="setModeDep(true)" style="padding:11px 8px;border-radius:10px;border:1px solid var(--accent);background:rgba(0,194,255,0.15);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128663; Je me d&eacute;place</button>
+        <button id="btnDep2" onclick="setModeDep(false)" style="padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#127968; Client &agrave; La Foux</button>
+      </div>
+
+      <div id="blocVille">
       <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ville ou code postal</div>
       <input type="text" id="calcVille" list="calcVilleList" autocomplete="off" placeholder="Ex : Saint-Tropez ou 83990"
         oninput="calcDevis()" onfocus="this.select()"
         style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:12px;">
       <datalist id="calcVilleList"></datalist>
+      </div>
 
       <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Prestation</div>
       <select id="calcPresta" onchange="calcDevis()"
@@ -3070,6 +3077,20 @@ function toggleCalculette() {
 }
 
 var dernierDevis = '';
+var jeMeDeplace = true;   // false = le client vient a l'atelier, pas de frais
+
+function setModeDep(dep) {
+  jeMeDeplace = dep;
+  var b1 = document.getElementById('btnDep1');
+  var b2 = document.getElementById('btnDep2');
+  var actif = 'padding:11px 8px;border-radius:10px;border:1px solid var(--accent);background:rgba(0,194,255,0.15);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;';
+  var inactif = 'padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;';
+  if (b1) b1.style.cssText = dep ? actif : inactif;
+  if (b2) b2.style.cssText = dep ? inactif : actif;
+  var bv = document.getElementById('blocVille');
+  if (bv) bv.style.display = dep ? 'block' : 'none';
+  calcDevis();
+}
 
 function calcDevis() {
   var el = document.getElementById('calcResultat');
@@ -3077,6 +3098,20 @@ function calcDevis() {
   var saisie = (document.getElementById('calcVille') || {}).value || '';
   var presta = (document.getElementById('calcPresta') || {}).value || '';
   var prixPresta = tarifs[presta] || 0;
+
+  if (!jeMeDeplace) {
+    dernierDevis = presta + ' : ' + prixPresta + '€ — Total : ' + prixPresta + '€ (sans déplacement)';
+    el.innerHTML =
+      '<div style="background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:12px 14px;">' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128295; Prestation</span><span style="font-weight:700;color:#fff;">' + prixPresta + '€</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#127968; Client &agrave; La Foux</span><span style="color:#00d68f;font-weight:700;">Pas de d&eacute;placement</span></div>' +
+        '<div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:12px;">' +
+          '<span style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;">Total &agrave; annoncer</span>' +
+          '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:40px;color:var(--green);line-height:1;">' + prixPresta + '€</span>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
 
   var zone = trouverZone(saisie);
   var horsZone = saisie.trim().length >= 2 && !zone;

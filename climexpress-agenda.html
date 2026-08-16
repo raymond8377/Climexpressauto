@@ -683,6 +683,8 @@ Ceci est un message automatique, veuillez ne pas y répondre. Nous vous contacte
         onkeydown="if(event.key==='Enter'){seConnecter();}"
         style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:14px;">
 
+      <div id="authAvis" style="display:none;background:rgba(0,194,255,0.1);border:1px solid rgba(0,194,255,0.25);color:var(--accent);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4;"></div>
+
       <div id="authErreur" style="display:none;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);color:#ff8080;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4;"></div>
 
       <button id="authBtn" onclick="seConnecter()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0a1f2e;font-weight:800;font-size:15px;cursor:pointer;font-family:DM Sans,sans-serif;">Se connecter</button>
@@ -719,6 +721,10 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // La cle anon reste publique (c'est normal, elle est faite pour ca).
 // Ce qui protege les donnees, ce sont les policies RLS cote Supabase :
 // elles n'autorisent la lecture des clients qu'aux sessions connectees.
+// Nombre de jours avant que le mot de passe soit redemande.
+// Mets 7 pour une semaine, 90 pour trois mois, 0 pour ne jamais redemander.
+var REAUTH_JOURS = 30;
+
 var SB_SESSION = null;
 try { SB_SESSION = JSON.parse(localStorage.getItem('clim_session') || 'null'); } catch (e) { SB_SESSION = null; }
 
@@ -773,6 +779,8 @@ async function seConnecter() {
       return;
     }
     enregistrerSession(data);
+    localStorage.setItem('clim_derniere_auth', String(Date.now()));
+    localStorage.setItem('clim_dernier_email', email.trim());
     masquerEcranConnexion();
     showNotif('✓ Connecté');
     syncFromSupabase();
@@ -828,6 +836,14 @@ function seDeconnecter() {
 function afficherEcranConnexion() {
   var el = document.getElementById('ecranConnexion');
   if (el) el.style.display = 'flex';
+  // Evite de retaper l'adresse : seul le mot de passe est demande
+  var mail = localStorage.getItem('clim_dernier_email');
+  var champ = document.getElementById('authEmail');
+  if (mail && champ && !champ.value) {
+    champ.value = mail;
+    var mdp = document.getElementById('authMdp');
+    if (mdp) setTimeout(function () { mdp.focus(); }, 200);
+  }
 }
 
 function masquerEcranConnexion() {
@@ -845,12 +861,35 @@ function majBandeauCompte() {
       '<div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;">Connect&eacute;</div>' +
       '<div style="font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (SB_SESSION.email || 'session active') + '</div>' +
     '</div>' +
-    '<button onclick="seDeconnecter()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">D&eacute;connexion</button>' +
-  '</div>';
+    '<button onclick="verrouiller()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">&#128274; Verrouiller</button>' +
+  '</div>' +
+  '<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;padding-left:2px;">Mot de passe redemand&eacute; tous les ' + REAUTH_JOURS + ' jours.</div>';
+}
+
+function authExpiree() {
+  if (!REAUTH_JOURS) return false;
+  var t = parseInt(localStorage.getItem('clim_derniere_auth') || '0', 10);
+  if (!t) return true;
+  return (Date.now() - t) > REAUTH_JOURS * 86400000;
+}
+
+function verrouiller() {
+  if (!confirm('Verrouiller l\'agenda ?\n\nLe mot de passe sera redemandé à la prochaine ouverture.')) return;
+  localStorage.removeItem('clim_derniere_auth');
+  deconnexionLocale();
 }
 
 async function demarrerAuth() {
   if (!SB_SESSION) { afficherEcranConnexion(); return; }
+  if (authExpiree()) {
+    deconnexionLocale();
+    var av = document.getElementById('authAvis');
+    if (av) {
+      av.style.display = 'block';
+      av.textContent = 'Par sécurité, ton mot de passe est redemandé tous les ' + REAUTH_JOURS + ' jours.';
+    }
+    return;
+  }
   if (!sessionValide()) {
     var ok = await rafraichirSession();
     if (!ok && !sessionValide()) { afficherEcranConnexion(); return; }

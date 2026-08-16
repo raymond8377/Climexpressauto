@@ -307,6 +307,164 @@
     position:absolute;top:3px;width:18px;height:18px;border-radius:50%;
     background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,0.3);
   }
+
+  /* ============================================================
+     POLISH VISUEL — surcouche. Rien de structurel n'est touche,
+     ces regles arrivent en fin de feuille et gagnent au cascade.
+     ============================================================ */
+
+  body::before {
+    background:
+      radial-gradient(900px 520px at 12% -12%, rgba(0,194,255,0.16), transparent 62%),
+      radial-gradient(760px 480px at 96% 6%,  rgba(124,92,255,0.13), transparent 64%),
+      radial-gradient(600px 400px at 50% 108%, rgba(0,214,143,0.07), transparent 66%),
+      linear-gradient(180deg, #1e4280 0%, #17325c 52%, #112542 100%);
+  }
+
+  header {
+    background: linear-gradient(180deg, rgba(24,54,102,0.98), rgba(20,45,86,0.94));
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 26px -18px rgba(0,0,0,.9);
+    padding: 14px 16px;
+  }
+
+  .nav { background: rgba(19,42,80,0.96); border-bottom: 1px solid rgba(255,255,255,0.09); }
+  .nav-btn { padding: 11px 4px; transition: color .18s, background .18s; }
+  .nav-btn.active { background: linear-gradient(180deg, rgba(0,194,255,0.13), transparent 78%); }
+
+  .page { padding: 18px 16px 40px; }
+
+  .section-title {
+    position: relative; padding-left: 13px; margin-bottom: 18px; line-height: 1.05;
+  }
+  .section-title::before {
+    content:''; position:absolute; left:0; top:5px; bottom:5px; width:4px; border-radius:4px;
+    background: linear-gradient(180deg, var(--accent), #7c5cff);
+  }
+
+  .card {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.028) 100%);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 18px;
+    padding: 17px;
+    margin-bottom: 14px;
+    box-shadow: 0 14px 32px -20px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .stats { gap: 11px; margin-bottom: 18px; }
+  .stat-card {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085), rgba(255,255,255,0.028));
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 16px; padding: 14px 10px;
+    box-shadow: 0 12px 26px -20px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .stat-num { font-size: 32px; text-shadow: 0 0 26px rgba(0,194,255,.35); }
+  .stat-label { margin-top: 4px; }
+
+  .today-rdv {
+    background: linear-gradient(158deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 14px; margin-bottom: 10px;
+    box-shadow: 0 12px 26px -20px rgba(0,0,0,.8);
+  }
+  .today-rdv::before { width: 4px; border-radius: 0 4px 4px 0; }
+  .today-rdv.confirmed::before { box-shadow: 0 0 16px rgba(0,214,143,.6); }
+  .today-rdv.pending::before   { box-shadow: 0 0 16px rgba(255,149,0,.55); }
+
+  /* ============================================================
+     MODULE BILAN / PERFORMANCE
+     ============================================================ */
+
+  .perf { margin-bottom: 18px; }
+
+  .perf-head {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:10px; margin-bottom:12px;
+  }
+  .perf-title {
+    font-family:'Bebas Neue',sans-serif; font-size:23px; color:#fff;
+    letter-spacing:1.5px; line-height:1;
+  }
+  .perf-title span { color: var(--accent); }
+  .perf-sub { font-size:11px; color:rgba(255,255,255,0.42); margin-top:4px; }
+  .perf-select {
+    background:#163260; color:rgba(255,255,255,0.8); border:1px solid var(--border);
+    border-radius:9px; padding:8px 9px; font-size:12px; font-family:'DM Sans',sans-serif;
+    -webkit-appearance:none; appearance:none; flex-shrink:0;
+  }
+
+  .perf-hero {
+    position:relative; overflow:hidden;
+    background: linear-gradient(155deg, rgba(0,194,255,0.13) 0%, rgba(124,92,255,0.10) 48%, rgba(255,255,255,0.03) 100%);
+    border:1px solid rgba(0,194,255,0.22);
+    border-radius:20px; padding:16px 0 0;
+    box-shadow: 0 20px 44px -26px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.12);
+    margin-bottom:12px;
+  }
+  .perf-hero-label {
+    font-size:10.5px; text-transform:uppercase; letter-spacing:1px;
+    color:rgba(255,255,255,0.5); padding:0 17px;
+  }
+  .perf-hero-row { display:flex; align-items:baseline; gap:11px; padding:0 17px; margin-top:3px; }
+  .perf-hero-num {
+    font-family:'Bebas Neue',sans-serif; font-size:46px; color:#fff; line-height:1;
+    letter-spacing:1px; text-shadow:0 0 34px rgba(0,194,255,.45);
+  }
+  .perf-delta {
+    font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:3px; white-space:nowrap;
+  }
+  .perf-delta.up   { background:rgba(0,214,143,0.16); color:var(--green);  border:1px solid rgba(0,214,143,0.3); }
+  .perf-delta.down { background:rgba(255,68,68,0.14); color:var(--red);    border:1px solid rgba(255,68,68,0.28); }
+  .perf-delta.flat { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.55); border:1px solid var(--border); }
+  .perf-hero-note { font-size:11.5px; color:rgba(255,255,255,0.45); padding:6px 17px 0; line-height:1.45; }
+
+  .perf-wave { display:block; width:100%; height:auto; margin-top:6px; }
+  .perf-xaxis {
+    display:flex; padding:0 14px 13px; margin-top:-2px;
+  }
+  .perf-xaxis div {
+    flex:1; text-align:center; font-size:10px; letter-spacing:.5px;
+    color:rgba(255,255,255,0.38); text-transform:uppercase;
+  }
+  .perf-xaxis div.now { color:var(--accent); font-weight:700; }
+
+  .perf-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:12px; }
+  @media (max-width:400px) { .perf-grid { grid-template-columns:1fr; } }
+
+  .perf-mini {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085), rgba(255,255,255,0.028));
+    border:1px solid rgba(255,255,255,0.13); border-radius:18px; padding:14px;
+    box-shadow: 0 14px 30px -22px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+    display:flex; align-items:center; gap:12px;
+  }
+  .perf-mini-body { min-width:0; }
+  .perf-mini-num {
+    font-family:'Bebas Neue',sans-serif; font-size:30px; color:#fff; line-height:1;
+  }
+  .perf-mini-label {
+    font-size:10px; text-transform:uppercase; letter-spacing:.6px;
+    color:rgba(255,255,255,0.45); margin-top:3px;
+  }
+  .perf-legend { display:flex; flex-direction:column; gap:3px; margin-top:8px; }
+  .perf-legend span { font-size:11px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:5px; }
+  .perf-legend i { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .perf-legend b { color:#fff; font-weight:700; }
+
+  .perf-bars { display:flex; align-items:flex-end; gap:4px; height:38px; margin-top:10px; }
+  .perf-bars div {
+    flex:1; border-radius:5px 5px 2px 2px; min-height:3px;
+    background:linear-gradient(180deg, var(--accent), rgba(124,92,255,.75));
+  }
+  .perf-bars div.now { background:linear-gradient(180deg, #fff, var(--accent)); }
+
+  .perf-kpis { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .perf-kpi {
+    background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.10);
+    border-radius:14px; padding:11px 12px;
+  }
+  .perf-kpi-num { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--accent); line-height:1.1; }
+  .perf-kpi-label { font-size:10px; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
 </style>
 </head>
 <body>
@@ -514,6 +672,57 @@
       <div class="stat-num" id="compta-mois" style="font-size:20px;">0€</div>
       <div class="stat-label">Ce mois</div>
     </div>
+  </div>
+
+  <!-- ===== BILAN / PERFORMANCE ===== -->
+  <div class="perf">
+    <div class="perf-head">
+      <div>
+        <div class="perf-title">Bilan <span>Saison</span></div>
+        <div class="perf-sub" id="perfSub">Chargement…</div>
+      </div>
+      <select id="perfPeriode" class="perf-select" onchange="renderPerf()">
+        <option value="6" selected>6 mois</option>
+        <option value="3">3 mois</option>
+        <option value="12">12 mois</option>
+      </select>
+    </div>
+
+    <div class="perf-hero">
+      <div class="perf-hero-label">Chiffre d'affaires — <span id="perfMoisNom">ce mois</span></div>
+      <div class="perf-hero-row">
+        <div class="perf-hero-num" id="perfCA">0€</div>
+        <div class="perf-delta flat" id="perfDelta">—</div>
+      </div>
+      <div class="perf-hero-note" id="perfNote"></div>
+      <div id="perfWaveBox"></div>
+      <div class="perf-xaxis" id="perfXaxis"></div>
+    </div>
+
+    <div class="perf-grid">
+      <div class="perf-mini">
+        <div id="perfDonutBox"></div>
+        <div class="perf-mini-body">
+          <div class="perf-mini-num" id="perfTaux">—</div>
+          <div class="perf-mini-label">Taux de réalisation</div>
+          <div class="perf-legend">
+            <span><i style="background:#00d68f"></i><b id="perfFaits">0</b>&nbsp;faits</span>
+            <span><i style="background:#ff4444"></i><b id="perfRates">0</b>&nbsp;annulés</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="perf-mini">
+        <div class="perf-mini-body" style="width:100%;">
+          <div class="perf-mini-num" id="perfDep">0</div>
+          <div class="perf-mini-label">Déplacements facturés</div>
+          <div class="perf-bars" id="perfBars"></div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:6px;" id="perfDepCA"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="perf-kpis" id="perfKpis"></div>
   </div>
 
   <!-- CAISSE RAPIDE -->
@@ -2137,7 +2346,7 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
-  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); }
+  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); try { renderPerf(); } catch(e) { console.error('perf', e); } }
 }
 
 // Démo données — désactivée.
@@ -3545,6 +3754,255 @@ async function checkMasquerState() {
       }
     }
   } catch(e) {}
+}
+
+/* ==================================================================
+   MODULE BILAN / PERFORMANCE
+   Lit rdvs[] + la caisse. N'ecrit rien, ne touche a aucune donnee.
+   Concatenation de chaines uniquement (pas de template literals).
+   ================================================================== */
+
+var PERF_MOIS = ['Janv','Fevr','Mars','Avr','Mai','Juin','Juil','Aout','Sept','Oct','Nov','Dec'];
+
+function perfEuro(n) {
+  return Math.round(n).toLocaleString('fr-FR') + '\u20AC';
+}
+
+/* Courbe lissee facon "vague" : Catmull-Rom converti en cubiques Bezier. */
+function perfSmoothPath(pts, yMin, yMax) {
+  if (!pts.length) return '';
+  if (pts.length === 1) return 'M' + pts[0].x + ',' + pts[0].y;
+  var clamp = function(v) { return Math.max(yMin, Math.min(yMax, v)); };
+  var d = 'M' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
+  for (var i = 0; i < pts.length - 1; i++) {
+    var p0 = pts[i - 1] || pts[i];
+    var p1 = pts[i];
+    var p2 = pts[i + 1];
+    var p3 = pts[i + 2] || p2;
+    var t = 0.21;
+    var c1x = p1.x + (p2.x - p0.x) * t, c1y = clamp(p1.y + (p2.y - p0.y) * t);
+    var c2x = p2.x - (p3.x - p1.x) * t, c2y = clamp(p2.y - (p3.y - p1.y) * t);
+    d += ' C' + c1x.toFixed(1) + ',' + c1y.toFixed(1) +
+         ' ' + c2x.toFixed(1) + ',' + c2y.toFixed(1) +
+         ' ' + p2.x.toFixed(1) + ',' + p2.y.toFixed(1);
+  }
+  return d;
+}
+
+/* Agrege les donnees mois par mois sur les n derniers mois (mois courant inclus). */
+function perfCollecte(nbMois) {
+  var out = [];
+  var now = new Date();
+  var caisse = [];
+  try { caisse = getAllCaisse(); } catch (e) { caisse = []; }
+
+  for (var i = nbMois - 1; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+
+    var duMois = rdvs.filter(function(r) { return (r.date || '').slice(0, 7) === key; });
+    var faits    = duMois.filter(function(r) { return r.status === 'done'; });
+    var annules  = duMois.filter(function(r) { return r.status === 'annule'; });
+    var absents  = duMois.filter(function(r) { return r.status === 'absent'; });
+    var nonEff   = duMois.filter(function(r) { return r.status === 'non_effectue'; });
+
+    var ca = faits.reduce(function(s, r) { return s + getPrix(r.type) + getFraisDep(r); }, 0);
+
+    /* Encaissements saisis a la main : on ne prend QUE ceux sans rdv_id,
+       sinon un RDV marque effectue serait compte deux fois. */
+    var manuels = caisse.filter(function(x) {
+      return !x.rdv_id && (x.date || '').slice(0, 7) === key;
+    });
+    ca += manuels.reduce(function(s, x) { return s + (x.montant || 0); }, 0);
+
+    var avecDep = faits.filter(function(r) { return getFraisDep(r) > 0; });
+
+    out.push({
+      key: key,
+      label: PERF_MOIS[d.getMonth()],
+      annee: d.getFullYear(),
+      ca: ca,
+      faits: faits.length,
+      annules: annules.length,
+      absents: absents.length,
+      nonEff: nonEff.length,
+      manuels: manuels.length,
+      dep: avecDep.length,
+      caDep: avecDep.reduce(function(s, r) { return s + getFraisDep(r); }, 0)
+    });
+  }
+  return out;
+}
+
+function perfWaveSVG(mois) {
+  var W = 320, H = 132, padX = 16, top = 20, bot = 104;
+  var vals = mois.map(function(m) { return m.ca; });
+  var max = Math.max.apply(null, vals.concat([1]));
+  var n = vals.length;
+  var step = n > 1 ? (W - padX * 2) / (n - 1) : 0;
+
+  var pts = vals.map(function(v, i) {
+    return { x: padX + i * step, y: bot - (v / max) * (bot - top) };
+  });
+
+  var ligne = perfSmoothPath(pts, top - 6, bot);
+  var aire = ligne + ' L' + pts[n - 1].x.toFixed(1) + ',' + H +
+                     ' L' + pts[0].x.toFixed(1) + ',' + H + ' Z';
+
+  var s = '<svg class="perf-wave" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<defs>';
+  s += '<linearGradient id="perfFill" x1="0" y1="0" x2="0" y2="1">';
+  s += '<stop offset="0%" stop-color="#00c2ff" stop-opacity="0.42"/>';
+  s += '<stop offset="55%" stop-color="#7c5cff" stop-opacity="0.16"/>';
+  s += '<stop offset="100%" stop-color="#7c5cff" stop-opacity="0"/>';
+  s += '</linearGradient>';
+  s += '<linearGradient id="perfStroke" x1="0" y1="0" x2="1" y2="0">';
+  s += '<stop offset="0%" stop-color="#7c5cff"/><stop offset="100%" stop-color="#00c2ff"/>';
+  s += '</linearGradient>';
+  s += '</defs>';
+
+  /* lignes de repere discretes */
+  for (var g = 1; g <= 2; g++) {
+    var gy = top + (bot - top) * (g / 3);
+    s += '<line x1="0" y1="' + gy.toFixed(1) + '" x2="' + W + '" y2="' + gy.toFixed(1) +
+         '" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
+  }
+
+  s += '<path d="' + aire + '" fill="url(#perfFill)"/>';
+  s += '<path d="' + ligne + '" fill="none" stroke="url(#perfStroke)" stroke-width="2.6" ' +
+       'stroke-linecap="round" stroke-linejoin="round"/>';
+
+  pts.forEach(function(p, i) {
+    var dernier = (i === n - 1);
+    if (dernier) {
+      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="8" fill="#00c2ff" opacity="0.22"/>';
+      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.4" fill="#fff" stroke="#00c2ff" stroke-width="2.4"/>';
+    } else {
+      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3" fill="#0b2545" stroke="#7fd8ff" stroke-width="1.8"/>';
+    }
+  });
+
+  /* valeur chiffree au-dessus du dernier point */
+  if (n > 0 && max > 0) {
+    var lp = pts[n - 1];
+    var tx = Math.min(W - 26, Math.max(26, lp.x));
+    s += '<text x="' + tx.toFixed(1) + '" y="' + Math.max(13, lp.y - 13).toFixed(1) + '" ' +
+         'text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="14" fill="#ffffff">' +
+         Math.round(vals[n - 1]) + '\u20AC</text>';
+  }
+
+  s += '</svg>';
+  return s;
+}
+
+function perfDonutSVG(pct) {
+  var r = 27, C = 2 * Math.PI * r, S = 70;
+  var dash = (Math.max(0, Math.min(100, pct)) / 100) * C;
+  var s = '<svg width="' + S + '" height="' + S + '" viewBox="0 0 ' + S + ' ' + S + '" style="flex-shrink:0;">';
+  s += '<defs><linearGradient id="perfDonutG" x1="0" y1="0" x2="1" y2="1">';
+  s += '<stop offset="0%" stop-color="#00d68f"/><stop offset="100%" stop-color="#00c2ff"/>';
+  s += '</linearGradient></defs>';
+  s += '<circle cx="' + S / 2 + '" cy="' + S / 2 + '" r="' + r + '" fill="none" ' +
+       'stroke="rgba(255,255,255,0.10)" stroke-width="7"/>';
+  s += '<circle cx="' + S / 2 + '" cy="' + S / 2 + '" r="' + r + '" fill="none" ' +
+       'stroke="url(#perfDonutG)" stroke-width="7" stroke-linecap="round" ' +
+       'stroke-dasharray="' + dash.toFixed(1) + ' ' + C.toFixed(1) + '" ' +
+       'transform="rotate(-90 ' + S / 2 + ' ' + S / 2 + ')"/>';
+  s += '</svg>';
+  return s;
+}
+
+function renderPerf() {
+  var sel = document.getElementById('perfPeriode');
+  if (!sel) return;
+  var nb = parseInt(sel.value, 10) || 6;
+  var mois = perfCollecte(nb);
+  var cur = mois[mois.length - 1];
+  var prev = mois.length > 1 ? mois[mois.length - 2] : null;
+
+  /* ---- Hero : CA du mois + variation ---- */
+  document.getElementById('perfMoisNom').textContent = cur.label + ' ' + cur.annee;
+  document.getElementById('perfCA').textContent = perfEuro(cur.ca);
+
+  var elD = document.getElementById('perfDelta');
+  if (!prev || prev.ca === 0) {
+    elD.className = 'perf-delta flat';
+    elD.textContent = (prev && cur.ca > 0) ? 'demarrage' : '\u2014';
+  } else {
+    var pct = ((cur.ca - prev.ca) / prev.ca) * 100;
+    var sens = pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat');
+    elD.className = 'perf-delta ' + sens;
+    elD.textContent = (pct > 0 ? '\u25B2 +' : (pct < 0 ? '\u25BC ' : '')) +
+                      Math.round(pct) + '% vs ' + prev.label;
+  }
+
+  /* Volumes faibles : le % seul est trompeur, on donne l'ecart en euros. */
+  var note = '';
+  if (prev) {
+    var ecart = cur.ca - prev.ca;
+    note = (ecart >= 0 ? '+' : '\u2212') + perfEuro(Math.abs(ecart)) +
+           ' par rapport a ' + prev.label + ' (' + perfEuro(prev.ca) + ').';
+  }
+  if (cur.faits <= 3 && cur.faits > 0) {
+    note += ' Peu d\'interventions ce mois-ci : le pourcentage bouge vite, fie-toi au montant.';
+  }
+  document.getElementById('perfNote').textContent = note;
+
+  document.getElementById('perfWaveBox').innerHTML = perfWaveSVG(mois);
+
+  var ax = '';
+  mois.forEach(function(m, i) {
+    ax += '<div class="' + (i === mois.length - 1 ? 'now' : '') + '">' + m.label + '</div>';
+  });
+  document.getElementById('perfXaxis').innerHTML = ax;
+
+  /* ---- Taux de realisation sur toute la periode ---- */
+  var totFaits = 0, totAnn = 0, totAbs = 0, totNon = 0, totCA = 0, totDep = 0, totCADep = 0;
+  mois.forEach(function(m) {
+    totFaits += m.faits; totAnn += m.annules; totAbs += m.absents; totNon += m.nonEff;
+    totCA += m.ca; totDep += m.dep; totCADep += m.caDep;
+  });
+  var totRates = totAnn + totAbs + totNon;
+  var totTraites = totFaits + totRates;
+  var taux = totTraites > 0 ? Math.round((totFaits / totTraites) * 100) : 0;
+
+  document.getElementById('perfDonutBox').innerHTML = perfDonutSVG(taux);
+  document.getElementById('perfTaux').textContent = totTraites > 0 ? taux + '%' : '\u2014';
+  document.getElementById('perfFaits').textContent = totFaits;
+  document.getElementById('perfRates').textContent = totRates;
+
+  /* ---- Deplacements ---- */
+  document.getElementById('perfDep').textContent = totDep;
+  var maxDep = Math.max.apply(null, mois.map(function(m) { return m.dep; }).concat([1]));
+  var bars = '';
+  mois.forEach(function(m, i) {
+    var h = Math.round((m.dep / maxDep) * 100);
+    bars += '<div class="' + (i === mois.length - 1 ? 'now' : '') + '" style="height:' +
+            Math.max(4, h) + '%;" title="' + m.label + ' : ' + m.dep + '"></div>';
+  });
+  document.getElementById('perfBars').innerHTML = bars;
+  document.getElementById('perfDepCA').textContent =
+    totCADep > 0 ? perfEuro(totCADep) + ' de frais de route sur la periode' : '';
+
+  /* ---- KPI ---- */
+  var panier = totFaits > 0 ? totCA / totFaits : 0;
+  var meilleur = mois.slice().sort(function(a, b) { return b.ca - a.ca; })[0];
+  var k = '';
+  k += '<div class="perf-kpi"><div class="perf-kpi-num">' + perfEuro(panier) +
+       '</div><div class="perf-kpi-label">Panier moyen</div></div>';
+  k += '<div class="perf-kpi"><div class="perf-kpi-num">' + perfEuro(totCA) +
+       '</div><div class="perf-kpi-label">CA sur ' + nb + ' mois</div></div>';
+  k += '<div class="perf-kpi"><div class="perf-kpi-num">' +
+       (meilleur && meilleur.ca > 0 ? meilleur.label + ' ' + meilleur.annee : '\u2014') +
+       '</div><div class="perf-kpi-label">Meilleur mois</div></div>';
+  k += '<div class="perf-kpi"><div class="perf-kpi-num">' + totTraites +
+       '</div><div class="perf-kpi-label">RDV traites</div></div>';
+  document.getElementById('perfKpis').innerHTML = k;
+
+  var sub = totTraites > 0
+    ? totFaits + ' intervention' + (totFaits > 1 ? 's' : '') + ' sur ' + nb + ' mois'
+    : 'Pas encore de donnees sur cette periode';
+  document.getElementById('perfSub').textContent = sub;
 }
 </script>
 <!-- MODAL BLOCAGE -->

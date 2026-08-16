@@ -334,6 +334,8 @@
 <div class="page active" id="page-accueil">
   <div class="section-title">Aujourd'hui <span id="todayDateTitle"></span></div>
 
+  <div id="alerteSauvegarde" style="display:none;margin-bottom:14px;"></div>
+
   <!-- ===== CALCULETTE DEVIS TELEPHONE ===== -->
   <div class="card" style="margin-bottom:14px;padding:0;overflow:hidden;border:1px solid rgba(0,194,255,0.25);">
     <div onclick="toggleCalculette()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer;background:rgba(0,194,255,0.06);">
@@ -417,7 +419,7 @@
     </div>
     <div class="form-group">
       <label>Adresse / Lieu d'intervention</label>
-      <input type="text" id="rdvAdresse" placeholder="Ex: 15 rue des Mimosas, Toulon">
+      <input type="text" id="rdvAdresse" placeholder="Ex: 15 rue des Mimosas, Sainte-Maxime">
     </div>
     <div class="form-group">
       <label>Type de recharge</label>
@@ -578,6 +580,23 @@
     </div>
   </div>
 
+  <div id="bandeauCompte" style="margin-bottom:14px;"></div>
+
+  <!-- SAUVEGARDE -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:1px;margin-bottom:4px;">&#128190; Sauvegarde</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">
+      Tes RDV et ta caisse vivent dans la m&eacute;moire de Safari. iOS peut l'effacer si tu n'ouvres pas l'agenda pendant plusieurs jours.
+      Enregistre le fichier dans Fichiers ou iCloud &mdash; une fois par mois suffit.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="exporterSauvegarde()" style="padding:12px;border-radius:10px;border:1px solid rgba(0,214,143,0.3);background:rgba(0,214,143,0.12);color:#00d68f;font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#11015;&#65039; Sauvegarder</button>
+      <button onclick="declencherImport()" style="padding:12px;border-radius:10px;border:1px solid rgba(0,194,255,0.3);background:rgba(0,194,255,0.12);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#11014;&#65039; Restaurer</button>
+    </div>
+    <button onclick="exporterCaisseCSV()" style="width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.8);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128202; Exporter la caisse en CSV (Excel / comptable)</button>
+    <input type="file" id="fichierRestauration" accept="application/json,.json" onchange="restaurerSauvegarde(event)" style="display:none;">
+  </div>
+
   <!-- Tarifs -->
   <div class="card" style="margin-bottom:12px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -638,6 +657,36 @@ Ceci est un message automatique, veuillez ne pas y répondre. Nous vous contacte
   </div>
 </div>
 
+<!-- ===== ECRAN DE CONNEXION ===== -->
+<div id="ecranConnexion" style="display:none;position:fixed;inset:0;z-index:5000;background:#0a1f3d;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;max-width:380px;">
+    <div style="text-align:center;margin-bottom:26px;">
+      <div style="font-size:40px;margin-bottom:10px;">&#10052;&#65039;</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:#fff;letter-spacing:2px;line-height:1;">CLIM<span style="color:var(--accent);">EXPRESS</span></div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;">Agenda professionnel &mdash; acc&egrave;s r&eacute;serv&eacute;</div>
+    </div>
+
+    <div style="background:#0f2547;border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Email</div>
+      <input type="email" id="authEmail" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:14px;">
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Mot de passe</div>
+      <input type="password" id="authMdp" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter'){seConnecter();}"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:14px;">
+
+      <div id="authErreur" style="display:none;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);color:#ff8080;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4;"></div>
+
+      <button id="authBtn" onclick="seConnecter()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0a1f2e;font-weight:800;font-size:15px;cursor:pointer;font-family:DM Sans,sans-serif;">Se connecter</button>
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:14px;line-height:1.5;text-align:center;">
+        La connexion reste active. Tu ne la referas qu'apr&egrave;s une longue p&eacute;riode sans ouvrir l'agenda.
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RDV DETAIL -->
 <div class="modal-overlay" id="rdvModal" onclick="closeRdvModal()">
   <div class="modal" onclick="event.stopPropagation()">
@@ -658,13 +707,163 @@ window.addEventListener('error', function(e) {
 // =========== SUPABASE ===========
 const SB_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
-const SB_HEADERS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+
+// =========== AUTHENTIFICATION SUPABASE ===========
+// La cle anon reste publique (c'est normal, elle est faite pour ca).
+// Ce qui protege les donnees, ce sont les policies RLS cote Supabase :
+// elles n'autorisent la lecture des clients qu'aux sessions connectees.
+var SB_SESSION = null;
+try { SB_SESSION = JSON.parse(localStorage.getItem('clim_session') || 'null'); } catch (e) { SB_SESSION = null; }
+
+function sbHeaders() {
+  var jeton = (SB_SESSION && SB_SESSION.access_token) ? SB_SESSION.access_token : SB_KEY;
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + jeton, 'Content-Type': 'application/json' };
+}
+
+function sessionValide() {
+  return !!(SB_SESSION && SB_SESSION.access_token && SB_SESSION.expires_at &&
+            SB_SESSION.expires_at * 1000 > Date.now());
+}
+
+function enregistrerSession(data) {
+  if (!data || !data.access_token) return false;
+  SB_SESSION = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    // expires_at absent de certaines reponses : on le recalcule
+    expires_at: data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+    email: (data.user && data.user.email) || (SB_SESSION && SB_SESSION.email) || ''
+  };
+  localStorage.setItem('clim_session', JSON.stringify(SB_SESSION));
+  return true;
+}
+
+async function seConnecter() {
+  var email = (document.getElementById('authEmail') || {}).value || '';
+  var mdp = (document.getElementById('authMdp') || {}).value || '';
+  var err = document.getElementById('authErreur');
+  var btn = document.getElementById('authBtn');
+  if (!email.trim() || !mdp) {
+    if (err) { err.style.display = 'block'; err.textContent = 'Renseigne ton email et ton mot de passe.'; }
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Connexion…'; }
+  if (err) err.style.display = 'none';
+  try {
+    var res = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password: mdp })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.access_token) {
+      if (err) {
+        err.style.display = 'block';
+        err.textContent = (res.status === 400)
+          ? 'Email ou mot de passe incorrect.'
+          : 'Connexion impossible (' + res.status + '). Vérifie ta liaison internet.';
+      }
+      return;
+    }
+    enregistrerSession(data);
+    masquerEcranConnexion();
+    showNotif('✓ Connecté');
+    syncFromSupabase();
+  } catch (e) {
+    if (err) { err.style.display = 'block'; err.textContent = 'Réseau indisponible. Réessaie.'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
+  }
+}
+
+async function rafraichirSession() {
+  if (!SB_SESSION || !SB_SESSION.refresh_token) return false;
+  try {
+    var res = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: SB_SESSION.refresh_token })
+    });
+    var data = await res.json();
+    if (res.ok && data.access_token) { enregistrerSession(data); return true; }
+    // Jeton de rafraichissement rejete : la session est morte
+    if (res.status === 400 || res.status === 401) deconnexionLocale();
+    return false;
+  } catch (e) { return false; }   // hors ligne : on garde la session
+}
+
+// Rafraichit si le jeton expire dans moins de 5 minutes
+async function assurerSession() {
+  if (!SB_SESSION) return false;
+  var reste = (SB_SESSION.expires_at || 0) * 1000 - Date.now();
+  if (reste < 5 * 60 * 1000) return await rafraichirSession();
+  return true;
+}
+
+function deconnexionLocale() {
+  SB_SESSION = null;
+  localStorage.removeItem('clim_session');
+  afficherEcranConnexion();
+}
+
+function seDeconnecter() {
+  if (!confirm('Se déconnecter ?\n\nTes RDV et ta caisse restent sur cet appareil.')) return;
+  var jeton = SB_SESSION && SB_SESSION.access_token;
+  if (jeton) {
+    fetch(SB_URL + '/auth/v1/logout', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + jeton }
+    }).catch(function () {});
+  }
+  deconnexionLocale();
+}
+
+function afficherEcranConnexion() {
+  var el = document.getElementById('ecranConnexion');
+  if (el) el.style.display = 'flex';
+}
+
+function masquerEcranConnexion() {
+  var el = document.getElementById('ecranConnexion');
+  if (el) el.style.display = 'none';
+  majBandeauCompte();
+}
+
+function majBandeauCompte() {
+  var el = document.getElementById('bandeauCompte');
+  if (!el) return;
+  if (!SB_SESSION) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:rgba(0,214,143,0.07);border:1px solid rgba(0,214,143,0.2);border-radius:12px;">' +
+    '<div style="min-width:0;">' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.5px;">Connect&eacute;</div>' +
+      '<div style="font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (SB_SESSION.email || 'session active') + '</div>' +
+    '</div>' +
+    '<button onclick="seDeconnecter()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">D&eacute;connexion</button>' +
+  '</div>';
+}
+
+async function demarrerAuth() {
+  if (!SB_SESSION) { afficherEcranConnexion(); return; }
+  if (!sessionValide()) {
+    var ok = await rafraichirSession();
+    if (!ok && !sessionValide()) { afficherEcranConnexion(); return; }
+  }
+  masquerEcranConnexion();
+}
+
+// Le jeton dure 1 h. Safari gele les minuteurs en arriere-plan sur iPhone,
+// donc on verifie aussi au retour sur l'onglet.
+setInterval(assurerSession, 20 * 60 * 1000);
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) assurerSession();
+});
+
 
 let deletedSupabaseIds = JSON.parse(localStorage.getItem('clim_deleted_ids') || '[]');
 
 async function syncFromSupabase() {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/rdvs?select=*&order=date.asc,heure.asc`, { headers: SB_HEADERS });
+    const res = await fetch(`${SB_URL}/rest/v1/rdvs?select=*&order=date.asc,heure.asc`, { headers: sbHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     if (!Array.isArray(data)) return;
@@ -683,7 +882,7 @@ async function syncFromSupabase() {
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
     webRdvs.forEach(r => addClientIfNew(r.nom, r.tel, r.adresse, r.type));
     try {
-      const resBlo = await fetch(`${SB_URL}/rest/v1/blocages?select=*`, { headers: SB_HEADERS });
+      const resBlo = await fetch(`${SB_URL}/rest/v1/blocages?select=*`, { headers: sbHeaders() });
       if (resBlo.ok) {
         const bdata = await resBlo.json();
         if (Array.isArray(bdata) && bdata.length > 0) {
@@ -756,6 +955,7 @@ function init() {
   renderCaisse();
   renderServicesDispo();
   initCalculette();
+  majAlerteSauvegarde();
 }
 
 function fillHeures(date) {
@@ -872,7 +1072,7 @@ function rdvCard(r) {
     ? `<span class="badge-lieu-place">🏠 Sur place</span>`
     : '';
   const isDone = r.status === 'done';
-  const montant = isDone ? (getPrix(r.type) + (r.deplacement ? 10 : 0)) : 0;
+  const montant = isDone ? (getPrix(r.type) + getFraisDep(r)) : 0;
   const doneOverlay = isDone ? `<div style="position:absolute;top:8px;right:8px;background:rgba(0,214,143,0.15);border:1px solid rgba(0,214,143,0.4);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#00d68f;">✅ Effectué +${montant}€</div>` : '';
   return `<div class="today-rdv ${r.status}" onclick="showRdvDetail(${r.id})" style="position:relative;${isDone ? 'opacity:0.7;' : ''}">
     ${doneOverlay}
@@ -900,7 +1100,7 @@ function saveRdvNote(id) {
     if (r.supabase_id) {
       fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
         method: 'PATCH',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ notes: r.notes })
       }).catch(function(e) { console.log('note sync:', e); });
     }
@@ -917,7 +1117,7 @@ function marquerAbsent(id) {
     if (r.supabase_id) {
       fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
         method: 'PATCH',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ status: 'absent', notes: r.notes })
       }).catch(function(e) {});
     }
@@ -931,20 +1131,26 @@ function marquerEffectue(id) {
   if (r) {
     r.status = 'done';
     r.deplacement = r.lieu && r.lieu.includes('domicile') ? true : false;
+    // Fige les frais de deplacement selon la commune du client
+    if (typeof r.frais_dep !== 'number') {
+      var zoneDep = r.deplacement ? trouverZone((r.adresse || '') + ' ' + (r.ville || '')) : null;
+      r.frais_dep = r.deplacement ? (zoneDep ? (zoneDep.prix || 0) : 10) : 0;
+      r.zone_dep = zoneDep ? zoneDep.ville : null;
+    }
     localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
     if (r.supabase_id) {
       fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
         method: 'PATCH',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ status: 'done' })
       }).catch(function(e) {});
     }
     // Ajout automatique dans la caisse
-    const montantRdv = getPrix(r.type) + (r.deplacement ? 10 : 0);
+    const montantRdv = getPrix(r.type) + r.frais_dep;
     const all = getAllCaisse();
     const now = new Date();
     const heure = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    const label = r.nom + ' — ' + r.type + (r.deplacement ? ' + Dépl.' : '');
+    const label = r.nom + ' — ' + r.type + (r.frais_dep > 0 ? ' + Dépl. ' + (r.zone_dep || '') + ' ' + r.frais_dep + '€' : '');
     all.push({ type: label, montant: montantRdv, heure, date: getToday(), id: Date.now(), rdv_id: r.id });
     saveAllCaisse(all);
     closeRdvModal(); renderAccueil(); updateStats(); renderCaisse();
@@ -986,7 +1192,7 @@ function marquerNonEffectue(id) {
     if (r.supabase_id) {
       fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
         method: 'PATCH',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ status: 'non_effectue', notes: r.notes || '' })
       }).catch(function(e) {});
     }
@@ -1347,7 +1553,7 @@ function annulerNouveauRdv() {
     if (r.supabase_id) {
       fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
         method: 'PATCH',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ status: 'annule' })
       }).catch(function(e) {});
     }
@@ -1391,7 +1597,7 @@ function validerModifHeure(id) {
   if (r.supabase_id) {
     fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
       method: 'PATCH',
-      headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+      headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
       body: JSON.stringify({ heure: nouvelleHeure })
     }).catch(function(e) {});
   }
@@ -1573,7 +1779,7 @@ function validerModifRDV(id) {
   if (r.supabase_id) {
     fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
       method: 'PATCH',
-      headers: Object.assign({}, SB_HEADERS, { 'Prefer': 'return=representation' }),
+      headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=representation' }),
       body: JSON.stringify({
         nom: nom, tel: tel, adresse: adresse, type: type,
         date: date, heure: heure, notes: notes
@@ -1621,7 +1827,7 @@ function deleteRDV(id) {
     localStorage.setItem('clim_deleted_ids', JSON.stringify(deletedSupabaseIds));
     // Essayer de supprimer dans Supabase aussi
     fetch(`${SB_URL}/rest/v1/rdvs?id=eq.${r.supabase_id}`, {
-      method: 'DELETE', headers: SB_HEADERS
+      method: 'DELETE', headers: sbHeaders()
     }).catch(e => console.log('Supabase delete:', e));
   }
   rdvs = rdvs.filter(r => r.id !== id);
@@ -1638,7 +1844,7 @@ function cancelRDV(id) {
     if (r.supabase_id) {
       fetch(`${SB_URL}/rest/v1/rdvs?id=eq.${r.supabase_id}`, {
         method: 'PATCH',
-        headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+        headers: { ...sbHeaders(), 'Prefer': 'return=minimal' },
         body: JSON.stringify({ status: 'annule' })
       }).catch(e => console.log('Supabase cancel:', e));
     }
@@ -1872,27 +2078,14 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
-  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); }
+  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); }
 }
 
-// Démo données si vide
+// Démo données — désactivée.
+// Injectait 3 faux clients (Toulon, La Seyne : hors zone ClimExpress)
+// à chaque démarrage avec une liste vide, donc après toute purge Safari.
 function loadDemo() {
-  if (rdvs.length > 0) return;
-  const today = toLocalDateStr(new Date());
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomStr = toLocalDateStr(tomorrow);
-  rdvs = [
-    { id: 1, nom: 'Marc Lefevre', tel: '0612345678', adresse: '12 rue des Roses, Toulon', type: 'VL Recharge Standard (R134a)', date: today, heure: '09:00', notes: 'Peugeot 308 - 2018', status: 'confirmed', createdAt: new Date().toISOString() },
-    { id: 2, nom: 'Sophie Girard', tel: '0698765432', adresse: '5 av du Port, La Seyne', type: 'VL Recharge + Désinfection', date: today, heure: '11:00', notes: 'Renault Clio', status: 'confirmed', createdAt: new Date().toISOString() },
-    { id: 3, nom: 'Bruno Casini', tel: '0645678901', adresse: 'Zone artisanale, Hyères', type: 'VU Recharge Standard', date: tomStr, heure: '08:30', notes: 'Ford Transit', status: 'confirmed', createdAt: new Date().toISOString() },
-  ];
-  clients = [
-    { id: 1, nom: 'Marc Lefevre', tel: '0612345678', adresse: '12 rue des Roses, Toulon', types: ['VL Recharge Standard (R134a)'], rdvCount: 1, createdAt: new Date().toISOString() },
-    { id: 2, nom: 'Sophie Girard', tel: '0698765432', adresse: '5 av du Port, La Seyne', types: ['VL Recharge + Désinfection'], rdvCount: 1, createdAt: new Date().toISOString() },
-    { id: 3, nom: 'Bruno Casini', tel: '0645678901', adresse: 'Zone artisanale, Hyères', types: ['VU Recharge Standard'], rdvCount: 1, createdAt: new Date().toISOString() },
-  ];
-  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
-  localStorage.setItem('clim_clients', JSON.stringify(clients));
+  return;
 }
 
 // =========== NOTIFICATIONS ===========
@@ -2115,7 +2308,7 @@ async function syncBlocageToSupabase(bloc) {
   try {
     await fetch(`${SB_URL}/rest/v1/blocages`, {
       method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+      headers: { ...sbHeaders(), 'Prefer': 'return=minimal' },
       body: JSON.stringify({ type: bloc.type, date: bloc.date, heure: bloc.heure, raison: bloc.raison })
     });
   } catch(e) {}
@@ -2495,55 +2688,262 @@ function ligneEncaissement(item) {
   '</div>';
 }
 
+// =========== SAUVEGARDE / RESTAURATION ===========
+// Safari iOS efface les donnees d'un site non ouvert depuis 7 jours.
+// Ces fonctions produisent un fichier a garder dans Fichiers / iCloud.
+var CLES_SAUVEGARDE = ['clim_rdvs', 'clim_clients', 'clim_caisse_all', 'clim_tarifs',
+                       'clim_bareme_dep', 'clim_blocages', 'clim_services_dispo'];
+
+function construireSauvegarde() {
+  var data = { version: 1, exporte_le: new Date().toISOString(), donnees: {} };
+  CLES_SAUVEGARDE.forEach(function(k) {
+    var v = localStorage.getItem(k);
+    if (v !== null) data.donnees[k] = v;
+  });
+  return data;
+}
+
+function exporterSauvegarde() {
+  var data = construireSauvegarde();
+  var nb = getAllCaisse().length;
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'climexpress-sauvegarde-' + getToday() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  localStorage.setItem('clim_derniere_sauvegarde', getToday());
+  majAlerteSauvegarde();
+  showNotif('✓ Sauvegarde créée (' + nb + ' encaissements)');
+}
+
+function exporterCaisseCSV() {
+  var all = getAllCaisse();
+  if (!all.length) { showNotif('Aucun encaissement à exporter', '#ff9500'); return; }
+  var lignes = ['Date;Heure;Libelle;Montant EUR'];
+  all.slice().sort(function(a, b) {
+    return (a.date + a.heure) < (b.date + b.heure) ? -1 : 1;
+  }).forEach(function(c) {
+    var lib = (c.type || '').replace(/[;\n\r]/g, ' ');
+    lignes.push([c.date, c.heure || '', lib, c.montant].join(';'));
+  });
+  var total = all.reduce(function(t, c) { return t + (c.montant || 0); }, 0);
+  lignes.push(';;TOTAL;' + total);
+  // BOM UTF-8 pour qu'Excel/Numbers affiche bien les accents
+  var blob = new Blob(['\ufeff' + lignes.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'climexpress-caisse-' + getToday() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  showNotif('✓ ' + all.length + ' lignes exportées');
+}
+
+function declencherImport() {
+  var inp = document.getElementById('fichierRestauration');
+  if (inp) { inp.value = ''; inp.click(); }
+}
+
+function restaurerSauvegarde(evt) {
+  var f = evt.target.files && evt.target.files[0];
+  if (!f) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var data;
+    try { data = JSON.parse(e.target.result); }
+    catch (err) { showNotif('Fichier illisible', '#ff4444'); return; }
+    if (!data || !data.donnees) { showNotif('Ce n\'est pas une sauvegarde ClimExpress', '#ff4444'); return; }
+
+    var nbRdv = 0, nbCaisse = 0;
+    try { nbRdv = JSON.parse(data.donnees['clim_rdvs'] || '[]').length; } catch (x) {}
+    try { nbCaisse = JSON.parse(data.donnees['clim_caisse_all'] || '[]').length; } catch (x) {}
+    var quand = (data.exporte_le || '').slice(0, 10);
+
+    if (!confirm('Restaurer la sauvegarde du ' + quand + ' ?\n\n' +
+                 nbRdv + ' RDV et ' + nbCaisse + ' encaissements.\n\n' +
+                 'ATTENTION : les données actuelles de l\'appareil seront remplacées.')) return;
+
+    Object.keys(data.donnees).forEach(function(k) {
+      if (CLES_SAUVEGARDE.indexOf(k) !== -1) localStorage.setItem(k, data.donnees[k]);
+    });
+    showNotif('✓ Restauration effectuée — rechargement…');
+    setTimeout(function() { location.reload(); }, 1200);
+  };
+  reader.readAsText(f);
+}
+
+// Bandeau d'alerte si la derniere sauvegarde date de plus de 14 jours
+function majAlerteSauvegarde() {
+  var el = document.getElementById('alerteSauvegarde');
+  if (!el) return;
+  var derniere = localStorage.getItem('clim_derniere_sauvegarde');
+  var jours = derniere
+    ? Math.floor((new Date(getToday()) - new Date(derniere)) / 86400000)
+    : 999;
+  if (jours < 14 || !getAllCaisse().length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;">' +
+    '<span style="font-size:18px;">&#9888;&#65039;</span>' +
+    '<div style="flex:1;font-size:12px;color:rgba(255,255,255,0.75);line-height:1.4;">' +
+      (derniere ? 'Derni&egrave;re sauvegarde il y a ' + jours + ' jours.' : 'Aucune sauvegarde enregistr&eacute;e.') +
+      ' Ta compta n\'existe que sur cet iPhone.' +
+    '</div>' +
+    '<button onclick="exporterSauvegarde()" style="padding:8px 12px;border-radius:8px;border:none;background:#ff9500;color:#0a1f2e;font-weight:800;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">Sauvegarder</button>' +
+  '</div>';
+}
+
 // =========== CALCULETTE DEVIS TELEPHONE ===========
 // Bareme deplacement depuis La Foux - 83580 Gassin.
 // Valeurs de depart a ajuster via le bouton "Bareme depl."
 var BAREME_DEP_DEFAULT = [
-  { ville: 'Gassin',                cp: '83580', prix: 0 },
-  { ville: 'La Foux',               cp: '83580', prix: 0 },
-  { ville: 'Cogolin',               cp: '83310', prix: 0 },
-  { ville: 'Grimaud',               cp: '83310', prix: 0 },
-  { ville: 'Port Grimaud',          cp: '83310', prix: 0 },
-  { ville: 'Saint-Tropez',          cp: '83990', prix: 10 },
-  { ville: 'Ramatuelle',            cp: '83350', prix: 10 },
-  { ville: 'La Croix-Valmer',       cp: '83420', prix: 10 },
-  { ville: 'Sainte-Maxime',         cp: '83120', prix: 10 },
-  { ville: 'Le Plan-de-la-Tour',    cp: '83120', prix: 15 },
-  { ville: 'Cavalaire-sur-Mer',     cp: '83240', prix: 15 },
-  { ville: 'La Garde-Freinet',      cp: '83680', prix: 20 },
-  { ville: 'Le Rayol-Canadel',      cp: '83820', prix: 20 },
-  { ville: 'Collobrieres',          cp: '83610', prix: 25 },
-  { ville: 'Roquebrune-sur-Argens', cp: '83520', prix: 25 },
-  { ville: 'Le Muy',                cp: '83490', prix: 30 },
-  { ville: 'Vidauban',              cp: '83550', prix: 30 },
-  { ville: 'Frejus',                cp: '83600', prix: 30 },
-  { ville: 'Saint-Raphael',         cp: '83700', prix: 30 },
-  { ville: 'Le Lavandou',           cp: '83980', prix: 30 },
-  { ville: 'Bormes-les-Mimosas',    cp: '83230', prix: 30 },
-  { ville: 'La Londe-les-Maures',   cp: '83250', prix: 35 },
-  { ville: 'Hyeres',                cp: '83400', prix: 40 }
+  // ---- Golfe ----
+  { ville: 'Gassin', cp: '83580', sect: 'Golfe', km: 6, prix: 0 },
+  { ville: 'La Foux', cp: '83580', sect: 'Golfe', km: 0, prix: 0 },
+  { ville: 'Cogolin', cp: '83310', sect: 'Golfe', km: 6, prix: 0 },
+  { ville: 'Grimaud', cp: '83310', sect: 'Golfe', km: 7, prix: 0 },
+  { ville: 'Port Grimaud', cp: '83310', sect: 'Golfe', km: 2, prix: 0 },
+  { ville: 'La Mole', cp: '83310', sect: 'Golfe', km: 16, prix: 0 },
+  { ville: 'Saint-Tropez', cp: '83990', sect: 'Golfe', km: 7, prix: 0 },
+  { ville: 'Ramatuelle', cp: '83350', sect: 'Golfe', km: 9, prix: 0 },
+  { ville: 'La Croix-Valmer', cp: '83420', sect: 'Golfe', km: 9, prix: 0 },
+  { ville: 'Sainte-Maxime', cp: '83120', sect: 'Golfe', km: 11, prix: 0 },
+  { ville: 'Cavalaire-sur-Mer', cp: '83240', sect: 'Golfe', km: 15, prix: 0 },
+  { ville: 'Le Plan-de-la-Tour', cp: '83120', sect: 'Golfe', km: 14, prix: 0 },
+  { ville: 'La Garde-Freinet', cp: '83680', sect: 'Golfe', km: 16, prix: 0 },
+  { ville: 'Le Rayol-Canadel', cp: '83820', sect: 'Golfe', km: 21, prix: 0 },
+
+  // ---- Maures ----
+  { ville: 'Collobrieres', cp: '83610', sect: 'Maures', km: 32, prix: 35 },
+  { ville: 'Le Lavandou', cp: '83980', sect: 'Maures', km: 32, prix: 35 },
+  { ville: 'Bormes-les-Mimosas', cp: '83230', sect: 'Maures', km: 33, prix: 35 },
+  { ville: 'La Londe-les-Maures', cp: '83250', sect: 'Maures', km: 45, prix: 50 },
+  { ville: 'Hyeres', cp: '83400', sect: 'Maures', km: 58, prix: 65, long: true },
+  { ville: 'La Crau', cp: '83260', sect: 'Maures', km: 62, prix: 70, long: true },
+  { ville: 'Pierrefeu-du-Var', cp: '83390', sect: 'Maures', km: 51, prix: 55, long: true },
+  { ville: 'Cuers', cp: '83390', sect: 'Maures', km: 60, prix: 65, long: true },
+  { ville: 'Puget-Ville', cp: '83390', sect: 'Maures', km: 52, prix: 55, long: true },
+  { ville: 'Carqueiranne', cp: '83320', sect: 'Maures', km: 65, prix: 70, long: true },
+  { ville: 'Le Pradet', cp: '83220', sect: 'Maures', km: 70, prix: 75, long: true },
+  { ville: 'Sollies-Pont', cp: '83210', sect: 'Maures', km: 64, prix: 70, long: true },
+  { ville: 'Sollies-Toucas', cp: '83210', sect: 'Maures', km: 63, prix: 70, long: true },
+  { ville: 'Belgentier', cp: '83210', sect: 'Maures', km: 66, prix: 75, long: true },
+
+  // ---- Est ----
+  { ville: 'Roquebrune-sur-Argens', cp: '83520', sect: 'Est', km: 30, prix: 35 },
+  { ville: 'Le Muy', cp: '83490', sect: 'Est', km: 34, prix: 35 },
+  { ville: 'Vidauban', cp: '83550', sect: 'Est', km: 31, prix: 35 },
+  { ville: 'La Motte', cp: '83920', sect: 'Est', km: 38, prix: 40 },
+  { ville: 'Puget-sur-Argens', cp: '83480', sect: 'Est', km: 34, prix: 35 },
+  { ville: 'Frejus', cp: '83600', sect: 'Est', km: 33, prix: 35 },
+  { ville: 'Saint-Raphael', cp: '83700', sect: 'Est', km: 34, prix: 40 },
+  { ville: 'Le Cannet-des-Maures', cp: '83340', sect: 'Est', km: 35, prix: 40 },
+  { ville: 'Trans-en-Provence', cp: '83720', sect: 'Est', km: 40, prix: 45 },
+  { ville: 'Draguignan', cp: '83300', sect: 'Est', km: 47, prix: 50, long: true },
+  { ville: 'Le Luc', cp: '83340', sect: 'Est', km: 38, prix: 40 },
+  { ville: 'Les Adrets-de-l Esterel', cp: '83600', sect: 'Est', km: 48, prix: 50, long: true },
+  { ville: 'Bagnols-en-Foret', cp: '83600', sect: 'Est', km: 46, prix: 50, long: true },
+  { ville: 'Lorgues', cp: '83510', sect: 'Est', km: 45, prix: 50 },
+  { ville: 'Callas', cp: '83830', sect: 'Est', km: 54, prix: 60, long: true },
+  { ville: 'Flayosc', cp: '83780', sect: 'Est', km: 48, prix: 55, long: true },
+
+  // ---- Haut Var ----
+  { ville: 'Saint-Paul-en-Foret', cp: '83440', sect: 'Haut Var', km: 49, prix: 55, long: true },
+  { ville: 'Montauroux', cp: '83440', sect: 'Haut Var', km: 62, prix: 70, long: true },
+  { ville: 'Callian', cp: '83440', sect: 'Haut Var', km: 62, prix: 70, long: true },
+  { ville: 'Tourrettes', cp: '83440', sect: 'Haut Var', km: 58, prix: 65, long: true },
+  { ville: 'Fayence', cp: '83440', sect: 'Haut Var', km: 60, prix: 65, long: true },
+  { ville: 'Seillans', cp: '83440', sect: 'Haut Var', km: 61, prix: 65, long: true },
+  { ville: 'Cotignac', cp: '83570', sect: 'Haut Var', km: 66, prix: 75, long: true },
+  { ville: 'Carces', cp: '83570', sect: 'Haut Var', km: 58, prix: 65, long: true },
+  { ville: 'Salernes', cp: '83690', sect: 'Haut Var', km: 63, prix: 70, long: true },
+  { ville: 'Aups', cp: '83630', sect: 'Haut Var', km: 72, prix: 80, long: true },
+  { ville: 'Barjols', cp: '83670', sect: 'Haut Var', km: 82, prix: 90, long: true },
+  { ville: 'Comps-sur-Artuby', cp: '83840', sect: 'Haut Var', km: 72, prix: 80, long: true },
+  { ville: 'Aiguines', cp: '83630', sect: 'Haut Var', km: 92, prix: 100, long: true },
+
+  // ---- Centre ----
+  { ville: 'Rocbaron', cp: '83136', sect: 'Centre', km: 59, prix: 65, long: true },
+  { ville: 'Gareoult', cp: '83136', sect: 'Centre', km: 64, prix: 70, long: true },
+  { ville: 'Neoules', cp: '83136', sect: 'Centre', km: 68, prix: 75, long: true },
+  { ville: 'Meounes-les-Montrieux', cp: '83136', sect: 'Centre', km: 72, prix: 80, long: true },
+  { ville: 'Brignoles', cp: '83170', sect: 'Centre', km: 65, prix: 70, long: true },
+  { ville: 'La Roquebrussanne', cp: '83136', sect: 'Centre', km: 72, prix: 80, long: true },
+  { ville: 'Le Val', cp: '83143', sect: 'Centre', km: 67, prix: 75, long: true },
+  { ville: 'Tourves', cp: '83170', sect: 'Centre', km: 80, prix: 90, long: true },
+  { ville: 'Saint-Maximin', cp: '83470', sect: 'Centre', km: 89, prix: 100, long: true },
+  { ville: 'Nans-les-Pins', cp: '83860', sect: 'Centre', km: 95, prix: 105, long: true },
+  { ville: 'Rians', cp: '83560', sect: 'Centre', km: 111, prix: 120, long: true },
+  { ville: 'Vinon-sur-Verdon', cp: '83560', sect: 'Centre', km: 117, prix: 130, long: true },
+  { ville: 'Ginasservis', cp: '83560', sect: 'Centre', km: 109, prix: 120, long: true },
+
+  // ---- Toulon ----
+  { ville: 'La Valette-du-Var', cp: '83160', sect: 'Toulon', km: 73, prix: 80, long: true },
+  { ville: 'La Garde', cp: '83130', sect: 'Toulon', km: 70, prix: 75, long: true },
+  { ville: 'Toulon', cp: '83000', cps: ['83100','83200'], sect: 'Toulon', km: 80, prix: 90, long: true },
+  { ville: 'Ollioules', cp: '83190', sect: 'Toulon', km: 88, prix: 95, long: true },
+  { ville: 'La Seyne-sur-Mer', cp: '83500', sect: 'Toulon', km: 86, prix: 95, long: true },
+  { ville: 'Six-Fours-les-Plages', cp: '83140', sect: 'Toulon', km: 91, prix: 100, long: true },
+  { ville: 'Le Castellet', cp: '83330', sect: 'Toulon', km: 95, prix: 105, long: true },
+  { ville: 'Le Beausset', cp: '83330', sect: 'Toulon', km: 92, prix: 100, long: true },
+  { ville: 'Evenos', cp: '83330', sect: 'Toulon', km: 88, prix: 95, long: true },
+  { ville: 'Signes', cp: '83870', sect: 'Toulon', km: 84, prix: 90, long: true },
+  { ville: 'Sanary-sur-Mer', cp: '83110', sect: 'Toulon', km: 94, prix: 105, long: true },
+  { ville: 'Bandol', cp: '83150', sect: 'Toulon', km: 99, prix: 110, long: true },
+  { ville: 'La Cadiere-d Azur', cp: '83740', sect: 'Toulon', km: 97, prix: 105, long: true },
+  { ville: 'Saint-Cyr-sur-Mer', cp: '83270', sect: 'Toulon', km: 103, prix: 115, long: true }
 ];
 
 // Abreviations courantes -> commune officielle.
 // Volontairement separe du bareme : modifier les prix n'efface pas les alias.
 var ALIAS_DEP = {
-  'Saint-Tropez':          ['st tropez', 'sttropez', 'tropez', 'st trop'],
-  'Sainte-Maxime':         ['ste maxime', 'stemaxime', 'maxime', 'ste max'],
-  'Saint-Raphael':         ['st raphael', 'raphael', 'st raph'],
-  'La Croix-Valmer':       ['croix valmer', 'la croix', 'lacroixvalmer'],
-  'Le Lavandou':           ['lavandou'],
-  'Bormes-les-Mimosas':    ['bormes'],
-  'La Londe-les-Maures':   ['la londe', 'londe'],
-  'Le Rayol-Canadel':      ['rayol', 'canadel'],
-  'Le Plan-de-la-Tour':    ['plan de la tour', 'plandelatour'],
-  'La Garde-Freinet':      ['garde freinet', 'gardefreinet', 'freinet'],
-  'Roquebrune-sur-Argens': ['roquebrune'],
-  'Cavalaire-sur-Mer':     ['cavalaire'],
-  'Port Grimaud':          ['portgrimaud', 'port-grimaud'],
-  'Collobrieres':          ['collobrieres', 'collobrière', 'collobrières'],
-  'Frejus':                ['frejus', 'fréjus'],
-  'Hyeres':                ['hyeres', 'hyères'],
-  'La Foux':               ['foux', 'la foux', 'base']
+  'Saint-Tropez':            ['st tropez', 'sttropez', 'tropez', 'st trop'],
+  'Sainte-Maxime':           ['ste maxime', 'stemaxime', 'maxime', 'ste max'],
+  'Saint-Raphael':           ['st raphael', 'raphael', 'st raph'],
+  'Saint-Maximin':           ['st maximin', 'saint maximin la sainte baume', 'maximin'],
+  'Saint-Cyr-sur-Mer':       ['st cyr', 'saint cyr'],
+  'Saint-Paul-en-Foret':     ['st paul en foret'],
+  'La Croix-Valmer':         ['croix valmer', 'la croix', 'lacroixvalmer'],
+  'Le Lavandou':             ['lavandou'],
+  'Bormes-les-Mimosas':      ['bormes'],
+  'La Londe-les-Maures':     ['la londe', 'londe'],
+  'Le Rayol-Canadel':        ['rayol', 'canadel'],
+  'Le Plan-de-la-Tour':      ['plan de la tour', 'plandelatour'],
+  'La Garde-Freinet':        ['garde freinet', 'gardefreinet', 'freinet'],
+  'Roquebrune-sur-Argens':   ['roquebrune'],
+  'Cavalaire-sur-Mer':       ['cavalaire'],
+  'Port Grimaud':            ['portgrimaud', 'port-grimaud'],
+  'Collobrieres':            ['collobrieres', 'collobrière', 'collobrières'],
+  'Frejus':                  ['frejus', 'fréjus'],
+  'Hyeres':                  ['hyeres', 'hyères'],
+  'La Foux':                 ['foux', 'la foux', 'base'],
+  'La Mole':                 ['la mole', 'la môle', 'mole'],
+  'La Seyne-sur-Mer':        ['la seyne', 'seyne'],
+  'Six-Fours-les-Plages':    ['six fours', 'sixfours'],
+  'Sanary-sur-Mer':          ['sanary'],
+  'La Cadiere-d Azur':       ['la cadiere', 'cadiere'],
+  'Sollies-Pont':            ['sollies pont', 'solliès-pont'],
+  'Sollies-Toucas':          ['sollies toucas', 'solliès-toucas'],
+  'Meounes-les-Montrieux':   ['meounes', 'méounes'],
+  'La Valette-du-Var':       ['la valette', 'valette'],
+  'Les Adrets-de-l Esterel': ['les adrets', 'adrets'],
+  'Bagnols-en-Foret':        ['bagnols'],
+  'Trans-en-Provence':       ['trans'],
+  'Le Cannet-des-Maures':    ['le cannet', 'cannet des maures'],
+  'Vinon-sur-Verdon':        ['vinon'],
+  'Nans-les-Pins':           ['nans'],
+  'Comps-sur-Artuby':        ['comps'],
+  'Gareoult':                ['gareoult', 'garéoult'],
+  'Neoules':                 ['neoules', 'néoules'],
+  'Carces':                  ['carces', 'carcès'],
+  'Evenos':                  ['evenos', 'événos'],
+  'La Roquebrussanne':       ['roquebrussanne'],
+  'Le Val':                  ['le val']
 };
 
 function aliasDe(ville) {
@@ -2571,9 +2971,11 @@ function trouverZone(saisie) {
   if (!q) return null;
   var bareme = getBaremeDep();
   var i, z;
-  // 1. Code postal exact
+  // 1. Code postal exact (principal ou secondaire)
+  var cpSaisi = saisie.replace(/\D/g, '');
   for (i = 0; i < bareme.length; i++) {
-    if (bareme[i].cp === saisie.replace(/\D/g, '')) return bareme[i];
+    if (bareme[i].cp === cpSaisi) return bareme[i];
+    if (bareme[i].cps && bareme[i].cps.indexOf(cpSaisi) !== -1) return bareme[i];
   }
   // 2. Nom de commune ou alias exact
   for (i = 0; i < bareme.length; i++) {
@@ -2651,7 +3053,7 @@ function calcDevis() {
     el.innerHTML = '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:14px;text-align:center;">' +
       '<div style="font-size:22px;margin-bottom:6px;">&#9888;&#65039;</div>' +
       '<div style="font-size:13px;color:#ff9500;font-weight:700;margin-bottom:4px;">Hors secteur</div>' +
-      '<div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5;">Cette commune n\'est pas dans ton bar&egrave;me. Annonce un devis personnalis&eacute; ou ajoute-la via &laquo; Bar&egrave;me d&eacute;pl. &raquo;.</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5;">Commune absente du bar&egrave;me (hors Var ?). Annonce un devis personnalis&eacute; ou ajoute-la via &laquo; Bar&egrave;me d&eacute;pl. &raquo;.</div>' +
       '</div>';
     return;
   }
@@ -2664,9 +3066,17 @@ function calcDevis() {
     (prixDep > 0 ? ' + déplacement ' + nomZone + ' : ' + prixDep + '€' : '') +
     ' — Total : ' + total + '€';
 
+  var detailKm = (zone && zone.km) ? ' <span style="color:rgba(255,255,255,0.35);font-size:11px;">' + zone.km + ' km</span>' : '';
   var ligneDep = prixDep > 0
-    ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + '</span><span style="color:#ff9500;font-weight:700;">+' + prixDep + '€</span></div>'
-    : (zone ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + '</span><span style="color:#00d68f;font-weight:700;">Offert</span></div>' : '');
+    ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + detailKm + '</span><span style="color:#ff9500;font-weight:700;">+' + prixDep + '€</span></div>'
+    : (zone ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + detailKm + '</span><span style="color:#00d68f;font-weight:700;">Offert</span></div>' : '');
+
+  // Au-dela de 45 km, une intervention isolee ne couvre pas le temps de route
+  var alerteLong = (zone && zone.long)
+    ? '<div style="margin-top:10px;padding:9px 11px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.25);border-radius:9px;font-size:11px;color:#ffb454;line-height:1.45;">' +
+      '&#9888;&#65039; ' + zone.km + ' km, soit ' + (zone.km * 2) + ' km aller-retour et environ ' + Math.round(zone.km * 2 / 60 * 1.15 * 10) / 10 + ' h de route. ' +
+      'Rentable surtout en groupant avec d\'autres RDV du secteur.</div>'
+    : '';
 
   el.innerHTML =
     '<div style="background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:12px 14px;">' +
@@ -2677,7 +3087,7 @@ function calcDevis() {
         '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:40px;color:var(--green);line-height:1;">' + total + '€</span>' +
       '</div>' +
       (zone ? '' : '<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">Saisis une ville pour ajouter le d&eacute;placement.</div>') +
-    '</div>';
+    '</div>' + alerteLong;
 }
 
 function copierDevis() {
@@ -2705,22 +3115,55 @@ function copierFallback(txt) {
 
 // ----- Edition du bareme -----
 function ouvrirEditBareme() {
+  var f = document.getElementById('baremeFiltre');
+  if (f) f.value = '';
+  rendreEditBareme('');
+  var m = document.getElementById('modalBareme');
+  if (m) m.style.display = 'flex';
+}
+
+function filtrerBareme() {
+  var f = document.getElementById('baremeFiltre');
+  rendreEditBareme(f ? f.value : '');
+}
+
+function rendreEditBareme(filtre) {
   var bareme = getBaremeDep();
   var el = document.getElementById('baremeEditList');
   if (!el) return;
-  el.innerHTML = bareme.map(function(z, i) {
+  var q = normTxt(filtre);
+  var secteurCourant = '';
+  var html = '';
+  var visibles = 0;
+
+  bareme.forEach(function(z, i) {
+    if (q && normTxt(z.ville).indexOf(q) === -1 && (z.cp || '').indexOf(filtre.replace(/\D/g, '')) !== 0) {
+      if (aliasDe(z.ville).filter(function(a) { return a.indexOf(q) !== -1; }).length === 0) return;
+    }
+    visibles++;
+    if (z.sect && z.sect !== secteurCourant) {
+      secteurCourant = z.sect;
+      html += '<div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin:14px 0 4px;font-weight:700;">' + z.sect + '</div>';
+    }
+    html += ligneEditBareme(z, i);
+  });
+
+  el.innerHTML = visibles ? html
+    : '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.35);font-size:12px;">Aucune commune ne correspond.</div>';
+}
+
+function ligneEditBareme(z, i) {
+  return [z].map(function(z, _u) {
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + z.ville + '</div>' +
-        '<div style="font-size:10px;color:rgba(255,255,255,0.35);">' + z.cp + '</div>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,0.35);">' + z.cp + (z.km ? ' &middot; ' + z.km + ' km' : '') + '</div>' +
       '</div>' +
       '<input type="number" inputmode="numeric" min="0" data-bareme-idx="' + i + '" value="' + (z.prix || 0) + '" ' +
       'style="width:78px;padding:9px;border-radius:8px;border:1px solid var(--border);background:#163260;color:#fff;font-size:15px;text-align:center;font-family:DM Sans,sans-serif;">' +
       '<span style="font-size:13px;color:rgba(255,255,255,0.4);">€</span>' +
     '</div>';
   }).join('');
-  var m = document.getElementById('modalBareme');
-  if (m) m.style.display = 'flex';
 }
 
 function fermerEditBareme() {
@@ -2729,6 +3172,7 @@ function fermerEditBareme() {
 }
 
 function sauverBareme() {
+  // Ne met a jour que les lignes visibles : le filtre n'efface pas le reste
   var bareme = getBaremeDep();
   var inputs = document.querySelectorAll('[data-bareme-idx]');
   for (var i = 0; i < inputs.length; i++) {
@@ -2758,21 +3202,46 @@ let tarifs = JSON.parse(localStorage.getItem('clim_tarifs') || JSON.stringify(TA
 
 function getPrix(type) {
   if (!type) return 0;
-  // Cherche correspondance
-  for (const key in tarifs) {
-    if (type.toLowerCase().includes(key.toLowerCase().split(' ')[0].toLowerCase()) ||
-        key.toLowerCase().includes(type.toLowerCase().split(' ')[0].toLowerCase())) {
-      return tarifs[key] || 0;
-    }
+  var t = normTxt(type);   // minuscules, sans accents ni ponctuation
+  var key;
+
+  // 1. Correspondance exacte sur la grille tarifaire
+  for (key in tarifs) {
+    if (normTxt(key) === t) return tarifs[key] || 0;
   }
-  // Correspondances directes
-  if (type.includes('R134a') && !type.includes('Desinfection') && !type.includes('sinfection')) return tarifs['VL Recharge Standard (R134a)'] || 45;
-  if (type.includes('R1234yf') && !type.includes('Desinfection') && !type.includes('sinfection')) return tarifs['VL Recharge Standard (R1234yf)'] || 49;
-  if (type.includes('sinfection') || type.includes('Desinfection')) return tarifs['VL Recharge + Desinfection'] || 65;
-  if (type.includes('VU')) return tarifs['VU Recharge Standard'] || 60;
-  if (type.includes('PL')) return tarifs['PL Recharge Standard'] || 80;
-  if (type.includes('Diagnostic')) return tarifs['Diagnostic + Recharge'] || 55;
+
+  // 2. Regles explicites — du plus specifique au plus general.
+  //    L'ordre compte : desinfection AVANT recharge simple,
+  //    sinon "VL Recharge + Desinfection" serait paye au tarif VL simple.
+  var estVU   = t.indexOf('vu') === 0 || t.indexOf('utilitaire') !== -1;
+  var estPL   = t.indexOf('pl') === 0 || t.indexOf('poidslourd') !== -1;
+  var estDesi = t.indexOf('desinfection') !== -1;
+
+  if (t.indexOf('etancheite') !== -1)  return tarifs['Controle Etancheite'] || 45;
+  if (t.indexOf('diagnostic') !== -1)  return tarifs['Diagnostic + Recharge'] || 55;
+  if (estPL)                           return tarifs['PL Recharge Standard'] || 80;
+  if (estVU && estDesi)                return tarifs['VU Recharge + Desinfection'] || 80;
+  if (estVU)                           return tarifs['VU Recharge Standard'] || 60;
+  if (estDesi)                         return tarifs['VL Recharge + Desinfection'] || 65;
+  if (t.indexOf('r1234yf') !== -1)     return tarifs['VL Recharge Standard (R1234yf)'] || 49;
+  if (t.indexOf('r134a') !== -1)       return tarifs['VL Recharge Standard (R134a)'] || 45;
+
+  // 3. Dernier recours : sous-chaine complete (et non le 1er mot)
+  for (key in tarifs) {
+    if (t.indexOf(normTxt(key)) !== -1 || normTxt(key).indexOf(t) !== -1) return tarifs[key] || 0;
+  }
   return 0;
+}
+
+// ---- Frais de deplacement reels, bases sur le bareme par commune ----
+// Le montant est fige sur le RDV (r.frais_dep) au moment ou tu le marques
+// effectue : modifier le bareme plus tard ne reecrit pas l'historique.
+function getFraisDep(r) {
+  if (!r) return 0;
+  if (typeof r.frais_dep === 'number') return r.frais_dep;   // deja fige
+  if (!r.deplacement) return 0;
+  var zone = trouverZone((r.adresse || '') + ' ' + (r.ville || ''));
+  return zone ? (zone.prix || 0) : 10;   // 10EUR = forfait par defaut si commune inconnue
 }
 
 function renderCompta() {
@@ -2783,9 +3252,9 @@ function renderCompta() {
 
   const effectues = rdvs.filter(r => r.status === 'done');
 
-  const totalJour = effectues.filter(r => r.date === today).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
-  const totalSemaine = effectues.filter(r => r.date >= ws).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
-  const totalMois = effectues.filter(r => r.date >= moisStart).reduce((s,r) => s + getPrix(r.type) + (r.deplacement ? 10 : 0), 0);
+  const totalJour = effectues.filter(r => r.date === today).reduce((s,r) => s + getPrix(r.type) + getFraisDep(r), 0);
+  const totalSemaine = effectues.filter(r => r.date >= ws).reduce((s,r) => s + getPrix(r.type) + getFraisDep(r), 0);
+  const totalMois = effectues.filter(r => r.date >= moisStart).reduce((s,r) => s + getPrix(r.type) + getFraisDep(r), 0);
 
   document.getElementById('compta-jour').textContent = totalJour + '€';
   document.getElementById('compta-semaine').textContent = totalSemaine + '€';
@@ -2807,7 +3276,7 @@ function renderCompta() {
     intHtml = '<div class="empty-state"><div class="icon">📊</div><p>Aucune intervention effectuée</p></div>';
   } else {
     sorted.forEach(function(r) {
-      const prix = getPrix(r.type) + (r.deplacement ? 10 : 0);
+      const prix = getPrix(r.type) + getFraisDep(r);
       intHtml += '<div class="card" style="padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
         '<div>' +
         '<div style="font-weight:700;font-size:13px;color:#fff;">' + r.nom + '</div>' +
@@ -2848,8 +3317,11 @@ function saveTarifs() {
 
 loadDemo();
 init();
-// Sync Supabase au démarrage
-setTimeout(syncFromSupabase, 1000);
+majBandeauCompte();
+// Verifie la session, puis synchronise
+demarrerAuth().then(function () {
+  setTimeout(syncFromSupabase, 600);
+});
 setTimeout(checkMasquerState, 1500);
 setTimeout(checkModeComplet, 1600);
 
@@ -2870,7 +3342,7 @@ async function toggleModeComplet() {
   const actif = btn.dataset.actif === '1';
   try {
     if (actif) {
-      await fetch(SB_URL + '/rest/v1/blocages?type=eq.mode_complet', { method: 'DELETE', headers: SB_HEADERS });
+      await fetch(SB_URL + '/rest/v1/blocages?type=eq.mode_complet', { method: 'DELETE', headers: sbHeaders() });
       btn.dataset.actif = '0';
       btn.textContent = '⚡ Mode complet — activer';
       btn.style.background = 'rgba(255,68,68,0.15)';
@@ -2880,7 +3352,7 @@ async function toggleModeComplet() {
     } else {
       await fetch(SB_URL + '/rest/v1/blocages', {
         method: 'POST',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ type: 'mode_complet', date: toLocalDateStr(new Date()), heure: null, raison: 'complet' })
       });
       btn.dataset.actif = '1';
@@ -2895,7 +3367,7 @@ async function toggleModeComplet() {
 
 async function checkModeComplet() {
   try {
-    const res = await fetch(SB_URL + '/rest/v1/blocages?type=eq.mode_complet&select=id', { headers: SB_HEADERS });
+    const res = await fetch(SB_URL + '/rest/v1/blocages?type=eq.mode_complet&select=id', { headers: sbHeaders() });
     if (res.ok) {
       const data = await res.json();
       const btn = document.getElementById('btnModeComplet');
@@ -2915,7 +3387,7 @@ async function toggleMasquerPosition() {
   const masque = btn.dataset.actif === '1';
   try {
     if (masque) {
-      await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position', { method: 'DELETE', headers: SB_HEADERS });
+      await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position', { method: 'DELETE', headers: sbHeaders() });
       btn.dataset.actif = '0';
       btn.textContent = '👁️ Masquer ma position aux clients';
       btn.style.background = 'rgba(255,149,0,0.15)';
@@ -2925,7 +3397,7 @@ async function toggleMasquerPosition() {
     } else {
       await fetch(SB_URL + '/rest/v1/blocages', {
         method: 'POST',
-        headers: Object.assign({}, SB_HEADERS, {'Prefer': 'return=minimal'}),
+        headers: Object.assign({}, sbHeaders(), {'Prefer': 'return=minimal'}),
         body: JSON.stringify({ type: 'masquer_position', date: toLocalDateStr(new Date()), heure: null, raison: 'masquer' })
       });
       btn.dataset.actif = '1';
@@ -2940,7 +3412,7 @@ async function toggleMasquerPosition() {
 
 async function checkMasquerState() {
   try {
-    const res = await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', { headers: SB_HEADERS });
+    const res = await fetch(SB_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', { headers: sbHeaders() });
     if (res.ok) {
       const data = await res.json();
       const btn = document.getElementById('btnMasquerPos');
@@ -3004,8 +3476,10 @@ async function checkMasquerState() {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;letter-spacing:1px;">Bar&egrave;me <span style="color:var(--orange);">D&eacute;placement</span></div>
       <button onclick="fermerEditBareme()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:24px;cursor:pointer;line-height:1;">&times;</button>
     </div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:14px;">Depuis La Foux &mdash; 83580 Gassin. Mets 0 pour les communes sans frais.</div>
-    <div id="baremeEditList"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:12px;">Depuis La Foux &mdash; 83580 Gassin. Tout le Var. Mets 0 pour les communes sans frais.</div>
+    <input type="text" id="baremeFiltre" placeholder="Rechercher une commune…" oninput="filtrerBareme()" autocomplete="off"
+      style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:6px;">
+    <div id="baremeEditList" style="max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
     <button onclick="sauverBareme()" style="width:100%;margin-top:14px;padding:13px;border-radius:10px;border:none;background:var(--green);color:#0a1f2e;font-weight:800;font-size:14px;cursor:pointer;font-family:DM Sans,sans-serif;">Enregistrer</button>
   </div>
 </div>

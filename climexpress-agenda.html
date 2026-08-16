@@ -334,6 +334,40 @@
 <div class="page active" id="page-accueil">
   <div class="section-title">Aujourd'hui <span id="todayDateTitle"></span></div>
 
+  <!-- ===== CALCULETTE DEVIS TELEPHONE ===== -->
+  <div class="card" style="margin-bottom:14px;padding:0;overflow:hidden;border:1px solid rgba(0,194,255,0.25);">
+    <div onclick="toggleCalculette()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer;background:rgba(0,194,255,0.06);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">&#129518;</span>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;color:#fff;letter-spacing:1px;line-height:1;">Calculette <span style="color:var(--accent);">Devis</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;">Prix &agrave; annoncer au t&eacute;l&eacute;phone</div>
+        </div>
+      </div>
+      <span id="calcChevron" style="font-size:14px;color:var(--accent);transition:transform .2s;">&#9660;</span>
+    </div>
+
+    <div id="calcBody" style="display:none;padding:4px 14px 14px;">
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ville ou code postal</div>
+      <input type="text" id="calcVille" list="calcVilleList" autocomplete="off" placeholder="Ex : Saint-Tropez ou 83990"
+        oninput="calcDevis()" onfocus="this.select()"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:12px;">
+      <datalist id="calcVilleList"></datalist>
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Prestation</div>
+      <select id="calcPresta" onchange="calcDevis()"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:15px;font-family:DM Sans,sans-serif;margin-bottom:12px;"></select>
+
+      <div id="calcResultat"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+        <button onclick="copierDevis()" style="padding:11px;border-radius:10px;border:1px solid rgba(0,214,143,0.3);background:rgba(0,214,143,0.12);color:#00d68f;font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128203; Copier</button>
+        <button onclick="ouvrirEditBareme()" style="padding:11px;border-radius:10px;border:1px solid rgba(255,149,0,0.3);background:rgba(255,149,0,0.12);color:#ff9500;font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#9999;&#65039; Bar&egrave;me d&eacute;pl.</button>
+      </div>
+    </div>
+  </div>
+
   <div class="stats">
     <div class="stat-card">
       <div class="stat-num" id="statToday">0</div>
@@ -721,6 +755,7 @@ function init() {
   updateStats();
   renderCaisse();
   renderServicesDispo();
+  initCalculette();
 }
 
 function fillHeures(date) {
@@ -2460,6 +2495,253 @@ function ligneEncaissement(item) {
   '</div>';
 }
 
+// =========== CALCULETTE DEVIS TELEPHONE ===========
+// Bareme deplacement depuis La Foux - 83580 Gassin.
+// Valeurs de depart a ajuster via le bouton "Bareme depl."
+var BAREME_DEP_DEFAULT = [
+  { ville: 'Gassin',                cp: '83580', prix: 0 },
+  { ville: 'La Foux',               cp: '83580', prix: 0 },
+  { ville: 'Cogolin',               cp: '83310', prix: 0 },
+  { ville: 'Grimaud',               cp: '83310', prix: 0 },
+  { ville: 'Port Grimaud',          cp: '83310', prix: 0 },
+  { ville: 'Saint-Tropez',          cp: '83990', prix: 10 },
+  { ville: 'Ramatuelle',            cp: '83350', prix: 10 },
+  { ville: 'La Croix-Valmer',       cp: '83420', prix: 10 },
+  { ville: 'Sainte-Maxime',         cp: '83120', prix: 10 },
+  { ville: 'Le Plan-de-la-Tour',    cp: '83120', prix: 15 },
+  { ville: 'Cavalaire-sur-Mer',     cp: '83240', prix: 15 },
+  { ville: 'La Garde-Freinet',      cp: '83680', prix: 20 },
+  { ville: 'Le Rayol-Canadel',      cp: '83820', prix: 20 },
+  { ville: 'Collobrieres',          cp: '83610', prix: 25 },
+  { ville: 'Roquebrune-sur-Argens', cp: '83520', prix: 25 },
+  { ville: 'Le Muy',                cp: '83490', prix: 30 },
+  { ville: 'Vidauban',              cp: '83550', prix: 30 },
+  { ville: 'Frejus',                cp: '83600', prix: 30 },
+  { ville: 'Saint-Raphael',         cp: '83700', prix: 30 },
+  { ville: 'Le Lavandou',           cp: '83980', prix: 30 },
+  { ville: 'Bormes-les-Mimosas',    cp: '83230', prix: 30 },
+  { ville: 'La Londe-les-Maures',   cp: '83250', prix: 35 },
+  { ville: 'Hyeres',                cp: '83400', prix: 40 }
+];
+
+// Abreviations courantes -> commune officielle.
+// Volontairement separe du bareme : modifier les prix n'efface pas les alias.
+var ALIAS_DEP = {
+  'Saint-Tropez':          ['st tropez', 'sttropez', 'tropez', 'st trop'],
+  'Sainte-Maxime':         ['ste maxime', 'stemaxime', 'maxime', 'ste max'],
+  'Saint-Raphael':         ['st raphael', 'raphael', 'st raph'],
+  'La Croix-Valmer':       ['croix valmer', 'la croix', 'lacroixvalmer'],
+  'Le Lavandou':           ['lavandou'],
+  'Bormes-les-Mimosas':    ['bormes'],
+  'La Londe-les-Maures':   ['la londe', 'londe'],
+  'Le Rayol-Canadel':      ['rayol', 'canadel'],
+  'Le Plan-de-la-Tour':    ['plan de la tour', 'plandelatour'],
+  'La Garde-Freinet':      ['garde freinet', 'gardefreinet', 'freinet'],
+  'Roquebrune-sur-Argens': ['roquebrune'],
+  'Cavalaire-sur-Mer':     ['cavalaire'],
+  'Port Grimaud':          ['portgrimaud', 'port-grimaud'],
+  'Collobrieres':          ['collobrieres', 'collobrière', 'collobrières'],
+  'Frejus':                ['frejus', 'fréjus'],
+  'Hyeres':                ['hyeres', 'hyères'],
+  'La Foux':               ['foux', 'la foux', 'base']
+};
+
+function aliasDe(ville) {
+  var list = ALIAS_DEP[ville] || [];
+  return list.map(normTxt);
+}
+
+function getBaremeDep() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('clim_bareme_dep') || 'null');
+    if (saved && saved.length) return saved;
+  } catch (e) {}
+  return BAREME_DEP_DEFAULT.slice();
+}
+
+// Retire accents / tirets / espaces pour comparer proprement
+function normTxt(t) {
+  return (t || '').toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function trouverZone(saisie) {
+  var q = normTxt(saisie);
+  if (!q) return null;
+  var bareme = getBaremeDep();
+  var i, z;
+  // 1. Code postal exact
+  for (i = 0; i < bareme.length; i++) {
+    if (bareme[i].cp === saisie.replace(/\D/g, '')) return bareme[i];
+  }
+  // 2. Nom de commune ou alias exact
+  for (i = 0; i < bareme.length; i++) {
+    if (normTxt(bareme[i].ville) === q) return bareme[i];
+    if (aliasDe(bareme[i].ville).indexOf(q) !== -1) return bareme[i];
+  }
+  // 3. Debut de nom ou d'alias
+  for (i = 0; i < bareme.length; i++) {
+    if (normTxt(bareme[i].ville).indexOf(q) === 0) return bareme[i];
+    var al = aliasDe(bareme[i].ville);
+    for (var j = 0; j < al.length; j++) {
+      if (al[j].indexOf(q) === 0) return bareme[i];
+    }
+  }
+  // 4. Contenu quelque part (adresse complete collee)
+  for (i = 0; i < bareme.length; i++) {
+    z = normTxt(bareme[i].ville);
+    if (q.length >= 3 && (q.indexOf(z) !== -1 || z.indexOf(q) !== -1)) return bareme[i];
+    var al2 = aliasDe(bareme[i].ville);
+    for (var k = 0; k < al2.length; k++) {
+      if (al2[k].length >= 4 && q.indexOf(al2[k]) !== -1) return bareme[i];
+    }
+  }
+  return null;
+}
+
+function initCalculette() {
+  // Liste des communes en autocompletion
+  var dl = document.getElementById('calcVilleList');
+  if (dl) {
+    dl.innerHTML = getBaremeDep().map(function(z) {
+      return '<option value="' + z.ville + '">' + z.cp + '</option>';
+    }).join('');
+  }
+  // Liste des prestations depuis la grille tarifaire
+  var sel = document.getElementById('calcPresta');
+  if (sel) {
+    var cur = sel.value;
+    sel.innerHTML = Object.keys(tarifs).map(function(k) {
+      return '<option value="' + k + '">' + k + ' — ' + tarifs[k] + '€</option>';
+    }).join('');
+    if (cur) sel.value = cur;
+  }
+  calcDevis();
+}
+
+function toggleCalculette() {
+  var b = document.getElementById('calcBody');
+  var c = document.getElementById('calcChevron');
+  if (!b) return;
+  var ouvert = b.style.display !== 'none';
+  b.style.display = ouvert ? 'none' : 'block';
+  if (c) c.style.transform = ouvert ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!ouvert) {
+    initCalculette();
+    var v = document.getElementById('calcVille');
+    if (v) setTimeout(function() { v.focus(); }, 120);
+  }
+}
+
+var dernierDevis = '';
+
+function calcDevis() {
+  var el = document.getElementById('calcResultat');
+  if (!el) return;
+  var saisie = (document.getElementById('calcVille') || {}).value || '';
+  var presta = (document.getElementById('calcPresta') || {}).value || '';
+  var prixPresta = tarifs[presta] || 0;
+
+  var zone = trouverZone(saisie);
+  var horsZone = saisie.trim().length >= 2 && !zone;
+
+  if (horsZone) {
+    dernierDevis = '';
+    el.innerHTML = '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:14px;text-align:center;">' +
+      '<div style="font-size:22px;margin-bottom:6px;">&#9888;&#65039;</div>' +
+      '<div style="font-size:13px;color:#ff9500;font-weight:700;margin-bottom:4px;">Hors secteur</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5;">Cette commune n\'est pas dans ton bar&egrave;me. Annonce un devis personnalis&eacute; ou ajoute-la via &laquo; Bar&egrave;me d&eacute;pl. &raquo;.</div>' +
+      '</div>';
+    return;
+  }
+
+  var prixDep = zone ? (zone.prix || 0) : 0;
+  var total = prixPresta + prixDep;
+  var nomZone = zone ? zone.ville : '—';
+
+  dernierDevis = presta + ' : ' + prixPresta + '€' +
+    (prixDep > 0 ? ' + déplacement ' + nomZone + ' : ' + prixDep + '€' : '') +
+    ' — Total : ' + total + '€';
+
+  var ligneDep = prixDep > 0
+    ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + '</span><span style="color:#ff9500;font-weight:700;">+' + prixDep + '€</span></div>'
+    : (zone ? '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128663; D&eacute;placement ' + nomZone + '</span><span style="color:#00d68f;font-weight:700;">Offert</span></div>' : '');
+
+  el.innerHTML =
+    '<div style="background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:12px 14px;">' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);"><span>&#128295; Prestation</span><span style="font-weight:700;color:#fff;">' + prixPresta + '€</span></div>' +
+      ligneDep +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:12px;">' +
+        '<span style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;">Total &agrave; annoncer</span>' +
+        '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:40px;color:var(--green);line-height:1;">' + total + '€</span>' +
+      '</div>' +
+      (zone ? '' : '<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">Saisis une ville pour ajouter le d&eacute;placement.</div>') +
+    '</div>';
+}
+
+function copierDevis() {
+  if (!dernierDevis) { showNotif('Rien à copier', '#ff9500'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(dernierDevis).then(function() {
+      showNotif('✓ Devis copié');
+    })['catch'](function() { copierFallback(dernierDevis); });
+  } else {
+    copierFallback(dernierDevis);
+  }
+}
+
+function copierFallback(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showNotif('✓ Devis copié'); }
+  catch (e) { showNotif('Copie impossible', '#ff9500'); }
+  document.body.removeChild(ta);
+}
+
+// ----- Edition du bareme -----
+function ouvrirEditBareme() {
+  var bareme = getBaremeDep();
+  var el = document.getElementById('baremeEditList');
+  if (!el) return;
+  el.innerHTML = bareme.map(function(z, i) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + z.ville + '</div>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,0.35);">' + z.cp + '</div>' +
+      '</div>' +
+      '<input type="number" inputmode="numeric" min="0" data-bareme-idx="' + i + '" value="' + (z.prix || 0) + '" ' +
+      'style="width:78px;padding:9px;border-radius:8px;border:1px solid var(--border);background:#163260;color:#fff;font-size:15px;text-align:center;font-family:DM Sans,sans-serif;">' +
+      '<span style="font-size:13px;color:rgba(255,255,255,0.4);">€</span>' +
+    '</div>';
+  }).join('');
+  var m = document.getElementById('modalBareme');
+  if (m) m.style.display = 'flex';
+}
+
+function fermerEditBareme() {
+  var m = document.getElementById('modalBareme');
+  if (m) m.style.display = 'none';
+}
+
+function sauverBareme() {
+  var bareme = getBaremeDep();
+  var inputs = document.querySelectorAll('[data-bareme-idx]');
+  for (var i = 0; i < inputs.length; i++) {
+    var idx = parseInt(inputs[i].getAttribute('data-bareme-idx'), 10);
+    var v = parseInt(inputs[i].value, 10);
+    if (!isNaN(idx) && bareme[idx]) bareme[idx].prix = isNaN(v) || v < 0 ? 0 : v;
+  }
+  localStorage.setItem('clim_bareme_dep', JSON.stringify(bareme));
+  fermerEditBareme();
+  initCalculette();
+  showNotif('✓ Barème déplacement enregistré');
+}
+
 // =========== COMPTABILITE ===========
 const TARIFS_DEFAULT = {
   'VL Recharge Standard (R134a)': 45,
@@ -2712,6 +2994,19 @@ async function checkMasquerState() {
     <button class="btn btn-primary" style="background:var(--red);" onclick="saveBlocage()">🔒 Bloquer ce créneau</button>
 
     <div style="margin-top:16px;" id="blocageListDiv"></div>
+  </div>
+</div>
+
+<!-- MODAL BAREME DEPLACEMENT -->
+<div id="modalBareme" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;">
+  <div style="background:#0f2547;border:1px solid var(--border);border-radius:16px;padding:18px;max-width:480px;width:100%;margin:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;letter-spacing:1px;">Bar&egrave;me <span style="color:var(--orange);">D&eacute;placement</span></div>
+      <button onclick="fermerEditBareme()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:24px;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:14px;">Depuis La Foux &mdash; 83580 Gassin. Mets 0 pour les communes sans frais.</div>
+    <div id="baremeEditList"></div>
+    <button onclick="sauverBareme()" style="width:100%;margin-top:14px;padding:13px;border-radius:10px;border:none;background:var(--green);color:#0a1f2e;font-weight:800;font-size:14px;cursor:pointer;font-family:DM Sans,sans-serif;">Enregistrer</button>
   </div>
 </div>
 

@@ -602,6 +602,7 @@
     </div>
     <button onclick="exporterCaisseCSV()" style="width:100%;margin-top:8px;padding:12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.8);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128202; Exporter la caisse en CSV (Excel / comptable)</button>
     <input type="file" id="fichierRestauration" accept="application/json,.json" onchange="restaurerSauvegarde(event)" style="display:none;">
+    <button onclick="voirErreurs()" style="width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:rgba(255,255,255,0.35);font-size:11px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128295; Voir les erreurs techniques</button>
   </div>
 
   <!-- Tarifs -->
@@ -706,12 +707,24 @@ Ceci est un message automatique, veuillez ne pas y répondre. Nous vous contacte
 </div>
 
 <script>
-// Gestionnaire d'erreurs global pour debug
+// Journal d'erreurs. N'ecrit PLUS dans document.title : iOS s'en sert comme
+// nom par defaut du raccourci sur l'ecran d'accueil, ce qui donnait "ERR: ...".
 window.addEventListener('error', function(e) {
   var msg = (e.message || '') + ' | ' + (e.filename || '') + ':' + (e.lineno || '');
-  document.title = 'ERR: ' + msg.substring(0, 50);
   console.error('GLOBAL ERROR:', msg, e.error);
+  try {
+    var j = JSON.parse(localStorage.getItem('clim_erreurs') || '[]');
+    j.unshift({ q: new Date().toISOString().slice(0, 16).replace('T', ' '), m: msg.substring(0, 120) });
+    localStorage.setItem('clim_erreurs', JSON.stringify(j.slice(0, 5)));
+  } catch (x) {}
 });
+
+function voirErreurs() {
+  var j = [];
+  try { j = JSON.parse(localStorage.getItem('clim_erreurs') || '[]'); } catch (x) {}
+  if (!j.length) { alert('Aucune erreur enregistrée.'); return; }
+  alert('Dernières erreurs :\n\n' + j.map(function (e) { return e.q + '\n' + e.m; }).join('\n\n'));
+}
 
 // =========== SUPABASE ===========
 const SB_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';

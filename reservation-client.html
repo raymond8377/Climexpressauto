@@ -492,6 +492,31 @@ async function envoyerDevis() {
 const SUPABASE_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
 
+/* ------------------------------------------------------------------
+   Acces aux donnees publiques via fonctions Postgres.
+   Les tables rdvs et blocages ne sont plus lisibles par les visiteurs :
+   ces fonctions ne renvoient que ce qui est necessaire a l'affichage
+   (dates, heures, lieu), jamais un nom, telephone, adresse ou email.
+   ------------------------------------------------------------------ */
+async function sbRpc(nom, params) {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params || {})
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 const HEURES_SEMAINE = ['09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
 const HEURES_SAM = ['09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00'];
 function getHeuresDuJour(d) {
@@ -679,12 +704,10 @@ async function loadSlots() {
 
   // Récupérer les créneaux pris ET les blocages depuis Supabase
   try {
-    const [resRdv, resBloc] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/rdvs?date=eq.${dateStr}&status=neq.annule&select=heure`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }),
-      fetch(`${SUPABASE_URL}/rest/v1/blocages?date=eq.${dateStr}&select=*`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
+    const [rdvData, blocData] = await Promise.all([
+      sbRpc('creneaux_occupes', { date_debut: dateStr, date_fin: dateStr }),
+      sbRpc('creneaux_bloques', { date_debut: dateStr, date_fin: dateStr })
     ]);
-    const rdvData = await resRdv.json();
-    const blocData = await resBloc.json();
     takenSlots = Array.isArray(rdvData) ? rdvData.map(r => r.heure) : [];
     const jourBloque = Array.isArray(blocData) && blocData.some(b => b.type === 'jour');
     const heuresBloquees = Array.isArray(blocData) ? blocData.filter(b => b.type === 'heure').map(b => b.heure) : [];
@@ -849,47 +872,29 @@ async function chargerLocalisationJour() {
     const now = new Date();
     const heure = now.getHours();
 
-    // Vérifier mode complet
-    try {
-      const resComplet = await fetch(SUPABASE_URL + '/rest/v1/blocages?type=eq.mode_complet&select=id', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-      });
-      if (resComplet.ok) {
-        const compData = await resComplet.json();
-        if (Array.isArray(compData) && compData.length > 0) {
-          banniere.style.display = 'block';
-          banniere.style.background = 'rgba(255,100,0,0.12)';
-          banniere.style.borderColor = 'rgba(255,149,0,0.4)';
-          titre.style.color = '#ff9500';
-          titre.textContent = 'Fort afflux en ce moment — créneaux temporairement complets';
-          detail.textContent = 'Revenez bientôt, nous reprendrons les réservations dès que possible. Pour urgence : 06 48 00 85 58';
-          return;
-        }
-      }
-    } catch(e) {}
+    // Drapeaux d'affichage (mode complet / position masquee) en un seul appel
+    const flags = await sbRpc('flags_publics', {});
+    const flagTypes = flags.map(f => f.type);
 
-    // Vérifier si position masquée
-    try {
-      const resMasque = await fetch(SUPABASE_URL + '/rest/v1/blocages?type=eq.masquer_position&select=id', {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-      });
-      if (resMasque.ok) {
-        const masqueData = await resMasque.json();
-        if (Array.isArray(masqueData) && masqueData.length > 0) {
-          // Masqué — afficher message générique selon heure
-          afficherMessageHeure(banniere, titre, detail, heure);
-          return;
-        }
-      }
-    } catch(e) {}
+    if (flagTypes.indexOf('mode_complet') !== -1) {
+      banniere.style.display = 'block';
+      banniere.style.background = 'rgba(255,100,0,0.12)';
+      banniere.style.borderColor = 'rgba(255,149,0,0.4)';
+      titre.style.color = '#ff9500';
+      titre.textContent = 'Fort afflux en ce moment — créneaux temporairement complets';
+      detail.textContent = 'Revenez bientôt, nous reprendrons les réservations dès que possible. Pour urgence : 06 48 00 85 58';
+      return;
+    }
 
-    const today = toLocalDateStr(new Date());
+    if (flagTypes.indexOf('masquer_position') !== -1) {
+      afficherMessageHeure(banniere, titre, detail, heure);
+      return;
+    }
+
     const heureActuelle = heure * 60 + now.getMinutes();
 
-    const res = await fetch(SUPABASE_URL + '/rest/v1/rdvs?date=eq.' + today + '&status=neq.annule&status=neq.done&select=heure,zone_ville,lieu,adresse', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    });
-    const rdvs = await res.json();
+    // Jauge position : heure + lieu uniquement, aucune adresse client
+    const rdvs = await sbRpc('position_technicien', {});
 
     let rdvActuel = null;
     let rdvProchain = null;
@@ -907,12 +912,12 @@ async function chargerLocalisationJour() {
     const msgFixe = 'Intervention sous 25-30 min après confirmation';
 
     if (rdvActuel) {
-      const secteur = getSecteur(rdvActuel.adresse) || getSecteur(rdvActuel.zone_ville) || getSecteur(rdvActuel.lieu);
+      const secteur = rdvActuel.secteur;
       banniere.style.display = 'block';
       titre.textContent = secteur ? 'En intervention — secteur ' + secteur : 'En intervention dans votre secteur';
       detail.textContent = 'Disponible rapidement après — ' + msgFixe;
     } else if (rdvProchain) {
-      const secteur = getSecteur(rdvProchain.adresse) || getSecteur(rdvProchain.zone_ville) || getSecteur(rdvProchain.lieu);
+      const secteur = rdvProchain.secteur;
       banniere.style.display = 'block';
       titre.textContent = secteur ? 'Prochain passage — secteur ' + secteur : 'Prochain passage prévu';
       detail.textContent = 'Vers ' + rdvProchain.heure + ' — ' + msgFixe;

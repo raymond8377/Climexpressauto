@@ -726,6 +726,7 @@
   </div>
 
   <!-- CAISSE RAPIDE -->
+  <div id="caisseBandeau" style="margin-bottom:12px;"></div>
   <div class="card" style="margin-bottom:14px;">
     <div style="margin-bottom:14px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;letter-spacing:1px;margin-bottom:12px;">⚡ Caisse <span style="color:var(--accent);">Rapide</span></div>
@@ -1415,12 +1416,10 @@ function marquerEffectue(id) {
     }
     // Ajout automatique dans la caisse
     const montantRdv = getPrix(r.type) + r.frais_dep;
-    const all = getAllCaisse();
     const now = new Date();
     const heure = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
     const label = r.nom + ' — ' + r.type + (r.frais_dep > 0 ? ' + Dépl. ' + (r.zone_dep || '') + ' ' + r.frais_dep + '€' : '');
-    all.push({ type: label, montant: montantRdv, heure, date: getToday(), id: Date.now(), rdv_id: r.id });
-    saveAllCaisse(all);
+    caisseAjouter({ type: label, montant: montantRdv, heure: heure, date: getToday(), id: Date.now(), rdv_id: r.id });
     closeRdvModal(); renderAccueil(); updateStats(); renderCaisse();
     showNotif('✓ Intervention effectuée ! +' + montantRdv + '€ ajouté en caisse');
     setTimeout(function() { envoyerSatisfaction(r); }, 800);
@@ -2346,7 +2345,7 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
-  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); try { renderPerf(); } catch(e) { console.error('perf', e); } }
+  if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); try { renderPerf(); } catch(e) { console.error('perf', e); } try { majCaisseBandeau(); caisseSync(true); } catch(e) { console.error('caisse', e); } }
 }
 
 // Démo données — désactivée.
@@ -2750,12 +2749,178 @@ function renderServicesDispo() {
 }
 
 // =========== CAISSE RAPIDE ===========
-// Stockage permanent : tous les encaissements dans une seule clé
+// Stockage permanent : tous les encaissements dans une seule cle
 function getAllCaisse() {
-  return JSON.parse(localStorage.getItem('clim_caisse_all') || '[]');
+  var t = [];
+  try { t = JSON.parse(localStorage.getItem('clim_caisse_all') || '[]'); } catch (e) { t = []; }
+  if (!Array.isArray(t)) t = [];
+  // Le montant peut revenir de Supabase en texte (colonne numeric) : on force le nombre.
+  return t.map(function (x) {
+    x.montant = Number(x.montant) || 0;
+    if (!x.cle_locale) x.cle_locale = String(x.id);
+    return x;
+  });
 }
 function saveAllCaisse(items) {
   localStorage.setItem('clim_caisse_all', JSON.stringify(items));
+}
+
+/* ==================================================================
+   CAISSE — SYNCHRONISATION SUPABASE
+   localStorage reste le cache : tu peux encaisser sans reseau.
+   Ce qui n'est pas encore parti est marque en attente et repart
+   tout seul au prochain passage sur la page Compta.
+   La cle unique (user_id, cle_locale) rend les renvois sans danger :
+   un meme encaissement ne peut pas etre enregistre deux fois.
+   ================================================================== */
+
+var caisseSyncEnCours = false;
+var caisseSyncRedemandee = false;
+
+function caisseVersLigne(e) {
+  return {
+    date: e.date,
+    heure: e.heure || null,
+    type: String(e.type || '').slice(0, 300),
+    montant: Number(e.montant) || 0,
+    rdv_id: (e.rdv_id === undefined || e.rdv_id === null) ? null : String(e.rdv_id),
+    cle_locale: String(e.cle_locale || e.id)
+  };
+}
+
+/* Envoie les entrees pas encore confirmees. Renvoie le nb envoye. */
+async function caissePousser() {
+  if (!sessionValide()) return 0;
+  var locales = getAllCaisse();
+  var enAttente = locales.filter(function (e) { return !e.cloud; });
+  if (!enAttente.length) return 0;
+
+  var lignes = enAttente.map(caisseVersLigne);
+  var res = await fetch(SB_URL + '/rest/v1/caisse?on_conflict=user_id,cle_locale', {
+    method: 'POST',
+    headers: Object.assign(sbHeaders(), {
+      'Prefer': 'resolution=ignore-duplicates,return=minimal'
+    }),
+    body: JSON.stringify(lignes)
+  });
+  if (!res.ok) return 0;
+
+  // Marquage local : ces entrees sont maintenant dans le cloud.
+  var envoyees = {};
+  enAttente.forEach(function (e) { envoyees[String(e.cle_locale)] = true; });
+  var maj = getAllCaisse().map(function (e) {
+    if (envoyees[String(e.cle_locale)]) e.cloud = true;
+    return e;
+  });
+  saveAllCaisse(maj);
+  return enAttente.length;
+}
+
+/* Recupere le cloud et reconstruit le cache : cloud + entrees en attente. */
+async function caisseTirer() {
+  if (!sessionValide()) return false;
+  var res = await fetch(SB_URL + '/rest/v1/caisse?select=*&order=date.desc', { headers: sbHeaders() });
+  if (!res.ok) return false;
+  var data = await res.json();
+  if (!Array.isArray(data)) return false;
+
+  var duCloud = data.map(function (r) {
+    return {
+      id: Number(r.cle_locale) || r.id,
+      cle_locale: String(r.cle_locale),
+      type: r.type,
+      montant: Number(r.montant) || 0,
+      heure: r.heure || '',
+      date: (r.date || '').split('T')[0],
+      rdv_id: r.rdv_id || undefined,
+      cloud: true
+    };
+  });
+
+  var vus = {};
+  duCloud.forEach(function (e) { vus[e.cle_locale] = true; });
+  // On conserve uniquement les locales pas encore parties : une entree
+  // supprimee depuis un autre appareil disparait donc bien d'ici.
+  var enAttente = getAllCaisse().filter(function (e) {
+    return !e.cloud && !vus[String(e.cle_locale)];
+  });
+
+  saveAllCaisse(duCloud.concat(enAttente));
+  return true;
+}
+
+async function caisseSync(silencieux) {
+  // Une synchro deja en cours : on ne l'abandonne pas, on la redemande
+  // a la fin. Sinon deux encaissements rapides feraient sauter un envoi.
+  if (caisseSyncEnCours) { caisseSyncRedemandee = true; return; }
+  caisseSyncEnCours = true;
+  try {
+    var envoyees = await caissePousser();
+    await caisseTirer();
+    renderCaisse();
+    try { renderPerf(); } catch (e) {}
+    majCaisseBandeau();
+    if (!silencieux && envoyees > 0) {
+      showNotif('\u2713 ' + envoyees + ' encaissement(s) sauvegard\u00e9(s) en ligne');
+    }
+  } catch (e) {
+    majCaisseBandeau();
+  } finally {
+    caisseSyncEnCours = false;
+    if (caisseSyncRedemandee) {
+      caisseSyncRedemandee = false;
+      await caisseSync(true);
+    }
+  }
+}
+
+function majCaisseBandeau() {
+  var el = document.getElementById('caisseBandeau');
+  if (!el) return;
+  var enAttente = getAllCaisse().filter(function (e) { return !e.cloud; }).length;
+
+  if (!sessionValide()) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,149,0,0.10);' +
+      'border:1px solid rgba(255,149,0,0.28);border-radius:13px;">' +
+      '<span style="font-size:17px;">\u26A0\uFE0F</span>' +
+      '<div style="flex:1;font-size:12px;color:rgba(255,255,255,0.72);line-height:1.4;">' +
+      'Non connect\u00e9 \u2014 ta caisse reste sur ce t\u00e9l\u00e9phone uniquement.' +
+      (enAttente ? ' <b style="color:#ff9500;">' + enAttente + ' en attente d\'envoi.</b>' : '') +
+      '</div></div>';
+    return;
+  }
+
+  if (enAttente > 0) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,149,0,0.10);' +
+      'border:1px solid rgba(255,149,0,0.28);border-radius:13px;">' +
+      '<span style="font-size:17px;">\u23F3</span>' +
+      '<div style="flex:1;font-size:12px;color:rgba(255,255,255,0.72);line-height:1.4;">' +
+      '<b style="color:#ff9500;">' + enAttente + '</b> encaissement(s) pas encore sauvegard\u00e9(s) en ligne.</div>' +
+      '<button onclick="caisseSync(false)" style="padding:8px 12px;border-radius:9px;border:1px solid rgba(255,149,0,0.4);' +
+      'background:rgba(255,149,0,0.16);color:#ff9500;font-weight:700;font-size:12px;font-family:DM Sans,sans-serif;cursor:pointer;">Envoyer</button>' +
+      '</div>';
+  } else {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(0,214,143,0.09);' +
+      'border:1px solid rgba(0,214,143,0.25);border-radius:13px;">' +
+      '<span style="font-size:17px;">\u2601\uFE0F</span>' +
+      '<div style="flex:1;font-size:12px;color:rgba(255,255,255,0.72);line-height:1.4;">' +
+      'Caisse sauvegard\u00e9e en ligne. Tu la retrouves m\u00eame si tu changes de t\u00e9l\u00e9phone.</div>' +
+      '<button onclick="caisseSync(false)" style="padding:8px 12px;border-radius:9px;border:1px solid var(--border);' +
+      'background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-weight:700;font-size:12px;font-family:DM Sans,sans-serif;cursor:pointer;">Actualiser</button>' +
+      '</div>';
+  }
+}
+
+/* Point d'entree unique pour toute nouvelle entree de caisse. */
+function caisseAjouter(entree) {
+  var all = getAllCaisse();
+  entree.cle_locale = String(entree.id);
+  entree.cloud = false;
+  all.push(entree);
+  saveAllCaisse(all);
+  renderCaisse();
+  majCaisseBandeau();
+  caisseSync(true);   // tentative d'envoi immediate, sans bruit si hors ligne
 }
 
 function toLocalDateStr(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
@@ -2855,19 +3020,30 @@ function envoyerConfirmation(mode) {
 
 
 function encaisser(type, montant) {
-  const all = getAllCaisse();
   const now = new Date();
   const heure = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-  all.push({ type, montant, heure, date: getToday(), id: Date.now() });
-  saveAllCaisse(all);
-  renderCaisse();
+  caisseAjouter({ type: type, montant: montant, heure: heure, date: getToday(), id: Date.now() });
   showNotif('✓ +' + montant + '€ encaissé');
 }
 
 function supprimerEncaissement(id) {
   if (!confirm('Supprimer cet encaissement ?')) return;
-  saveAllCaisse(getAllCaisse().filter(i => i.id !== id));
+  var all = getAllCaisse();
+  var cible = all.filter(function (i) { return i.id === id; })[0];
+  saveAllCaisse(all.filter(function (i) { return i.id !== id; }));
   renderCaisse();
+  majCaisseBandeau();
+  try { renderPerf(); } catch (e) {}
+
+  // Suppression cote Supabase, sinon la ligne reviendrait a la prochaine sync.
+  if (cible && cible.cloud && sessionValide()) {
+    fetch(SB_URL + '/rest/v1/caisse?cle_locale=eq.' + encodeURIComponent(String(cible.cle_locale)), {
+      method: 'DELETE',
+      headers: sbHeaders()
+    }).catch(function () {
+      showNotif('⚠️ Supprimé ici, mais pas en ligne — réessaie connecté', '#ff9500');
+    });
+  }
 }
 
 function setCaisseVue(v) {

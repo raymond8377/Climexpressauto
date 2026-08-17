@@ -3940,6 +3940,44 @@ async function checkMasquerState() {
 
 var PERF_MOIS = ['Janv','Fevr','Mars','Avr','Mai','Juin','Juil','Aout','Sept','Oct','Nov','Dec'];
 
+/* L'agenda purge du telephone les RDV de plus de 2 jours ouvres
+   (nettoyerAncienRdvs). L'historique complet n'existe donc que dans
+   Supabase : le bilan doit lire la base, pas le cache local. */
+var perfRdvsCache = null;
+
+async function perfChargerHistorique() {
+  if (!sessionValide()) return null;
+  var debut = new Date();
+  debut = new Date(debut.getFullYear(), debut.getMonth() - 13, 1);
+  var d = debut.getFullYear() + '-' + String(debut.getMonth() + 1).padStart(2, '0') + '-01';
+  try {
+    var res = await fetch(
+      SB_URL + '/rest/v1/rdvs?select=id,date,type,status,adresse,lieu&date=gte.' + d + '&order=date.asc',
+      { headers: sbHeaders() }
+    );
+    if (!res.ok) return null;
+    var data = await res.json();
+    if (!Array.isArray(data)) return null;
+    perfRdvsCache = data;
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Frais de deplacement : la colonne "deplacement" n'existe pas en base,
+   c'est le champ "lieu" qui porte l'information ("A domicile (+10EUR)"). */
+function perfFrais(r) {
+  if (typeof r.frais_dep === 'number') return r.frais_dep;
+  var lieu = (r.lieu || '').toLowerCase();
+  if (lieu.indexOf('domicile') === -1) return 0;
+  try {
+    var zone = trouverZone((r.adresse || '') + ' ' + (r.ville || ''));
+    if (zone && zone.prix) return zone.prix;
+  } catch (e) {}
+  return 10;
+}
+
 function perfEuro(n) {
   return Math.round(n).toLocaleString('fr-FR') + '\u20AC';
 }
@@ -3972,17 +4010,20 @@ function perfCollecte(nbMois) {
   var caisse = [];
   try { caisse = getAllCaisse(); } catch (e) { caisse = []; }
 
+  // Base Supabase si disponible, sinon repli sur le cache local (partiel).
+  var source = perfRdvsCache || rdvs;
+
   for (var i = nbMois - 1; i >= 0; i--) {
     var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
-    var duMois = rdvs.filter(function(r) { return (r.date || '').slice(0, 7) === key; });
+    var duMois = source.filter(function(r) { return (r.date || '').slice(0, 7) === key; });
     var faits    = duMois.filter(function(r) { return r.status === 'done'; });
     var annules  = duMois.filter(function(r) { return r.status === 'annule'; });
     var absents  = duMois.filter(function(r) { return r.status === 'absent'; });
     var nonEff   = duMois.filter(function(r) { return r.status === 'non_effectue'; });
 
-    var ca = faits.reduce(function(s, r) { return s + getPrix(r.type) + getFraisDep(r); }, 0);
+    var ca = faits.reduce(function(s, r) { return s + getPrix(r.type) + perfFrais(r); }, 0);
 
     /* Encaissements saisis a la main : on ne prend QUE ceux sans rdv_id,
        sinon un RDV marque effectue serait compte deux fois. */
@@ -3991,7 +4032,7 @@ function perfCollecte(nbMois) {
     });
     ca += manuels.reduce(function(s, x) { return s + (x.montant || 0); }, 0);
 
-    var avecDep = faits.filter(function(r) { return getFraisDep(r) > 0; });
+    var avecDep = faits.filter(function(r) { return perfFrais(r) > 0; });
 
     out.push({
       key: key,
@@ -4004,7 +4045,7 @@ function perfCollecte(nbMois) {
       nonEff: nonEff.length,
       manuels: manuels.length,
       dep: avecDep.length,
-      caDep: avecDep.reduce(function(s, r) { return s + getFraisDep(r); }, 0)
+      caDep: avecDep.reduce(function(s, r) { return s + perfFrais(r); }, 0)
     });
   }
   return out;
@@ -4088,9 +4129,17 @@ function perfDonutSVG(pct) {
   return s;
 }
 
-function renderPerf() {
+async function renderPerf() {
   var sel = document.getElementById('perfPeriode');
   if (!sel) return;
+
+  // Historique complet depuis Supabase (une fois par ouverture de page).
+  if (!perfRdvsCache) {
+    var sub0 = document.getElementById('perfSub');
+    if (sub0) sub0.textContent = 'Chargement de l\'historique\u2026';
+    await perfChargerHistorique();
+  }
+
   var nb = parseInt(sel.value, 10) || 6;
   var mois = perfCollecte(nb);
   var cur = mois[mois.length - 1];
@@ -4119,6 +4168,18 @@ function renderPerf() {
     note = (ecart >= 0 ? '+' : '\u2212') + perfEuro(Math.abs(ecart)) +
            ' par rapport a ' + prev.label + ' (' + perfEuro(prev.ca) + ').';
   }
+
+  /* Le mois en cours est incomplet : le comparer a un mois entier donne
+     toujours l'impression d'une chute. On projette sur le mois complet. */
+  var auj = new Date();
+  var jourDuMois = auj.getDate();
+  var joursDansMois = new Date(auj.getFullYear(), auj.getMonth() + 1, 0).getDate();
+  if (jourDuMois < joursDansMois && cur.ca > 0) {
+    var projection = cur.ca / jourDuMois * joursDansMois;
+    note += ' Mois en cours (' + jourDuMois + ' jours sur ' + joursDansMois +
+            ') \u2014 au rythme actuel, environ ' + perfEuro(projection) + ' fin ' + cur.label + '.';
+  }
+
   if (cur.faits <= 3 && cur.faits > 0) {
     note += ' Peu d\'interventions ce mois-ci : le pourcentage bouge vite, fie-toi au montant.';
   }
@@ -4178,6 +4239,9 @@ function renderPerf() {
   var sub = totTraites > 0
     ? totFaits + ' intervention' + (totFaits > 1 ? 's' : '') + ' sur ' + nb + ' mois'
     : 'Pas encore de donnees sur cette periode';
+  if (!perfRdvsCache) {
+    sub = '\u26A0\uFE0F Historique partiel \u2014 connecte-toi pour le bilan complet';
+  }
   document.getElementById('perfSub').textContent = sub;
 }
 </script>

@@ -465,6 +465,21 @@
   }
   .perf-kpi-num { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--accent); line-height:1.1; }
   .perf-kpi-label { font-size:10px; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+  /* Formulaire encaissement direct */
+  .dlbl {
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+    color:rgba(255,255,255,0.5); margin:0 0 5px 2px;
+  }
+  .dinp {
+    width:100%; box-sizing:border-box; padding:12px 13px; margin-bottom:12px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14);
+    border-radius:12px; color:#fff; font-size:16px; font-family:'DM Sans',sans-serif;
+    -webkit-appearance:none; appearance:none;
+  }
+  .dinp::placeholder { color:rgba(255,255,255,0.3); }
+  .dinp:focus { outline:none; border-color:rgba(0,194,255,0.5); background:rgba(255,255,255,0.09); }
+  select.dinp { background-image:none; }
 </style>
 </head>
 <body>
@@ -727,6 +742,16 @@
 
   <!-- CAISSE RAPIDE -->
   <div id="caisseBandeau" style="margin-bottom:12px;"></div>
+
+  <button onclick="ouvrirDirect()" style="width:100%;margin-bottom:12px;padding:15px;border-radius:15px;
+    border:1px solid rgba(0,214,143,0.35);background:linear-gradient(135deg,rgba(0,214,143,0.18),rgba(0,194,255,0.12));
+    color:#fff;font-weight:800;font-size:14px;font-family:DM Sans,sans-serif;cursor:pointer;">
+    ⚡ Client sans RDV — encaisser
+    <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.55);margin-top:3px;">
+      Enregistre le client, encaisse et édite un reçu
+    </div>
+  </button>
+
   <div class="card" style="margin-bottom:14px;">
     <div style="margin-bottom:14px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;letter-spacing:1px;margin-bottom:12px;">⚡ Caisse <span style="color:var(--accent);">Rapide</span></div>
@@ -1244,6 +1269,48 @@ function fillHeures(date) {
 document.getElementById('rdvDate').addEventListener('change', e => fillHeures(e.target.value));
 
 // =========== SAVE RDV ===========
+
+/* Un RDV saisi ici (client au telephone) n'existait jusqu'a present que dans
+   localStorage. nettoyerAncienRdvs() le supprimait 2 jours ouvres plus tard,
+   sans copie nulle part. On l'ecrit donc dans Supabase des la creation. */
+async function pousserRdvVersSupabase(rdv) {
+  if (!sessionValide()) {
+    showNotif('⚠️ Non connecté — RDV gardé sur ce téléphone uniquement', '#ff9500');
+    return false;
+  }
+  try {
+    var res = await fetch(SB_URL + '/rest/v1/rdvs?select=id', {
+      method: 'POST',
+      headers: Object.assign(sbHeaders(), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify({
+        nom: rdv.nom, tel: rdv.tel, adresse: rdv.adresse || '',
+        email: rdv.email || '', lieu: rdv.lieu || 'Sur place — La Foux',
+        type: rdv.type, date: rdv.date, heure: rdv.heure,
+        notes: rdv.notes || '', status: rdv.status || 'confirmed',
+        source: 'telephone'
+      })
+    });
+    if (!res.ok) {
+      showNotif('⚠️ RDV non sauvegardé en ligne — vérifie ta connexion', '#ff9500');
+      return false;
+    }
+    var data = await res.json();
+    if (Array.isArray(data) && data[0] && data[0].id) {
+      // On rattache l'identifiant Supabase pour que le RDV survive au nettoyage.
+      var maj = rdvs.map(function (r) {
+        if (r.id === rdv.id) { r.supabase_id = data[0].id; r.source = 'web'; }
+        return r;
+      });
+      rdvs = maj;
+      localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+    }
+    return true;
+  } catch (e) {
+    showNotif('⚠️ RDV non sauvegardé en ligne — vérifie ta connexion', '#ff9500');
+    return false;
+  }
+}
+
 function saveRDV() {
   const nom = document.getElementById('rdvNom').value.trim();
   const tel = document.getElementById('rdvTel').value.trim();
@@ -1257,6 +1324,7 @@ function saveRDV() {
   const rdv = { id: Date.now(), nom, tel, adresse, type, date, heure, notes, status: 'confirmed', createdAt: new Date().toISOString() };
   rdvs.push(rdv);
   localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  pousserRdvVersSupabase(rdv);
 
   // Auto-add client if new
   addClientIfNew(nom, tel, adresse, type);
@@ -2500,6 +2568,7 @@ function saveRDVWithNotif() {
   const rdv = { id: Date.now(), nom, tel, adresse, type, date, heure, notes, status: 'confirmed', createdAt: new Date().toISOString() };
   rdvs.push(rdv);
   localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  pousserRdvVersSupabase(rdv);
 
   addClientIfNew(nom, tel, adresse, type);
 
@@ -4244,6 +4313,203 @@ async function renderPerf() {
   }
   document.getElementById('perfSub').textContent = sub;
 }
+/* ==================================================================
+   CLIENT SANS RDV — encaissement direct
+   Cree le RDV en base (status 'done'), l'encaisse, et edite un recu
+   ou une facture numerotee. Le RDV etant marque effectue, le bilan le
+   compte une seule fois : l'entree de caisse porte son rdv_id.
+   ================================================================== */
+
+function ouvrirDirect() {
+  var sel = document.getElementById('dType');
+  sel.innerHTML = '';
+  for (var k in tarifs) {
+    var o = document.createElement('option');
+    o.value = k; o.textContent = k + ' — ' + tarifs[k] + '\u20AC';
+    sel.appendChild(o);
+  }
+  var autre = document.createElement('option');
+  autre.value = '__autre__'; autre.textContent = 'Autre prestation (montant libre)';
+  sel.appendChild(autre);
+
+  document.getElementById('dNom').value = '';
+  document.getElementById('dTel').value = '';
+  document.getElementById('dMail').value = '';
+  document.getElementById('dAdresse').value = '';
+  document.getElementById('dDepl').checked = false;
+  document.getElementById('dDeplMontant').value = 10;
+  document.getElementById('dZoneInfo').textContent = '';
+  document.getElementById('dDate').value = getToday();
+  majTotalDirect();
+  document.getElementById('modalDirect').style.display = 'block';
+}
+
+function fermerDirect() {
+  document.getElementById('modalDirect').style.display = 'none';
+}
+
+/* Propose le forfait de la commune saisie, sans l'imposer. */
+function majDeplacementDirect() {
+  var adr = document.getElementById('dAdresse').value;
+  var info = document.getElementById('dZoneInfo');
+  if (!adr || adr.length < 3) { info.textContent = ''; return; }
+  try {
+    var zone = trouverZone(adr);
+    if (zone) {
+      document.getElementById('dDeplMontant').value = zone.prix || 10;
+      info.textContent = 'Zone reconnue : ' + (zone.ville || zone.nom || adr) +
+                         ' \u2014 forfait ' + (zone.prix || 10) + '\u20AC (modifiable)';
+      majTotalDirect();
+    } else {
+      info.textContent = 'Commune non reconnue \u2014 forfait par d\u00e9faut, ajuste si besoin';
+    }
+  } catch (e) { info.textContent = ''; }
+}
+
+function majTotalDirect() {
+  var type = document.getElementById('dType').value;
+  var champPresta = document.getElementById('dPresta');
+  if (type !== '__autre__' && document.activeElement !== champPresta) {
+    champPresta.value = tarifs[type] || getPrix(type) || 0;
+  }
+  var presta = Number(champPresta.value) || 0;
+  var depl = document.getElementById('dDepl').checked
+    ? (Number(document.getElementById('dDeplMontant').value) || 0) : 0;
+  document.getElementById('dTotal').textContent = (presta + depl) + '\u20AC';
+}
+
+async function validerDirect() {
+  var nom = document.getElementById('dNom').value.trim();
+  var tel = document.getElementById('dTel').value.trim();
+  var mail = document.getElementById('dMail').value.trim();
+  var adresse = document.getElementById('dAdresse').value.trim();
+  var typeSel = document.getElementById('dType').value;
+  var type = typeSel === '__autre__' ? 'Prestation diverse' : typeSel;
+  var date = document.getElementById('dDate').value || getToday();
+  var presta = Number(document.getElementById('dPresta').value) || 0;
+  var depl = document.getElementById('dDepl').checked
+    ? (Number(document.getElementById('dDeplMontant').value) || 0) : 0;
+  var total = presta + depl;
+  var doc = document.getElementById('dDoc').value;
+
+  if (!nom) { showNotif('\u26A0\uFE0F Le nom du client est requis', '#ff9500'); return; }
+  if (total <= 0) { showNotif('\u26A0\uFE0F Le montant doit \u00eatre sup\u00e9rieur \u00e0 0', '#ff9500'); return; }
+  var veutFacture = (doc === 'facture' || doc === 'facture_muette');
+  if (veutFacture && !sessionValide()) {
+    showNotif('\u26A0\uFE0F Facture impossible hors connexion', '#ff9500'); return;
+  }
+
+  var btn = document.getElementById('dBtn');
+  btn.disabled = true; btn.textContent = 'Enregistrement\u2026';
+
+  var now = new Date();
+  var heure = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  var localId = Date.now();
+  var supabaseId = null;
+
+  // 1. Le RDV, marque effectue
+  if (sessionValide()) {
+    try {
+      var res = await fetch(SB_URL + '/rest/v1/rdvs?select=id', {
+        method: 'POST',
+        headers: Object.assign(sbHeaders(), { 'Prefer': 'return=representation' }),
+        body: JSON.stringify({
+          nom: nom, tel: tel, email: mail, adresse: adresse, type: type,
+          date: date, heure: heure, status: 'done', source: 'direct',
+          lieu: depl > 0 ? 'À domicile' : 'Sur place — La Foux',
+          notes: 'Client sans RDV'
+        })
+      });
+      if (res.ok) {
+        var d = await res.json();
+        if (Array.isArray(d) && d[0]) supabaseId = d[0].id;
+      }
+    } catch (e) {}
+  }
+  if (!supabaseId) {
+    showNotif('\u26A0\uFE0F Non sauvegard\u00e9 en ligne \u2014 encaissement gard\u00e9 en local', '#ff9500');
+  }
+
+  // 2. L'encaissement (rattache au RDV : pas de double comptage)
+  var libelle = nom + ' \u2014 ' + type + (depl > 0 ? ' + D\u00e9pl. ' + depl + '\u20AC' : '');
+  caisseAjouter({
+    type: libelle, montant: total, heure: heure, date: date,
+    id: localId, rdv_id: supabaseId || undefined
+  });
+
+  // 3. Le document
+  var numero = null;
+  if (veutFacture) {
+    try {
+      var rf = await fetch(SB_URL + '/rest/v1/rpc/emettre_facture', {
+        method: 'POST',
+        headers: Object.assign(sbHeaders(), { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          p_nom: nom, p_tel: tel, p_mail: mail, p_adresse: adresse,
+          p_prestation: type, p_presta: presta, p_depl: depl,
+          p_rdv_id: supabaseId, p_date: date
+        })
+      });
+      if (rf.ok) {
+        var fd = await rf.json();
+        if (Array.isArray(fd) && fd[0]) numero = fd[0].numero;
+      }
+    } catch (e) {}
+    if (!numero) showNotif('\u26A0\uFE0F Facture non enregistr\u00e9e \u2014 encaissement conserv\u00e9', '#ff9500');
+  }
+
+  btn.disabled = false; btn.textContent = '\u2713 Encaisser';
+  fermerDirect();
+  renderCaisse(); updateStats(); renderAccueil();
+  perfRdvsCache = null;                 // forcer le rechargement du bilan
+  try { await renderPerf(); } catch (e) {}
+  showNotif('\u2713 ' + total + '\u20AC encaiss\u00e9' + (numero ? ' \u2014 facture ' + numero : ''));
+
+  // 'aucun' et 'facture_muette' n'envoient rien au client.
+  if (doc === 'recu' || doc === 'facture') {
+    envoyerDocument({
+      nom: nom, tel: tel, mail: mail, adresse: adresse, type: type,
+      presta: presta, depl: depl, total: total, date: date,
+      numero: numero, estFacture: veutFacture
+    });
+  }
+}
+
+function envoyerDocument(f) {
+  var dateAff = f.date.split('-').reverse().join('/');
+  var titre = f.estFacture ? ('FACTURE N\u00B0 ' + f.numero) : 'RE\u00C7U';
+
+  var corps = 'ClimExpress Recharge Auto\n'
+    + 'Raymond \u2014 06 48 00 85 58\n'
+    + 'rech.raymond@climexpressauto.fr\n\n'
+    + titre + '\n'
+    + 'Date : ' + dateAff + '\n\n'
+    + 'Client : ' + f.nom + '\n'
+    + (f.adresse ? 'Adresse : ' + f.adresse + '\n' : '')
+    + '\n'
+    + f.type + ' : ' + f.presta + '\u20AC\n'
+    + (f.depl > 0 ? 'D\u00e9placement : ' + f.depl + '\u20AC\n' : '')
+    + '------------------------\n'
+    + 'TOTAL : ' + f.total + '\u20AC\n\n'
+    + 'TVA non applicable, article 293 B du CGI.\n\n'
+    + 'Merci de votre confiance.\n'
+    + 'Raymond \u2014 ClimExpress';
+
+  var sujet = titre + ' \u2014 ClimExpress';
+
+  if (f.mail) {
+    if (confirm('Envoyer le document par MAIL \u00e0 ' + f.nom + ' ?')) {
+      window.location.href = 'mailto:' + f.mail + '?subject=' + encodeURIComponent(sujet) +
+                             '&body=' + encodeURIComponent(corps);
+      return;
+    }
+  }
+  if (f.tel) {
+    if (confirm('Envoyer le document par SMS \u00e0 ' + f.nom + ' ?')) {
+      window.location.href = 'sms:' + f.tel + '?body=' + encodeURIComponent(corps);
+    }
+  }
+}
 </script>
 <!-- MODAL BLOCAGE -->
 <div class="modal-overlay" id="blocageModal" onclick="closeBlocageModal()">
@@ -4329,5 +4595,81 @@ async function renderPerf() {
     </div>
   </div>
 </div>
+<!-- ===== MODALE : CLIENT SANS RDV ===== -->
+<div id="modalDirect" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(6,20,42,0.82);
+     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;padding:18px 14px 40px;">
+  <div style="max-width:520px;margin:0 auto;background:linear-gradient(160deg,#1d4078,#16305a);
+       border:1px solid rgba(255,255,255,0.14);border-radius:20px;padding:18px;
+       box-shadow:0 30px 60px -25px rgba(0,0,0,.9);">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:1.2px;">
+        ⚡ CLIENT SANS RDV</div>
+      <button onclick="fermerDirect()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
+        background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">✕</button>
+    </div>
+
+    <label class="dlbl">Nom du client *</label>
+    <input id="dNom" class="dinp" type="text" placeholder="Ex : M. Martin">
+
+    <label class="dlbl">Téléphone</label>
+    <input id="dTel" class="dinp" type="tel" inputmode="tel" placeholder="06 12 34 56 78">
+
+    <label class="dlbl">Email (pour envoyer le reçu)</label>
+    <input id="dMail" class="dinp" type="email" inputmode="email" placeholder="facultatif">
+
+    <label class="dlbl">Adresse / commune</label>
+    <input id="dAdresse" class="dinp" type="text" placeholder="Ex : Sainte-Maxime"
+           oninput="majDeplacementDirect()">
+
+    <label class="dlbl">Prestation *</label>
+    <select id="dType" class="dinp" onchange="majTotalDirect()"></select>
+
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;">
+        <label class="dlbl">Date</label>
+        <input id="dDate" class="dinp" type="date">
+      </div>
+      <div style="flex:1;">
+        <label class="dlbl">Montant prestation (€)</label>
+        <input id="dPresta" class="dinp" type="number" inputmode="decimal" onchange="majTotalDirect()">
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:11px 13px;
+         background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;">
+      <input id="dDepl" type="checkbox" onchange="majTotalDirect()" style="width:20px;height:20px;flex-shrink:0;">
+      <label for="dDepl" style="flex:1;font-size:13px;color:rgba(255,255,255,0.75);">Déplacement</label>
+      <input id="dDeplMontant" class="dinp" type="number" inputmode="decimal" value="10"
+             onchange="majTotalDirect()" style="width:78px;margin:0;text-align:right;">
+      <span style="color:rgba(255,255,255,0.5);font-size:13px;">€</span>
+    </div>
+    <div id="dZoneInfo" style="font-size:11px;color:rgba(255,255,255,0.42);margin-bottom:12px;"></div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px;
+         background:linear-gradient(135deg,rgba(0,214,143,0.16),rgba(0,194,255,0.10));
+         border:1px solid rgba(0,214,143,0.3);border-radius:15px;margin-bottom:14px;">
+      <span style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.6);">Total encaissé</span>
+      <span id="dTotal" style="font-family:'Bebas Neue',sans-serif;font-size:34px;color:#fff;">0€</span>
+    </div>
+
+    <label class="dlbl">Document à remettre</label>
+    <select id="dDoc" class="dinp">
+      <option value="aucun">Aucun</option>
+      <option value="recu" selected>Reçu simple — envoyé</option>
+      <option value="facture">Facture numérotée — envoyée</option>
+      <option value="facture_muette">Facture numérotée — enregistrée sans envoi</option>
+    </select>
+    <div style="font-size:11px;color:rgba(255,255,255,0.42);margin:-4px 0 14px;line-height:1.45;">
+      La facture reçoit un numéro séquentiel enregistré en base et ne peut plus être modifiée ensuite.
+      « Sans envoi » l'enregistre pour ta comptabilité sans rien transmettre au client.
+    </div>
+
+    <button onclick="validerDirect()" id="dBtn" style="width:100%;padding:15px;border-radius:14px;border:none;
+      background:linear-gradient(135deg,#00d68f,#00c2ff);color:#06243f;font-weight:800;font-size:15px;
+      font-family:DM Sans,sans-serif;cursor:pointer;">✓ Encaisser</button>
+  </div>
+</div>
+
 </body>
 </html>

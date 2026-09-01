@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ClimExpress — Agenda Toulon</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ice: #e8f4fd;
+    --frost: #b8dff5;
+    --blue: #1a6fa8;
+    --deep: #0b2545;
+    --dark: #1a3a6b;
+    --accent: #00c2ff;
+    --green: #00d68f;
+    --orange: #ff9500;
+    --red: #ff4444;
+    --card: #22487a;
+    --border: rgba(255,255,255,0.25);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #1a3a6b !important;
+    color: #ffffff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: #1a3a6b;
+    pointer-events: none; z-index: 0;
+  }
+  html { background: #1a3a6b !important; }
+
+  /* HEADER */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(22,50,96,0.99);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); letter-spacing: 2px; }
+  .logo span { color: #fff; }
+  .header-date { font-size: 11px; color: rgba(255,255,255,0.6); text-align: right; }
+
+  /* NAV TABS */
+  .nav { display: flex; background: #163260; border-bottom: 1px solid var(--border); position: sticky; top: 57px; z-index: 99; }
+  .nav-btn {
+    flex: 1; padding: 10px 4px; border: none; background: none; color: rgba(255,255,255,0.45);
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all .2s;
+    border-bottom: 2px solid transparent;
+  }
+  .nav-btn .icon { font-size: 18px; }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* PAGES */
+  .page { display: none; padding: 16px; position: relative; z-index: 1; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #fff;
+    letter-spacing: 2px; margin-bottom: 16px;
+  }
+  .section-title span { color: var(--accent); }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* STATS ROW */
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card {
+    background: #22487a; border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 10px; text-align: center;
+  }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* TODAY TIMELINE */
+  .today-section { margin-bottom: 20px; }
+  .today-rdv {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px; background: #22487a;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; margin-bottom: 8px;
+    position: relative; overflow: hidden;
+  }
+  .today-rdv::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .today-rdv.confirmed::before { background: var(--green); }
+  .today-rdv.pending::before { background: var(--orange); }
+  .today-rdv.done::before { background: rgba(205,232,255,0.2); }
+  .rdv-time { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); min-width: 52px; line-height: 1.1; }
+  .rdv-info { flex: 1; }
+  .rdv-name { font-weight: 700; font-size: 15px; color: #ffffff; }
+  .rdv-detail { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+  .rdv-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600;
+    display: inline-block; margin-top: 4px;
+  }
+  .badge-vl { background: rgba(0,214,143,0.15); color: var(--green); }
+  .badge-vu { background: rgba(255,149,0,0.15); color: var(--orange); }
+  .badge-pl { background: rgba(0,194,255,0.15); color: var(--accent); }
+
+  .rdv-actions { display: flex; gap: 6px; flex-direction: column; }
+  .btn-icon {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: rgba(0,194,255,0.08); color: var(--accent); font-size: 15px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .btn-icon:active { background: rgba(0,194,255,0.2); }
+
+  /* FREE SLOTS */
+  .slots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; background: transparent; }
+  .slot {
+    padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #fff;
+    cursor: pointer; transition: all .15s;
+  }
+  .slot:active { background: rgba(0,194,255,0.25); transform: scale(.97); }
+  .slot.taken { background: rgba(255,68,68,0.15); color: #ff8080; border-color: rgba(255,68,68,0.3); cursor: default; }
+  .slot.free { background: rgba(0,214,143,0.15); color: #00d68f; border-color: rgba(0,214,143,0.3); }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: #163260;
+    color: #ffffff; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder { color: rgba(255,255,255,0.35); }
+  select option { background: #163260; color: #fff; }
+  textarea { resize: none; height: 80px; }
+
+  .btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all .2s; letter-spacing: .5px;
+  }
+  .btn-primary { background: var(--accent); color: var(--dark); }
+  .btn-primary:active { background: #00a8e0; transform: scale(.99); }
+  .btn-danger { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); margin-top: 8px; }
+  .btn-secondary { background: rgba(0,194,255,0.1); color: var(--accent); border: 1px solid var(--border); }
+
+  /* CLIENT LIST */
+  .client-card {
+    background: #22487a; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;
+  }
+  .client-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #fff; flex-shrink: 0;
+  }
+  .client-info { flex: 1; min-width: 0; }
+  .client-name { font-weight: 700; font-size: 14px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .client-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .client-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: rgba(0,194,255,0.1); color: var(--accent); border: 1px solid rgba(0,194,255,0.2); }
+
+  .client-actions { display: flex; gap: 6px; }
+
+  /* SEARCH */
+  .search-box {
+    position: relative; margin-bottom: 14px;
+  }
+  .search-box input { padding-left: 38px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: .5; }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: var(--green); color: var(--dark); padding: 10px 20px; border-radius: 20px;
+    font-weight: 700; font-size: 13px; z-index: 10001; opacity: 0;
+    transition: all .3s; pointer-events: none; white-space: nowrap;
+  }
+  .notif.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RAPPEL SECTION */
+  .rappel-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; background: #22487a;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; margin-bottom: 8px;
+  }
+  .rappel-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .rappel-dot.urgent { background: var(--red); }
+  .rappel-dot.today { background: var(--orange); }
+  .rappel-dot.future { background: var(--green); }
+  .rappel-text { flex: 1; font-size: 13px; color: #cde8ff; }
+  .rappel-time { font-size: 11px; color: rgba(205,232,255,0.4); }
+
+  /* CALENDAR MINI */
+  .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #fff; letter-spacing: 1px; }
+  .cal-arrow { background: none; border: 1px solid var(--border); color: var(--accent); width: 32px; height: 32px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-day-header { text-align: center; font-size: 10px; color: rgba(205,232,255,0.4); font-weight: 600; text-transform: uppercase; padding: 4px 0; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s;
+    position: relative;
+  }
+  .cal-day.empty { cursor: default; }
+  .cal-day.today-day { background: var(--accent); color: var(--dark); font-weight: 700; }
+  .cal-day.has-rdv::after {
+    content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: var(--orange);
+  }
+  .cal-day.today-day::after { background: var(--dark); }
+  .cal-day.blocked-day { background: rgba(255,68,68,0.2); color: #ff8080; border: 1px solid rgba(255,68,68,0.3); }
+  .cal-day.blocked-day::before { content: '🔒'; font-size: 8px; position: absolute; top: 1px; right: 1px; }
+  .cal-day:not(.empty):not(.today-day):not(.blocked-day):hover { background: rgba(0,194,255,0.12); }
+  .cal-day.selected-day { background: rgba(0,194,255,0.2); color: var(--accent); font-weight: 700; }
+  .badge-lieu-place { background: rgba(0,214,143,0.15); color: var(--green); font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; margin-left: 4px; }
+  .badge-lieu-domicile { background: rgba(255,149,0,0.15); color: var(--orange); font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; margin-left: 4px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(8,26,40,0.92); z-index: 500;
+    display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    width: 100%; background: #1a3a6b; border-radius: 20px 20px 0 0;
+    border: 1px solid var(--border); padding: 20px;
+    transform: translateY(100%); transition: transform .3s ease;
+    max-height: 85vh; overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: rgba(205,232,255,0.2); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #fff; margin-bottom: 16px; letter-spacing: 1px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: rgba(205,232,255,0.3); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* PHONE LINK */
+  a.tel { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  .full-rdv-list { }
+
+
+  .rdv-day-header { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 6px; }
+
+  /* CAISSE RAPIDE */
+  .caisse-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(0,194,255,0.25);
+    background: rgba(0,194,255,0.07); cursor: pointer; transition: all .15s;
+    gap: 4px;
+  }
+  .caisse-btn:active { background: rgba(0,194,255,0.22); transform: scale(.96); }
+  .caisse-label { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; text-align:center; line-height:1.2; }
+  .caisse-prix { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); line-height: 1; }
+  .caisse-btn-dep { border-color: rgba(255,149,0,0.3); background: rgba(255,149,0,0.07); }
+  .caisse-btn-dep .caisse-prix { color: var(--orange); }
+  .caisse-btn-dep:active { background: rgba(255,149,0,0.2); }
+
+  .caisse-ligne {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px; border-radius: 10px; background: rgba(255,255,255,0.05);
+    margin-bottom: 6px; gap: 10px;
+  }
+  .caisse-ligne-info { flex:1; }
+  .caisse-ligne-type { font-size: 13px; font-weight: 600; color: #fff; }
+  .caisse-ligne-heure { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 1px; }
+  .caisse-ligne-montant { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--green); }
+  .caisse-ligne-del { background: none; border: none; color: rgba(255,255,255,0.25); font-size: 16px; cursor: pointer; padding: 4px; }
+  .caisse-ligne-del:active { color: var(--red); }
+
+  .caisse-vue-btn {
+    flex: 1; padding: 7px 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: all .15s; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .caisse-vue-btn.active { background: rgba(0,194,255,0.15); border-color: rgba(0,194,255,0.4); color: var(--accent); }
+  .caisse-vue-btn:active { transform: scale(.97); }
+
+  /* TOGGLE SWITCH */
+  .toggle-switch {
+    width:46px;height:26px;border-radius:13px;cursor:pointer;transition:background .25s;
+    position:relative;flex-shrink:0;border:none;outline:none;
+  }
+  .toggle-switch .toggle-knob {
+    position:absolute;top:3px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* ============================================================
+     POLISH VISUEL — surcouche. Rien de structurel n'est touche,
+     ces regles arrivent en fin de feuille et gagnent au cascade.
+     ============================================================ */
+
+  body::before {
+    background:
+      radial-gradient(900px 520px at 12% -12%, rgba(0,194,255,0.16), transparent 62%),
+      radial-gradient(760px 480px at 96% 6%,  rgba(124,92,255,0.13), transparent 64%),
+      radial-gradient(600px 400px at 50% 108%, rgba(0,214,143,0.07), transparent 66%),
+      linear-gradient(180deg, #1e4280 0%, #17325c 52%, #112542 100%);
+  }
+
+  header {
+    background: linear-gradient(180deg, rgba(24,54,102,0.98), rgba(20,45,86,0.94));
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 26px -18px rgba(0,0,0,.9);
+    padding: 14px 16px;
+  }
+
+  .nav { background: rgba(19,42,80,0.96); border-bottom: 1px solid rgba(255,255,255,0.09); }
+  .nav-btn { padding: 11px 4px; transition: color .18s, background .18s; }
+  .nav-btn.active { background: linear-gradient(180deg, rgba(0,194,255,0.13), transparent 78%); }
+
+  .page { padding: 18px 16px 40px; }
+
+  .section-title {
+    position: relative; padding-left: 13px; margin-bottom: 18px; line-height: 1.05;
+  }
+  .section-title::before {
+    content:''; position:absolute; left:0; top:5px; bottom:5px; width:4px; border-radius:4px;
+    background: linear-gradient(180deg, var(--accent), #7c5cff);
+  }
+
+  .card {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.028) 100%);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 18px;
+    padding: 17px;
+    margin-bottom: 14px;
+    box-shadow: 0 14px 32px -20px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  .stats { gap: 11px; margin-bottom: 18px; }
+  .stat-card {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085), rgba(255,255,255,0.028));
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 16px; padding: 14px 10px;
+    box-shadow: 0 12px 26px -20px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .stat-num { font-size: 32px; text-shadow: 0 0 26px rgba(0,194,255,.35); }
+  .stat-label { margin-top: 4px; }
+
+  .today-rdv {
+    background: linear-gradient(158deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 14px; margin-bottom: 10px;
+    box-shadow: 0 12px 26px -20px rgba(0,0,0,.8);
+  }
+  .today-rdv::before { width: 4px; border-radius: 0 4px 4px 0; }
+  .today-rdv.confirmed::before { box-shadow: 0 0 16px rgba(0,214,143,.6); }
+  .today-rdv.pending::before   { box-shadow: 0 0 16px rgba(255,149,0,.55); }
+
+  /* ============================================================
+     MODULE BILAN / PERFORMANCE
+     ============================================================ */
+
+  .perf { margin-bottom: 18px; }
+
+  .perf-head {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:10px; margin-bottom:12px;
+  }
+  .perf-title {
+    font-family:'Bebas Neue',sans-serif; font-size:23px; color:#fff;
+    letter-spacing:1.5px; line-height:1;
+  }
+  .perf-title span { color: var(--accent); }
+  .perf-sub { font-size:11px; color:rgba(255,255,255,0.42); margin-top:4px; }
+  .perf-select {
+    background:#163260; color:rgba(255,255,255,0.8); border:1px solid var(--border);
+    border-radius:9px; padding:8px 9px; font-size:12px; font-family:'DM Sans',sans-serif;
+    -webkit-appearance:none; appearance:none; flex-shrink:0;
+  }
+
+  .perf-hero {
+    position:relative; overflow:hidden;
+    background: linear-gradient(155deg, rgba(0,194,255,0.13) 0%, rgba(124,92,255,0.10) 48%, rgba(255,255,255,0.03) 100%);
+    border:1px solid rgba(0,194,255,0.22);
+    border-radius:20px; padding:16px 0 0;
+    box-shadow: 0 20px 44px -26px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.12);
+    margin-bottom:12px;
+  }
+  .perf-hero-label {
+    font-size:10.5px; text-transform:uppercase; letter-spacing:1px;
+    color:rgba(255,255,255,0.5); padding:0 17px;
+  }
+  .perf-hero-row { display:flex; align-items:baseline; gap:11px; padding:0 17px; margin-top:3px; }
+  .perf-hero-num {
+    font-family:'Bebas Neue',sans-serif; font-size:46px; color:#fff; line-height:1;
+    letter-spacing:1px; text-shadow:0 0 34px rgba(0,194,255,.45);
+  }
+  .perf-delta {
+    font-size:12.5px; font-weight:700; padding:4px 10px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:3px; white-space:nowrap;
+  }
+  .perf-delta.up   { background:rgba(0,214,143,0.16); color:var(--green);  border:1px solid rgba(0,214,143,0.3); }
+  .perf-delta.down { background:rgba(255,68,68,0.14); color:var(--red);    border:1px solid rgba(255,68,68,0.28); }
+  .perf-delta.flat { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.55); border:1px solid var(--border); }
+  .perf-hero-note { font-size:11.5px; color:rgba(255,255,255,0.45); padding:6px 17px 0; line-height:1.45; }
+
+  .perf-wave { display:block; width:100%; height:auto; margin-top:6px; }
+  .perf-xaxis {
+    display:flex; padding:0 14px 13px; margin-top:-2px;
+  }
+  .perf-xaxis div {
+    flex:1; text-align:center; font-size:10px; letter-spacing:.5px;
+    color:rgba(255,255,255,0.38); text-transform:uppercase;
+  }
+  .perf-xaxis div.now { color:var(--accent); font-weight:700; }
+
+  .perf-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:12px; }
+  @media (max-width:400px) { .perf-grid { grid-template-columns:1fr; } }
+
+  .perf-mini {
+    background: linear-gradient(158deg, rgba(255,255,255,0.085), rgba(255,255,255,0.028));
+    border:1px solid rgba(255,255,255,0.13); border-radius:18px; padding:14px;
+    box-shadow: 0 14px 30px -22px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.10);
+    display:flex; align-items:center; gap:12px;
+  }
+  .perf-mini-body { min-width:0; }
+  .perf-mini-num {
+    font-family:'Bebas Neue',sans-serif; font-size:30px; color:#fff; line-height:1;
+  }
+  .perf-mini-label {
+    font-size:10px; text-transform:uppercase; letter-spacing:.6px;
+    color:rgba(255,255,255,0.45); margin-top:3px;
+  }
+  .perf-legend { display:flex; flex-direction:column; gap:3px; margin-top:8px; }
+  .perf-legend span { font-size:11px; color:rgba(255,255,255,0.55); display:flex; align-items:center; gap:5px; }
+  .perf-legend i { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .perf-legend b { color:#fff; font-weight:700; }
+
+  .perf-bars { display:flex; align-items:flex-end; gap:4px; height:38px; margin-top:10px; }
+  .perf-bars div {
+    flex:1; border-radius:5px 5px 2px 2px; min-height:3px;
+    background:linear-gradient(180deg, var(--accent), rgba(124,92,255,.75));
+  }
+  .perf-bars div.now { background:linear-gradient(180deg, #fff, var(--accent)); }
+
+  .perf-kpis { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .perf-kpi {
+    background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.10);
+    border-radius:14px; padding:11px 12px;
+  }
+  .perf-kpi-num { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--accent); line-height:1.1; }
+  .perf-kpi-label { font-size:10px; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+
+  /* Formulaire encaissement direct */
+  .dlbl {
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+    color:rgba(255,255,255,0.5); margin:0 0 5px 2px;
+  }
+  .dinp {
+    width:100%; box-sizing:border-box; padding:12px 13px; margin-bottom:12px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14);
+    border-radius:12px; color:#fff; font-size:16px; font-family:'DM Sans',sans-serif;
+    -webkit-appearance:none; appearance:none;
+  }
+  .dinp::placeholder { color:rgba(255,255,255,0.3); }
+  .dinp:focus { outline:none; border-color:rgba(0,194,255,0.5); background:rgba(255,255,255,0.09); }
+  select.dinp { background-image:none; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo">CLIM<span>EXPRESS</span></div>
+    <div style="font-size:10px;color:var(--orange);font-weight:700;letter-spacing:1px;margin-top:2px;">SECTEUR TOULON — HYÈRES</div>
+  </div>
+  <div class="header-date" id="headerDate"></div>
+</header>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="goPage('accueil',this)"><span class="icon">🏠</span>Aujourd'hui</button>
+  <button class="nav-btn" onclick="goPage('agenda',this)"><span class="icon">🗓</span>Agenda</button>
+  <button class="nav-btn" onclick="goPage('rdv',this)"><span class="icon">＋</span>Nouveau</button>
+</div>
+
+
+  <!-- ===== AUJOURD'HUI ===== -->
+  <div class="page active" id="page-accueil">
+    <div class="section-title">Aujourd'hui <span id="todayDateTitle"></span></div>
+
+
+    <!-- ===== CALCULETTE DEVIS ===== -->
+    <div class="card" style="margin-bottom:14px;padding:0;overflow:hidden;border:1px solid rgba(0,194,255,0.25);">
+      <div onclick="toggleCalculette()" style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer;background:rgba(0,194,255,0.06);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">&#129518;</span>
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;color:#fff;letter-spacing:1px;line-height:1;">Calculette <span style="color:var(--accent);">Devis</span></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;">Prix &agrave; annoncer au t&eacute;l&eacute;phone</div>
+          </div>
+        </div>
+        <span id="calcChevron" style="font-size:14px;color:var(--accent);transition:transform .2s;">&#9660;</span>
+      </div>
+
+      <div id="calcBody" style="display:none;padding:4px 14px 14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+          <button id="btnDep1" onclick="setModeDep(true)" style="padding:11px 8px;border-radius:10px;border:1px solid var(--accent);background:rgba(0,194,255,0.15);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128663; Je me d&eacute;place</button>
+          <button id="btnDep2" onclick="setModeDep(false)" style="padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#127968; Client vient &agrave; moi</button>
+        </div>
+
+        <div id="blocVille">
+          <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ville ou code postal</div>
+          <input type="text" id="calcVille" list="calcVilleList" autocomplete="off" placeholder="Ex : Hy&egrave;res ou 83400"
+            oninput="calcDevis()" onfocus="this.select()"
+            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:12px;">
+          <datalist id="calcVilleList"></datalist>
+        </div>
+
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Prestation</div>
+        <select id="calcPresta" onchange="calcDevis()"
+          style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:15px;font-family:DM Sans,sans-serif;margin-bottom:12px;"></select>
+
+        <div id="calcResultat"></div>
+
+        <button onclick="copierDevis()" style="width:100%;padding:11px;margin-top:10px;border-radius:10px;border:1px solid rgba(0,214,143,0.3);background:rgba(0,214,143,0.12);color:#00d68f;font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">&#128203; Copier le devis</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-num" id="statToday">0</div>
+        <div class="stat-label">RDV Aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statWeek">0</div>
+        <div class="stat-label">Cette Semaine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statCA">0€</div>
+        <div class="stat-label">Encaissé ce jour</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 14px;background:rgba(0,214,143,0.08);border:1px solid rgba(0,214,143,0.2);border-radius:12px;">
+      <span style="font-size:18px;">✅</span>
+      <span style="font-size:13px;color:rgba(255,255,255,0.7);">Effectués aujourd'hui :</span>
+      <span id="statDone" style="font-size:16px;font-weight:900;color:#00d68f;">0</span>
+      <span style="font-size:13px;color:rgba(255,255,255,0.4);">client(s)</span>
+    </div>
+
+    <div class="today-section">
+      <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Planning du jour</div>
+      <div id="todayList"></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin:16px 0 10px;">Créneaux libres aujourd'hui</div>
+    <div class="slots" id="todaySlots"></div>
+
+    <button class="btn" onclick="chargerTout()" style="margin-top:14px;">↻ Actualiser</button>
+    <button class="btn" onclick="ouvrirBlocage()" style="margin-top:10px;background:rgba(255,68,68,0.15);color:#ff4444;border:1px solid rgba(255,68,68,0.3);">🔒 Bloquer un créneau / jour</button>
+    <button class="btn" onclick="seDeconnecter()" style="margin-top:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);">Déconnexion</button>
+  </div>
+
+  <!-- ===== AGENDA ===== -->
+  <div class="page" id="page-agenda">
+    <div class="section-title">Agenda <span>Mensuel</span></div>
+    <div class="card">
+      <div class="calendar-nav">
+        <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-title" id="calMonthTitle"></div>
+        <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="calendar-grid" id="calGrid"></div>
+    </div>
+    <div id="dayRDVList" style="margin-top:8px;"></div>
+
+    <div style="margin-top:20px;">
+      <div class="section-title" style="font-size:20px;">RDV à <span>venir</span></div>
+      <div id="fullRDVList"></div>
+    </div>
+  </div>
+
+  <!-- ===== NOUVEAU RDV ===== -->
+  <div class="page" id="page-rdv">
+    <div class="section-title">Nouveau <span>RDV</span></div>
+    <div class="card">
+      <div class="form-group">
+        <label>Nom du client</label>
+        <input type="text" id="rdvNom" placeholder="Nom et prénom">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" id="rdvTel" inputmode="tel" placeholder="06 12 34 56 78">
+      </div>
+      <div class="form-group">
+        <label>Adresse</label>
+        <input type="text" id="rdvAdresse" placeholder="Rue, ville">
+      </div>
+      <div class="form-group">
+        <label>Prestation</label>
+        <select id="rdvType"></select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="rdvDate" onchange="fillHeures()">
+      </div>
+      <div class="form-group">
+        <label>Heure</label>
+        <select id="rdvHeure"></select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="rdvNotes" rows="2" placeholder="Véhicule, précisions…"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="creerRdv()">Enregistrer le RDV</button>
+    </div>
+  </div>
+
+
+<!-- ===== MODALE BLOCAGE ===== -->
+<div class="modal-overlay" id="blocModal" onclick="fermerBlocage()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Bloquer un créneau</div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="blocDate">
+    </div>
+    <div class="form-group">
+      <label>Ce que tu bloques</label>
+      <select id="blocPortee" onchange="majChampHeure()">
+        <option value="heure">Un créneau précis</option>
+        <option value="jour">La journée entière</option>
+      </select>
+    </div>
+    <div class="form-group" id="blocChampHeure">
+      <label>Heure</label>
+      <select id="blocHeure"></select>
+    </div>
+    <div class="form-group">
+      <label>Raison</label>
+      <input type="text" id="blocRaison" placeholder="Déjeuner, rendez-vous perso…">
+    </div>
+    <button class="btn btn-primary" onclick="validerBlocage()">Bloquer</button>
+    <button class="btn" onclick="fermerBlocage()" style="margin-top:8px;">Annuler</button>
+  </div>
+</div>
+
+<!-- ===== ECRAN DE CONNEXION ===== -->
+<div id="ecranConnexion" style="display:none;position:fixed;inset:0;z-index:5000;background:#0a1f3d;align-items:center;justify-content:center;padding:24px;">
+  <div style="width:100%;max-width:380px;">
+    <div style="text-align:center;margin-bottom:26px;">
+      <div style="font-size:40px;margin-bottom:10px;">&#10052;&#65039;</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:#fff;letter-spacing:2px;line-height:1;">CLIM<span style="color:var(--accent);">EXPRESS</span></div>
+      <div style="font-size:12px;color:var(--orange);margin-top:8px;font-weight:700;letter-spacing:1px;">SECTEUR TOULON &mdash; HY&Egrave;RES</div>
+    </div>
+
+    <div style="background:#0f2547;border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Email</div>
+      <input type="email" id="authEmail" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:14px;">
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Mot de passe</div>
+      <input type="password" id="authMdp" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter'){seConnecter();}"
+        style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:#163260;color:#fff;font-size:16px;font-family:DM Sans,sans-serif;margin-bottom:14px;">
+
+      <div id="authErreur" style="display:none;background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.3);color:#ff8080;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4;"></div>
+
+      <button id="authBtn" onclick="seConnecter()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0a1f2e;font-weight:800;font-size:15px;cursor:pointer;font-family:DM Sans,sans-serif;">Se connecter</button>
+
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:14px;line-height:1.5;text-align:center;">
+        La connexion reste active. Tu ne la referas qu'apr&egrave;s une longue p&eacute;riode sans ouvrir l'agenda.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+/* =========================================================
+   AGENDA SECTEUR TOULON — ClimExpress
+   Lit et écrit uniquement les lignes secteur = 'toulon'.
+   ========================================================= */
+
+const SB_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
+
+const SECTEUR = 'toulon';
+var REAUTH_JOURS = 30;
+
+/* ---------- Session ---------- */
+var SB_SESSION = null;
+try { SB_SESSION = JSON.parse(localStorage.getItem('clim_session_toulon') || 'null'); } catch (e) { SB_SESSION = null; }
+
+function sbHeaders() {
+  var jeton = (SB_SESSION && SB_SESSION.access_token) ? SB_SESSION.access_token : SB_KEY;
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + jeton, 'Content-Type': 'application/json' };
+}
+function sessionValide() {
+  return !!(SB_SESSION && SB_SESSION.access_token && SB_SESSION.expires_at &&
+            SB_SESSION.expires_at * 1000 > Date.now());
+}
+function enregistrerSession(data) {
+  if (!data || !data.access_token) return false;
+  SB_SESSION = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+    email: (data.user && data.user.email) || (SB_SESSION && SB_SESSION.email) || ''
+  };
+  localStorage.setItem('clim_session_toulon', JSON.stringify(SB_SESSION));
+  return true;
+}
+
+async function seConnecter() {
+  var email = (document.getElementById('authEmail') || {}).value || '';
+  var mdp = (document.getElementById('authMdp') || {}).value || '';
+  var err = document.getElementById('authErreur');
+  var btn = document.getElementById('authBtn');
+  if (!email.trim() || !mdp) {
+    if (err) { err.style.display = 'block'; err.textContent = 'Renseigne ton email et ton mot de passe.'; }
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  if (err) err.style.display = 'none';
+  try {
+    var res = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password: mdp })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.access_token) {
+      if (err) { err.style.display = 'block'; err.textContent = 'Email ou mot de passe incorrect.'; }
+      btn.disabled = false; btn.textContent = 'Se connecter';
+      return;
+    }
+    enregistrerSession(data);
+    localStorage.setItem('clim_derniere_auth_toulon', String(Date.now()));
+    document.getElementById('ecranConnexion').style.display = 'none';
+    document.getElementById('authMdp').value = '';
+    btn.disabled = false; btn.textContent = 'Se connecter';
+    demarrer();
+  } catch (e) {
+    if (err) { err.style.display = 'block'; err.textContent = 'Connexion impossible. Vérifie ton réseau.'; }
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+async function rafraichirSession() {
+  if (!SB_SESSION || !SB_SESSION.refresh_token) return false;
+  try {
+    var res = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: SB_SESSION.refresh_token })
+    });
+    var data = await res.json();
+    return res.ok ? enregistrerSession(data) : false;
+  } catch (e) { return false; }
+}
+
+function seDeconnecter() {
+  if (!confirm('Se déconnecter ?')) return;
+  localStorage.removeItem('clim_session_toulon');
+  SB_SESSION = null;
+  location.reload();
+}
+
+function afficherConnexion() {
+  var e = document.getElementById('ecranConnexion');
+  e.style.display = 'flex';
+  setTimeout(function () { var c = document.getElementById('authEmail'); if (c) c.focus(); }, 200);
+}
+
+/* ---------- Utilitaires ---------- */
+function toLocalDateStr(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function getToday() { return toLocalDateStr(new Date()); }
+function getWeekStart() {
+  const d = new Date(); const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return toLocalDateStr(d);
+}
+function normTxt(t) {
+  return (t || '').toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+const HEURES_SAM = ['09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00'];
+const HEURES_SEMAINE = ['09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+function getHeuresDuJour(dateStr) {
+  var d = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+  var jour = d.getDay();
+  if (jour === 0) return [];
+  if (jour === 6) return HEURES_SAM;
+  return HEURES_SEMAINE;
+}
+
+const TARIFS = {
+  'VL Recharge Standard (R134a)': 45,
+  'VL Recharge Standard (R1234yf)': 49,
+  'VL Recharge + Desinfection': 65,
+  'VU Recharge Standard': 60,
+  'VU Recharge + Desinfection': 80,
+  'PL Recharge Standard': 80,
+  'Diagnostic + Recharge': 55,
+  'Controle Etancheite': 45
+};
+
+function getPrix(type) {
+  if (!type) return 0;
+  var t = normTxt(type), key;
+  for (key in TARIFS) { if (normTxt(key) === t) return TARIFS[key] || 0; }
+  var estVU = t.indexOf('vu') === 0 || t.indexOf('utilitaire') !== -1;
+  var estPL = t.indexOf('pl') === 0 || t.indexOf('poidslourd') !== -1;
+  var estDesi = t.indexOf('desinfection') !== -1;
+  if (t.indexOf('etancheite') !== -1) return TARIFS['Controle Etancheite'];
+  if (t.indexOf('diagnostic') !== -1) return TARIFS['Diagnostic + Recharge'];
+  if (estPL) return TARIFS['PL Recharge Standard'];
+  if (estVU && estDesi) return TARIFS['VU Recharge + Desinfection'];
+  if (estVU) return TARIFS['VU Recharge Standard'];
+  if (estDesi) return TARIFS['VL Recharge + Desinfection'];
+  if (t.indexOf('r1234yf') !== -1) return TARIFS['VL Recharge Standard (R1234yf)'];
+  if (t.indexOf('r134a') !== -1) return TARIFS['VL Recharge Standard (R134a)'];
+  for (key in TARIFS) {
+    if (t.indexOf(normTxt(key)) !== -1 || normTxt(key).indexOf(t) !== -1) return TARIFS[key] || 0;
+  }
+  return 0;
+}
+
+/* ---------- Données ---------- */
+var rdvs = [];
+var blocages = [];
+
+function isHeureBloquee(dateStr, heure) {
+  return blocages.some(b => b.date === dateStr && b.type === 'heure' && b.heure === heure);
+}
+function isJourBloque(dateStr) {
+  return blocages.some(b => b.date === dateStr && b.type === 'jour');
+}
+
+async function chargerTout() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(SB_URL + '/rest/v1/rdvs?select=*&secteur=eq.' + SECTEUR + '&order=date.asc,heure.asc', { headers: sbHeaders() }),
+      fetch(SB_URL + '/rest/v1/blocages?select=*&secteur=eq.' + SECTEUR, { headers: sbHeaders() })
+    ]);
+    if (r1.status === 401) {
+      const ok = await rafraichirSession();
+      if (ok) return chargerTout();
+      afficherConnexion(); return;
+    }
+    rdvs = r1.ok ? await r1.json() : [];
+    blocages = r2.ok ? await r2.json() : [];
+    render();
+  } catch (e) {
+    showNotif('Chargement impossible — vérifie ta connexion');
+  }
+}
+
+/* ---------- Rendu ---------- */
+function render() { renderAccueil(); renderCalendar(); renderFullList(); }
+
+function rdvCard(r) {
+  const badge = (r.type||'').startsWith('VL') ? 'badge-vl' : (r.type||'').startsWith('VU') ? 'badge-vu' : 'badge-pl';
+  const label = (r.type||'').startsWith('VL') ? 'VL' : (r.type||'').startsWith('VU') ? 'VU' : (r.type||'').startsWith('PL') ? 'PL' : '🔧';
+  const isDone = r.status === 'done';
+  const montant = isDone ? getPrix(r.type) : 0;
+  const adresse = [r.adresse, r.lieu].filter(Boolean).join(' — ') || 'Adresse non précisée';
+  const overlay = isDone
+    ? '<div style="position:absolute;top:8px;right:8px;background:rgba(0,214,143,0.15);border:1px solid rgba(0,214,143,0.4);border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#00d68f;">✅ Effectué +' + montant + '€</div>'
+    : '';
+  return '<div class="today-rdv ' + esc(r.status) + '" style="position:relative;' + (isDone ? 'opacity:0.7;' : '') + '">'
+    + overlay
+    + '<div class="rdv-time" style="' + (isDone ? 'color:rgba(255,255,255,0.4);text-decoration:line-through;' : '') + '">' + esc(r.heure) + '</div>'
+    + '<div class="rdv-info">'
+    +   '<div class="rdv-name">' + esc(r.nom) + '</div>'
+    +   '<div class="rdv-detail">📍 ' + esc(adresse) + '</div>'
+    +   '<div class="rdv-detail">📞 <a class="tel" href="tel:' + esc(String(r.tel||'').replace(/[^0-9+]/g,'')) + '">' + esc(r.tel) + '</a></div>'
+    +   (r.notes ? '<div class="rdv-detail">📝 ' + esc(r.notes) + '</div>' : '')
+    +   '<span class="rdv-badge ' + badge + '">' + label + '</span>'
+    + '</div>'
+    + '<div class="rdv-actions">'
+    +   '<div class="btn-icon" onclick="itineraire(\'' + esc(adresse).replace(/'/g,"\\'") + '\')">🧭</div>'
+    +   (!isDone ? '<div class="btn-icon" onclick="doneRDV(' + r.id + ')">OK</div>' : '')
+    + '</div>'
+    + '</div>';
+}
+
+function renderAccueil() {
+  const today = getToday();
+  const dt = new Date();
+  document.getElementById('todayDateTitle').textContent =
+    dt.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('headerDate').textContent =
+    dt.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule')
+                        .sort((a,b) => String(a.heure).localeCompare(String(b.heure)));
+  const faits = todayRDVs.filter(r => r.status === 'done');
+  const ws = getWeekStart();
+  const semaine = rdvs.filter(r => r.date >= ws && r.status !== 'annule');
+
+  document.getElementById('statToday').textContent = todayRDVs.length;
+  document.getElementById('statWeek').textContent = semaine.length;
+  document.getElementById('statCA').textContent = faits.reduce((s,r) => s + getPrix(r.type), 0) + '€';
+  document.getElementById('statDone').textContent = faits.length;
+
+  const list = document.getElementById('todayList');
+  list.innerHTML = todayRDVs.length
+    ? todayRDVs.map(rdvCard).join('')
+    : '<div class="empty-state"><div class="icon">☀️</div><p>Aucun RDV aujourd\'hui</p></div>';
+
+  const taken = todayRDVs.map(r => r.heure);
+  const jourBloque = isJourBloque(today);
+  document.getElementById('todaySlots').innerHTML = getHeuresDuJour(today).map(h => {
+    const pris = taken.includes(h);
+    const bloc = isHeureBloquee(today, h) || jourBloque;
+    const cls = (pris || bloc) ? 'taken' : 'free';
+    const lab = bloc ? '🔒' : (pris ? '✗' : '✓');
+    return '<div class="slot ' + cls + '">' + h + ' ' + lab + '</div>';
+  }).join('');
+}
+
+/* ---------- Calendrier ---------- */
+var calDate = new Date();
+const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function changeMonth(n) { calDate.setMonth(calDate.getMonth() + n); renderCalendar(); }
+
+function renderCalendar() {
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  document.getElementById('calMonthTitle').textContent = MOIS[m] + ' ' + y;
+  const premier = new Date(y, m, 1);
+  const decalage = (premier.getDay() + 6) % 7;
+  const nbJours = new Date(y, m + 1, 0).getDate();
+  const today = getToday();
+
+  let html = ['L','M','M','J','V','S','D'].map(j => '<div class="cal-day-header">' + j + '</div>').join('');
+  for (let i = 0; i < decalage; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= nbJours; d++) {
+    const ds = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const aRdv = rdvs.some(r => r.date === ds && r.status !== 'annule');
+    const bloque = isJourBloque(ds);
+    let cls = 'cal-day';
+    if (ds === today) cls += ' today-day';
+    if (aRdv) cls += ' has-rdv';
+    if (bloque) cls += ' blocked-day';
+    html += '<div class="' + cls + '" onclick="voirJour(\'' + ds + '\')">' + d + '</div>';
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function voirJour(ds) {
+  const liste = rdvs.filter(r => r.date === ds && r.status !== 'annule')
+                    .sort((a,b) => String(a.heure).localeCompare(String(b.heure)));
+  const d = new Date(ds + 'T12:00:00');
+  const titre = d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('dayRDVList').innerHTML =
+    '<div class="card"><div style="font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">' + titre + '</div>'
+    + (liste.length ? liste.map(rdvCard).join('') : '<div style="font-size:13px;color:rgba(255,255,255,0.45);">Aucun RDV ce jour.</div>')
+    + '</div>';
+}
+
+function renderFullList() {
+  const today = getToday();
+  const avenir = rdvs.filter(r => r.date >= today && r.status !== 'annule' && r.status !== 'done')
+                     .sort((a,b) => (a.date + a.heure).localeCompare(b.date + b.heure));
+  document.getElementById('fullRDVList').innerHTML = avenir.length
+    ? avenir.map(r => {
+        const d = new Date(r.date + 'T12:00:00');
+        return '<div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 4px;">'
+          + d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' }) + '</div>' + rdvCard(r);
+      }).join('')
+    : '<div class="empty-state"><div class="icon">📭</div><p>Aucun RDV à venir</p></div>';
+}
+
+/* ---------- Actions ---------- */
+function itineraire(adresse) {
+  window.open('https://maps.apple.com/?q=' + encodeURIComponent(adresse), '_blank');
+}
+
+async function doneRDV(id) {
+  const r = rdvs.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm('Marquer « ' + r.nom + ' » comme effectué ?')) return;
+  const res = await fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + id, {
+    method: 'PATCH',
+    headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify({ status: 'done' })
+  });
+  if (!res.ok) { showNotif('Échec de la mise à jour'); return; }
+  r.status = 'done';
+  render();
+  showNotif('Intervention enregistrée : +' + getPrix(r.type) + '€');
+}
+
+function fillHeures() {
+  const ds = document.getElementById('rdvDate').value || getToday();
+  const sel = document.getElementById('rdvHeure');
+  const pris = rdvs.filter(r => r.date === ds && r.status !== 'annule').map(r => r.heure);
+  const jourBloque = isJourBloque(ds);
+  const heures = getHeuresDuJour(ds).filter(h => !pris.includes(h) && !isHeureBloquee(ds, h) && !jourBloque);
+  sel.innerHTML = heures.length
+    ? heures.map(h => '<option value="' + h + '">' + h + '</option>').join('')
+    : '<option value="">Aucun créneau libre</option>';
+}
+
+async function creerRdv() {
+  const nom = document.getElementById('rdvNom').value.trim();
+  const tel = document.getElementById('rdvTel').value.trim();
+  const heure = document.getElementById('rdvHeure').value;
+  const date = document.getElementById('rdvDate').value;
+  if (!nom || !tel || !date || !heure) { showNotif('Nom, téléphone, date et heure sont obligatoires'); return; }
+
+  const ligne = {
+    nom: nom,
+    tel: tel,
+    adresse: document.getElementById('rdvAdresse').value.trim() || null,
+    type: document.getElementById('rdvType').value,
+    date: date,
+    heure: heure,
+    notes: document.getElementById('rdvNotes').value.trim() || null,
+    status: 'confirmed',
+    source: 'tel',
+    secteur: SECTEUR
+  };
+  const res = await fetch(SB_URL + '/rest/v1/rdvs', {
+    method: 'POST',
+    headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=representation' }),
+    body: JSON.stringify(ligne)
+  });
+  if (!res.ok) { showNotif('Enregistrement refusé'); return; }
+  ['rdvNom','rdvTel','rdvAdresse','rdvNotes'].forEach(id => document.getElementById(id).value = '');
+  await chargerTout();
+  goPage('accueil', document.querySelectorAll('.nav-btn')[0]);
+  showNotif('RDV enregistré');
+}
+
+/* ---------- Blocages ---------- */
+function ouvrirBlocage() {
+  document.getElementById('blocDate').value = getToday();
+  const sel = document.getElementById('blocHeure');
+  sel.innerHTML = HEURES_SEMAINE.map(h => '<option value="' + h + '">' + h + '</option>').join('');
+  document.getElementById('blocModal').classList.add('active');
+}
+function fermerBlocage() { document.getElementById('blocModal').classList.remove('active'); }
+function majChampHeure() {
+  document.getElementById('blocChampHeure').style.display =
+    document.getElementById('blocPortee').value === 'jour' ? 'none' : '';
+}
+
+async function validerBlocage() {
+  const journee = document.getElementById('blocPortee').value === 'jour';
+  const ligne = {
+    type: journee ? 'jour' : 'heure',
+    date: document.getElementById('blocDate').value,
+    heure: journee ? null : document.getElementById('blocHeure').value,
+    raison: document.getElementById('blocRaison').value.trim() || 'Indisponible',
+    secteur: SECTEUR
+  };
+  const res = await fetch(SB_URL + '/rest/v1/blocages', {
+    method: 'POST',
+    headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify(ligne)
+  });
+  if (!res.ok) { showNotif('Blocage refusé'); return; }
+  document.getElementById('blocRaison').value = '';
+  fermerBlocage();
+  await chargerTout();
+  showNotif(journee ? 'Journée bloquée' : 'Créneau bloqué');
+}
+
+/* =========================================================
+   CALCULETTE DEVIS — secteur Toulon
+   Barème de déplacement calculé depuis La Crau (base du technicien).
+   ========================================================= */
+
+var BAREME_DEP_DEFAULT = [
+  // ---- Proche : 10€ (base La Crau) ----
+  { ville: 'La Crau', cp: '83260', sect: 'Proche', km: 0, prix: 10 },
+  { ville: 'La Farlede', cp: '83210', sect: 'Proche', km: 4, prix: 10 },
+  { ville: 'Sollies-Pont', cp: '83210', sect: 'Proche', km: 6, prix: 10 },
+  { ville: 'La Garde', cp: '83130', sect: 'Proche', km: 7, prix: 10 },
+  { ville: 'Hyeres', cp: '83400', sect: 'Proche', km: 8, prix: 10 },
+  { ville: 'La Valette-du-Var', cp: '83160', sect: 'Proche', km: 8, prix: 10 },
+  { ville: 'Le Pradet', cp: '83220', sect: 'Proche', km: 9, prix: 10 },
+  { ville: 'Sollies-Toucas', cp: '83210', sect: 'Proche', km: 10, prix: 10 },
+  { ville: 'Carqueiranne', cp: '83320', sect: 'Proche', km: 12, prix: 10 },
+  { ville: 'Cuers', cp: '83390', sect: 'Proche', km: 12, prix: 10 },
+  { ville: 'Toulon', cp: '83000', cps: ['83100','83200'], sect: 'Proche', km: 13, prix: 10 },
+  { ville: 'Belgentier', cp: '83210', sect: 'Proche', km: 14, prix: 10 },
+  { ville: 'Pierrefeu-du-Var', cp: '83390', sect: 'Proche', km: 15, prix: 10 },
+
+  // ---- Ouest toulonnais : 15€ ----
+  { ville: 'Le Revest-les-Eaux', cp: '83200', sect: 'Ouest', km: 18, prix: 15 },
+  { ville: 'Ollioules', cp: '83190', sect: 'Ouest', km: 20, prix: 15 },
+  { ville: 'Puget-Ville', cp: '83390', sect: 'Ouest', km: 20, prix: 15 },
+  { ville: 'La Londe-les-Maures', cp: '83250', sect: 'Ouest', km: 20, prix: 15 },
+  { ville: 'La Seyne-sur-Mer', cp: '83500', sect: 'Ouest', km: 22, prix: 15 },
+  { ville: 'Gareoult', cp: '83136', sect: 'Ouest', km: 24, prix: 15 },
+  { ville: 'Rocbaron', cp: '83136', sect: 'Ouest', km: 24, prix: 15 },
+  { ville: 'Meounes-les-Montrieux', cp: '83136', sect: 'Ouest', km: 25, prix: 15 },
+  { ville: 'Neoules', cp: '83136', sect: 'Ouest', km: 25, prix: 15 },
+  { ville: 'Saint-Mandrier-sur-Mer', cp: '83430', sect: 'Ouest', km: 26, prix: 15 },
+  { ville: 'Evenos', cp: '83330', sect: 'Ouest', km: 26, prix: 15 },
+  { ville: 'Six-Fours-les-Plages', cp: '83140', sect: 'Ouest', km: 27, prix: 15 },
+
+  // ---- Bordure de secteur : 25€ ----
+  { ville: 'Sanary-sur-Mer', cp: '83110', sect: 'Bordure', km: 30, prix: 25, long: true },
+  { ville: 'Le Beausset', cp: '83330', sect: 'Bordure', km: 30, prix: 25, long: true },
+  { ville: 'Collobrieres', cp: '83610', sect: 'Bordure', km: 30, prix: 25, long: true },
+  { ville: 'Bormes-les-Mimosas', cp: '83230', sect: 'Bordure', km: 30, prix: 25, long: true },
+  { ville: 'La Roquebrussanne', cp: '83136', sect: 'Bordure', km: 30, prix: 25, long: true },
+  { ville: 'Signes', cp: '83870', sect: 'Bordure', km: 33, prix: 25, long: true },
+  { ville: 'Le Castellet', cp: '83330', sect: 'Bordure', km: 33, prix: 25, long: true },
+  { ville: 'Bandol', cp: '83150', sect: 'Bordure', km: 34, prix: 30, long: true },
+  { ville: 'Le Lavandou', cp: '83980', sect: 'Bordure', km: 34, prix: 30, long: true },
+  { ville: 'Brignoles', cp: '83170', sect: 'Bordure', km: 35, prix: 30, long: true },
+  { ville: 'La Cadiere-d Azur', cp: '83740', sect: 'Bordure', km: 37, prix: 35, long: true },
+  { ville: 'Saint-Cyr-sur-Mer', cp: '83270', sect: 'Bordure', km: 40, prix: 35, long: true }
+];
+
+var ALIAS_DEP = {
+  'La Crau':                  ['la craux', 'craux', 'crau'],
+  'La Valette-du-Var':        ['la valette', 'valette'],
+  'La Seyne-sur-Mer':         ['la seyne', 'seyne'],
+  'Six-Fours-les-Plages':     ['six fours', 'sixfours'],
+  'Saint-Mandrier-sur-Mer':   ['st mandrier', 'saint mandrier', 'mandrier'],
+  'Sanary-sur-Mer':           ['sanary'],
+  'Saint-Cyr-sur-Mer':        ['st cyr', 'saint cyr'],
+  'La Cadiere-d Azur':        ['la cadiere', 'cadiere'],
+  'Le Revest-les-Eaux':       ['le revest', 'revest'],
+  'Hyeres':                   ['hyeres', 'hyères', 'hyeres les palmiers', 'les palmiers'],
+  'Sollies-Pont':             ['sollies pont', 'solliès-pont'],
+  'Sollies-Toucas':           ['sollies toucas', 'solliès-toucas'],
+  'La Farlede':               ['la farlede', 'farlede', 'farlède'],
+  'Meounes-les-Montrieux':    ['meounes', 'méounes'],
+  'Gareoult':                 ['gareoult', 'garéoult'],
+  'Neoules':                  ['neoules', 'néoules'],
+  'Evenos':                   ['evenos', 'événos'],
+  'La Roquebrussanne':        ['roquebrussanne'],
+  'Le Lavandou':              ['lavandou'],
+  'Bormes-les-Mimosas':       ['bormes'],
+  'La Londe-les-Maures':      ['la londe', 'londe'],
+  'Collobrieres':             ['collobrieres', 'collobrière', 'collobrières'],
+  'Le Beausset':              ['beausset'],
+  'Le Castellet':             ['castellet'],
+  'Pierrefeu-du-Var':         ['pierrefeu'],
+  'Puget-Ville':              ['puget ville', 'pugetville']
+};
+
+var jeMeDeplace = true;
+var dernierDevis = '';
+
+function aliasDe(ville) {
+  var list = ALIAS_DEP[ville] || [];
+  return list.map(normTxt);
+}
+function getBaremeDep() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('clim_bareme_toulon') || 'null');
+    if (saved && saved.length) return saved;
+  } catch (e) {}
+  return BAREME_DEP_DEFAULT.slice();
+}
+
+function distanceMots(a, b) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 3) return 99;
+  var prev = [], cur = [], i, j;
+  for (j = 0; j <= b.length; j++) prev[j] = j;
+  for (i = 1; i <= a.length; i++) {
+    cur[0] = i;
+    for (j = 1; j <= b.length; j++) {
+      var cout = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      cur[j] = Math.min(cur[j - 1] + 1, prev[j] + 1, prev[j - 1] + cout);
+    }
+    for (j = 0; j <= b.length; j++) prev[j] = cur[j];
+  }
+  return prev[b.length];
+}
+
+function trouverZone(saisie) {
+  var q = normTxt(saisie);
+  if (!q) return null;
+  var bareme = getBaremeDep();
+  var i, z;
+  var cpSaisi = saisie.replace(/\D/g, '');
+  for (i = 0; i < bareme.length; i++) {
+    if (bareme[i].cp === cpSaisi) return bareme[i];
+    if (bareme[i].cps && bareme[i].cps.indexOf(cpSaisi) !== -1) return bareme[i];
+  }
+  for (i = 0; i < bareme.length; i++) {
+    if (normTxt(bareme[i].ville) === q) return bareme[i];
+    if (aliasDe(bareme[i].ville).indexOf(q) !== -1) return bareme[i];
+  }
+  for (i = 0; i < bareme.length; i++) {
+    if (normTxt(bareme[i].ville).indexOf(q) === 0) return bareme[i];
+    var al = aliasDe(bareme[i].ville);
+    for (var j = 0; j < al.length; j++) {
+      if (al[j].indexOf(q) === 0) return bareme[i];
+    }
+  }
+  for (i = 0; i < bareme.length; i++) {
+    z = normTxt(bareme[i].ville);
+    if (q.length >= 3 && (q.indexOf(z) !== -1 || z.indexOf(q) !== -1)) return bareme[i];
+    var al2 = aliasDe(bareme[i].ville);
+    for (var k = 0; k < al2.length; k++) {
+      if (al2[k].length >= 4 && q.indexOf(al2[k]) !== -1) return bareme[i];
+    }
+  }
+  if (q.length >= 4) {
+    var meilleur = null, meilleureDist = 99;
+    for (i = 0; i < bareme.length; i++) {
+      var cands = [normTxt(bareme[i].ville)].concat(aliasDe(bareme[i].ville));
+      for (var c = 0; c < cands.length; c++) {
+        if (cands[c].length < 4) continue;
+        var d = distanceMots(q, cands[c]);
+        var seuil = Math.min(3, Math.max(1, Math.floor(cands[c].length / 5)));
+        if (d <= seuil && d < meilleureDist) { meilleureDist = d; meilleur = bareme[i]; }
+      }
+    }
+    if (meilleur) return meilleur;
+  }
+  return null;
+}
+
+function initCalculette() {
+  var sel = document.getElementById('calcPresta');
+  if (sel && !sel.options.length) {
+    sel.innerHTML = Object.keys(TARIFS).map(function (t) {
+      return '<option value="' + t + '">' + t + ' — ' + TARIFS[t] + '€</option>';
+    }).join('');
+  }
+  var dl = document.getElementById('calcVilleList');
+  if (dl && !dl.children.length) {
+    dl.innerHTML = getBaremeDep().map(function (z) {
+      return '<option value="' + z.ville + '">';
+    }).join('');
+  }
+  calcDevis();
+}
+
+function toggleCalculette() {
+  var b = document.getElementById('calcBody');
+  var c = document.getElementById('calcChevron');
+  if (!b) return;
+  var ouvert = b.style.display !== 'none';
+  b.style.display = ouvert ? 'none' : 'block';
+  if (c) c.style.transform = ouvert ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!ouvert) {
+    initCalculette();
+    var v = document.getElementById('calcVille');
+    if (v) setTimeout(function () { v.focus(); }, 120);
+  }
+}
+
+function setModeDep(dep) {
+  jeMeDeplace = dep;
+  var b1 = document.getElementById('btnDep1');
+  var b2 = document.getElementById('btnDep2');
+  var actif = 'padding:11px 8px;border-radius:10px;border:1px solid var(--accent);background:rgba(0,194,255,0.15);color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;';
+  var inactif = 'padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;';
+  if (b1) b1.style.cssText = dep ? actif : inactif;
+  if (b2) b2.style.cssText = dep ? inactif : actif;
+  var bv = document.getElementById('blocVille');
+  if (bv) bv.style.display = dep ? 'block' : 'none';
+  calcDevis();
+}
+
+function calcDevis() {
+  var el = document.getElementById('calcResultat');
+  if (!el) return;
+  var saisie = (document.getElementById('calcVille') || {}).value || '';
+  var presta = (document.getElementById('calcPresta') || {}).value || '';
+  var prixPresta = TARIFS[presta] || 0;
+
+  var cadre = 'background:rgba(0,194,255,0.06);border:1px solid rgba(0,194,255,0.2);border-radius:12px;padding:12px 14px;';
+  var ligne = 'display:flex;justify-content:space-between;font-size:13px;color:rgba(255,255,255,0.75);padding:7px 0;border-bottom:1px solid var(--border);';
+  var totalCss = 'font-family:\'Bebas Neue\',sans-serif;font-size:40px;color:var(--green);line-height:1;';
+
+  if (!jeMeDeplace) {
+    dernierDevis = presta + ' : ' + prixPresta + '€ — Total : ' + prixPresta + '€ (sans déplacement)';
+    el.innerHTML =
+      '<div style="' + cadre + '">' +
+        '<div style="' + ligne + '"><span>&#128295; Prestation</span><span style="font-weight:700;color:#fff;">' + prixPresta + '€</span></div>' +
+        '<div style="' + ligne + '"><span>&#127968; Le client vient à toi</span><span style="color:#00d68f;font-weight:700;">Pas de déplacement</span></div>' +
+        '<div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:12px;">' +
+          '<span style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;">Total à annoncer</span>' +
+          '<span style="' + totalCss + '">' + prixPresta + '€</span>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  var zone = trouverZone(saisie);
+  var horsZone = saisie.trim().length >= 2 && !zone;
+
+  if (horsZone) {
+    dernierDevis = '';
+    el.innerHTML = '<div style="background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:14px;text-align:center;">' +
+      '<div style="font-size:22px;margin-bottom:6px;">&#9888;&#65039;</div>' +
+      '<div style="font-size:13px;color:#ff9500;font-weight:700;margin-bottom:4px;">Hors secteur</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5;">Cette commune n\'est pas dans ton barème. Annonce un devis personnalisé, ou appelle Raymond si c\'est plus près de chez lui.</div>' +
+      '</div>';
+    return;
+  }
+
+  var prixDep = zone ? (zone.prix || 0) : 0;
+  var total = prixPresta + prixDep;
+  var nomZone = zone ? zone.ville : '—';
+
+  dernierDevis = presta + ' : ' + prixPresta + '€' +
+    (prixDep > 0 ? ' + déplacement ' + nomZone + ' : ' + prixDep + '€' : '') +
+    ' — Total : ' + total + '€';
+
+  var detailKm = (zone && zone.km) ? ' <span style="color:rgba(255,255,255,0.35);font-size:11px;">' + zone.km + ' km</span>' : '';
+  var ligneDep = zone
+    ? '<div style="' + ligne + '"><span>&#128663; Déplacement ' + nomZone + detailKm + '</span><span style="color:#ff9500;font-weight:700;">+' + prixDep + '€</span></div>'
+    : '';
+
+  var alerteLong = (zone && zone.long)
+    ? '<div style="margin-top:10px;padding:9px 11px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.25);border-radius:9px;font-size:11px;color:#ffb454;line-height:1.45;">' +
+      '&#9888;&#65039; ' + zone.km + ' km, soit ' + (zone.km * 2) + ' km aller-retour et environ ' +
+      Math.round(zone.km * 2 / 60 * 1.15 * 10) / 10 + ' h de route. Rentable surtout en groupant avec d\'autres RDV.</div>'
+    : '';
+
+  el.innerHTML =
+    '<div style="' + cadre + '">' +
+      '<div style="' + ligne + '"><span>&#128295; Prestation</span><span style="font-weight:700;color:#fff;">' + prixPresta + '€</span></div>' +
+      ligneDep +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;padding-top:12px;">' +
+        '<span style="font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;">Total à annoncer</span>' +
+        '<span style="' + totalCss + '">' + total + '€</span>' +
+      '</div>' +
+      (zone ? '' : '<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:8px;">Saisis une ville pour ajouter le déplacement.</div>') +
+    '</div>' + alerteLong;
+}
+
+function copierDevis() {
+  if (!dernierDevis) { showNotif('Rien à copier'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(dernierDevis).then(function () {
+      showNotif('✓ Devis copié');
+    })['catch'](function () { copierFallback(dernierDevis); });
+  } else {
+    copierFallback(dernierDevis);
+  }
+}
+function copierFallback(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showNotif('✓ Devis copié'); }
+  catch (e) { showNotif('Copie impossible'); }
+  document.body.removeChild(ta);
+}
+
+/* ---------- Navigation ---------- */
+function goPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'rdv') { document.getElementById('rdvDate').value = getToday(); fillHeures(); }
+}
+
+var notifTimer = null;
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => n.classList.remove('show'), 3200);
+}
+
+/* ---------- Démarrage ---------- */
+function demarrer() {
+  const sel = document.getElementById('rdvType');
+  sel.innerHTML = Object.keys(TARIFS).map(t =>
+    '<option value="' + t + '">' + t + ' — ' + TARIFS[t] + '€</option>').join('');
+  document.getElementById('rdvDate').value = getToday();
+  chargerTout();
+}
+
+(async function init() {
+  const derniere = parseInt(localStorage.getItem('clim_derniere_auth_toulon') || '0', 10);
+  const trop_vieux = REAUTH_JOURS > 0 && derniere && (Date.now() - derniere) > REAUTH_JOURS * 86400000;
+
+  if (!SB_SESSION || trop_vieux) { afficherConnexion(); return; }
+  if (!sessionValide()) {
+    const ok = await rafraichirSession();
+    if (!ok) { afficherConnexion(); return; }
+  }
+  demarrer();
+})();
+</script>
+</body>
+</html>

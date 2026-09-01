@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F1E">
+<meta name="color-scheme" content="dark">
+<title>ClimExpress Toulon — Réserver une intervention</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-width='1.9'><rect width='24' height='24' rx='5' fill='%230B0F1E'/><path d='M 10.61 21.9 A 8.6 8.6 0 0 1 10.61 2.1' stroke='%233D8BFF' transform='translate(1.4,1.4) scale(0.885)'/><path d='M 13.39 2.1 A 8.6 8.6 0 0 1 13.39 21.9' stroke='%23FF5470' transform='translate(1.4,1.4) scale(0.885)'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+/* ============================================================
+   RESERVATION — SECTEUR TOULON / HYERES
+   Technicien : Dimitri, base La Crau (83260)
+   ------------------------------------------------------------
+   A REMPLIR AVANT MISE EN LIGNE :
+   ============================================================ */
+const FORMSPREE_URL = 'https://formspree.io/f/mzebeazl';
+const TEL_TECH      = '06 43 40 70 35';          // Dimitri, technicien secteur Toulon
+const TEL_TECH_LIEN = '+33643407035';            // meme numero, format international
+const NOM_TECH      = 'Dimitri';
+const SECTEUR       = 'toulon';                  // ne pas modifier
+const BASE_TECH     = 'La Crau';
+</script>
+<style>
+  :root {
+    /* nouveaux tokens — les anciens noms sont conservés pour les styles inline */
+    --bg: #0B0F1E; --surface: #131A30; --surface-2: #1A2342;
+    --accent: #38E1FF; --green: #3DDC97; --orange: #FF8A3D; --red: #FF5470;
+    --violet: #8B7BFF;
+    --dark: #04222B; --deep: #131A30; --card: #131A30;
+    --border: rgba(150,170,230,.16); --border-strong: rgba(150,170,230,.32);
+    --text: #F0F4FF; --text-2: #A8B4D6;
+    --grad-cold: linear-gradient(120deg, #38E1FF, #4D7CFF);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { background: #0B0F1E !important; color-scheme: dark; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    background: #0B0F1E !important; color: var(--text); min-height: 100dvh;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(700px 420px at 90% -5%, rgba(56,225,255,.10), transparent 60%),
+      radial-gradient(600px 420px at -5% 40%, rgba(139,123,255,.09), transparent 58%),
+      radial-gradient(640px 460px at 95% 95%, rgba(255,138,61,.06), transparent 60%),
+      #0B0F1E;
+  }
+
+  header {
+    background: rgba(11,15,30,.85);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+    text-align: center; position: relative; z-index: 10;
+  }
+  .logo {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    font-weight: 800; font-size: 22px; letter-spacing: -.02em; color: var(--text);
+  }
+  .logo svg { width: 26px; height: 26px; }
+  .logo span {
+    background: var(--grad-cold);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { font-size: 11px; color: var(--text-2); margin-top: 3px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+
+  .hero {
+    border-bottom: 1px solid var(--border);
+    padding: 26px 16px; text-align: center; position: relative; z-index: 1;
+  }
+  .hero h1 { font-weight: 800; font-size: 30px; color: var(--text); letter-spacing: -.02em; line-height: 1.15; }
+  .hero h1 span {
+    background: linear-gradient(105deg, #38E1FF 15%, #8B7BFF 60%, #FF8A3D 105%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { font-size: 14px; color: var(--text-2); margin-top: 8px; line-height: 1.6; }
+  .hero-badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .hero-badge {
+    background: rgba(61,220,151,.10); border: 1px solid rgba(61,220,151,.32);
+    color: var(--green); font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 999px;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.5; transform:scale(1.3); } }
+
+  .container { padding: 16px; position: relative; z-index: 1; max-width: 520px; margin: 0 auto; }
+
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn .26s cubic-bezier(.25,.7,.3,1); }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 14px; }
+
+  .section-title { font-weight: 800; font-size: 21px; color: var(--text); letter-spacing: -.02em; margin-bottom: 16px; }
+  .section-title span { color: var(--accent); }
+
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 7px; }
+  input, select, textarea {
+    width: 100%; min-height: 50px; padding: 13px 15px; border-radius: 12px;
+    border: 1px solid var(--border-strong); background: var(--bg);
+    color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px;
+    outline: none; transition: border-color .2s; -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: rgba(168,180,214,.45); }
+  select option { background: var(--surface); color: var(--text); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .btn {
+    width: 100%; min-height: 52px; padding: 14px; border-radius: 999px; border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: opacity .12s, filter .2s;
+    touch-action: manipulation;
+  }
+  .btn-primary { background: var(--grad-cold); color: var(--dark); box-shadow: 0 6px 20px rgba(56,225,255,.28); }
+  .btn-primary:active { opacity: .85; }
+  .btn-secondary { background: rgba(19,26,48,.6); color: var(--text); border: 1.5px solid var(--border-strong); margin-top: 8px; box-shadow: none; }
+  .btn-secondary:active { opacity: .85; }
+
+  /* CRÉNEAUX */
+  .date-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .date-nav button {
+    background: rgba(56,225,255,.10); border: 1px solid var(--border); color: var(--accent);
+    width: 44px; height: 44px; border-radius: 12px; font-size: 20px; cursor: pointer; flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .date-label { flex: 1; text-align: center; font-weight: 700; font-size: 15px; color: var(--text); text-transform: capitalize; }
+
+  .slots-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .slot-btn {
+    min-height: 46px; padding: 12px 6px; border-radius: 12px; border: 1px solid var(--border);
+    background: rgba(61,220,151,.08); color: var(--green); font-size: 15px; font-weight: 700;
+    cursor: pointer; text-align: center; transition: all .15s;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+  }
+  .slot-btn:active, .slot-btn.selected { background: var(--grad-cold); color: var(--dark); border-color: transparent; }
+  .slot-btn.taken { background: rgba(255,84,112,.07); color: rgba(168,180,214,.35); border-color: rgba(255,84,112,.14); cursor: not-allowed; font-size: 13px; }
+
+  /* SERVICES */
+  .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .service-btn {
+    min-height: 44px; padding: 14px 10px; border-radius: 14px; border: 1px solid var(--border-strong);
+    background: var(--bg); color: var(--text); font-size: 12.5px; font-weight: 600;
+    cursor: pointer; text-align: center; transition: all .15s; line-height: 1.45;
+    touch-action: manipulation;
+  }
+  .service-btn .sico { display: flex; justify-content: center; margin-bottom: 8px; }
+  .service-btn .sico svg { width: 26px; height: 26px; color: var(--accent); }
+  .service-btn.selected { background: rgba(56,225,255,.14); border-color: var(--accent); color: var(--accent); }
+  .service-btn.selected .sico svg { color: var(--accent); }
+
+  /* RECAP */
+  .recap-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .recap-row:last-child { border-bottom: none; }
+  .recap-label { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .recap-value { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; max-width: 60%; }
+
+  /* CONFIRM */
+  .confirm-box { text-align: center; padding: 30px 20px; }
+  .confirm-icon { display: flex; justify-content: center; margin-bottom: 18px; }
+  .confirm-icon svg { width: 72px; height: 72px; }
+  .confirm-title { font-weight: 800; font-size: 26px; letter-spacing: -.02em; color: var(--green); }
+  .confirm-sub { font-size: 14px; color: var(--text-2); margin-top: 10px; line-height: 1.65; }
+
+  /* STEPS INDICATOR */
+  .steps-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 14px 0 0; margin-bottom: 4px; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(168,180,214,.22); transition: all .3s; }
+  .step-dot.active { background: var(--accent); width: 26px; border-radius: 4px; }
+  .step-dot.done { background: var(--green); }
+
+  .loading { text-align: center; padding: 30px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgba(56,225,255,.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg { background: rgba(255,84,112,.10); border: 1px solid rgba(255,84,112,.32); color: var(--red); padding: 13px; border-radius: 12px; font-size: 13.5px; margin-bottom: 12px; display: none; }
+  .error-msg.show { display: block; }
+
+  footer { text-align: center; padding: 22px 16px calc(22px + env(safe-area-inset-bottom)); font-size: 11.5px; color: rgba(168,180,214,.5); position: relative; z-index: 1; }
+
+  /* ZONES DEPLACEMENT */
+  .zone-btn {
+    padding: 12px 10px; border-radius: 14px; border: 1px solid rgba(255,138,61,.28);
+    background: rgba(255,138,61,.06); cursor: pointer; text-align: center;
+    transition: all .15s; touch-action: manipulation;
+  }
+  .zone-btn:active, .zone-btn.selected {
+    background: rgba(255,138,61,.18); border-color: rgba(255,138,61,.6);
+  }
+  .zone-label { font-size: 11px; color: var(--text-2); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .zone-prix { font-weight: 800; font-size: 22px; color: var(--orange); line-height: 1; margin-bottom: 3px; }
+  .zone-ex { font-size: 10px; color: rgba(168,180,214,.4); line-height: 1.3; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" aria-hidden="true">
+        <path d="M 10.61 21.9 A 10.0 10.0 0 0 1 10.61 2.1" stroke="#3D8BFF" stroke-width="1.9"/>
+        <path d="M 13.39 2.1 A 10.0 10.0 0 0 1 13.39 21.9" stroke="#FF5470" stroke-width="1.9"/>
+        <line x1="13.6" y1="12.0" x2="18.5" y2="12.0" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="10.44" stroke="#FF5470"/><line x1="15.7" y1="12.0" x2="16.79" y2="13.56" stroke="#FF5470"/><line x1="12.8" y1="13.39" x2="15.25" y2="17.63" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="15.74" y2="15.37" stroke="#FF5470"/><line x1="13.85" y1="15.2" x2="13.05" y2="16.92" stroke="#FF5470"/><line x1="11.2" y1="13.39" x2="8.75" y2="17.63" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="10.95" y2="16.92" stroke="#3D8BFF"/><line x1="10.15" y1="15.2" x2="8.26" y2="15.37" stroke="#3D8BFF"/><line x1="10.4" y1="12.0" x2="5.5" y2="12.0" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="13.56" stroke="#3D8BFF"/><line x1="8.3" y1="12.0" x2="7.21" y2="10.44" stroke="#3D8BFF"/><line x1="11.2" y1="10.61" x2="8.75" y2="6.37" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="8.26" y2="8.63" stroke="#3D8BFF"/><line x1="10.15" y1="8.8" x2="10.95" y2="7.08" stroke="#3D8BFF"/><line x1="12.8" y1="10.61" x2="15.25" y2="6.37" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="13.05" y2="7.08" stroke="#FF5470"/><line x1="13.85" y1="8.8" x2="15.74" y2="8.63" stroke="#FF5470"/>
+      </svg>Clim<span>Express</span></div>
+  <div class="tagline">Recharge climatisation — Var (83)</div>
+</header>
+
+<div class="hero">
+  <h1>Réservez votre<br><span>intervention</span></h1>
+  <p>Choisissez votre créneau en ligne.<br>Toulon, Hyères, La Seyne et alentours.</p>
+  <div class="hero-badges">
+    <span class="hero-badge">✓ Rapide & Simple</span>
+    <span class="hero-badge">✓ Confirmation immédiate</span>
+    <span class="hero-badge">✓ À domicile</span>
+  </div>
+
+  <!-- BANNIÈRE LOCALISATION TEMPS RÉEL -->
+  <div id="banniereLocalisation" style="display:none;margin-top:14px;background:rgba(61,220,151,0.12);border:1px solid rgba(61,220,151,0.4);border-radius:14px;padding:12px 16px;max-width:400px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#3DDC97;box-shadow:0 0 8px #3DDC97;flex-shrink:0;animation:pulse 1.5s infinite;"></div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#3DDC97;" id="banniereTitre">Notre technicien est actuellement dans votre secteur</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;" id="banniereDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOUTONS TARIFS + QUI SOMMES NOUS -->
+  <div style="margin-top:16px;">
+    <button onclick="toggleTarifs()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;">Consulter nos tarifs</button>
+  </div>
+
+  <!-- TARIFS DROPDOWN -->
+  <div id="tarifsBox" style="display:none;margin-top:14px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:16px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto;">
+    <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Nos tarifs</div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VL — R134a</span><span style="color:#fff;font-weight:700;">45€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VL — R1234yf</span><span style="color:#fff;font-weight:700;">49€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">Désinfection (option)</span><span style="color:#fff;font-weight:700;">+20€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">VU — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 60€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">PL — Recharge</span><span style="color:#fff;font-weight:700;">à partir de 80€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:13px;"><span style="color:rgba(255,255,255,0.8);">Diagnostic + Recharge</span><span style="color:#fff;font-weight:700;">50€</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#FF8A3D;">Déplacement domicile</span><span style="color:#FF8A3D;font-weight:700;">selon votre zone — voir étape réservation</span></div>
+  </div>
+</div>
+
+<!-- QUI SOMMES-NOUS -->
+<div style="position:relative;z-index:5;max-width:440px;margin:16px auto 0;padding:0 16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;font-size:13.5px;color:var(--text-2);line-height:1.7;">
+    <strong style="color:var(--text);">Artisan indépendant diplômé depuis 5 ans</strong> — 100% clients satisfaits<br>Gaz neuf certifié, jamais recyclé — Vous êtes présent pendant toute l'intervention
+  </div>
+</div>
+
+<div class="container">
+  <div class="steps-bar">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+    <div class="step-dot" id="dot5"></div>
+    <div class="step-dot" id="dot6"></div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- ÉTAPE 1 : Infos client -->
+  <div class="step active" id="step1">
+    <div class="card">
+      <div class="section-title">Vos <span>Coordonnées</span></div>
+      <div class="form-group">
+        <label>Votre nom complet *</label>
+        <input type="text" id="cNom" placeholder="Ex: Jean Dupont">
+      </div>
+      <div class="form-group">
+        <label>Téléphone *</label>
+        <input type="tel" id="cTel" placeholder="06 12 34 56 78">
+      </div>
+      <div class="form-group">
+        <label>Email <span style="font-size:10px;color:rgba(255,255,255,0.35);font-weight:400;">(optionnel — pour recevoir confirmation)</span></label>
+        <input type="email" id="cEmail" placeholder="Ex: jean.dupont@gmail.com">
+      </div>
+      <button class="btn btn-primary" onclick="goStep2()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Sur place ou à domicile -->
+  <div class="step" id="step2">
+    <div class="card">
+      <div class="section-title">Lieu d'<span>Intervention</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:8px;">
+
+        <div class="service-btn" id="btnSurPlace" onclick="selectLieu('sur_place',this)" style="padding:20px 16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#38E1FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;flex:none;"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">Sur place</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);">Je viens à La Crau</div>
+            <div style="font-size:12px;color:#3DDC97;font-weight:600;margin-top:4px;">Tarif normal</div>
+          </div>
+        </div>
+
+        <div class="service-btn" id="btnDomicile" onclick="selectLieu('domicile',this)" style="padding:20px 16px;text-align:left;display:flex;align-items:center;gap:14px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FF8A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;flex:none;"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">À domicile</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);">Intervention chez vous (max 15 km)</div>
+            <div style="font-size:12px;color:#FF8A3D;font-weight:600;margin-top:4px;">+10€ jusqu'à 15 km · Au-delà : sur devis</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Champ adresse + code postal -->
+      <div id="adresseGroup" style="display:none;">
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Votre adresse *</label>
+          <input type="text" id="cAdresse" placeholder="Ex: 15 rue des Mimosas">
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Ville *</label>
+          <input type="text" id="cVille" placeholder="Ex: Cogolin, Sainte-Maxime, Toulon...">
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Code postal *</label>
+          <input type="text" id="cCodePostal" placeholder="Ex: 83990" maxlength="5" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,''); analyserCodePostal()">
+        </div>
+        <div id="zoneResultat" style="display:none;margin-bottom:14px;"></div>
+        <button class="btn btn-primary" id="btnContinuerZone" onclick="goStep3FromDomicile()" style="display:none;">Continuer →</button>
+      </div>
+
+    </div>
+    <button class="btn btn-secondary" onclick="goStep(1)">← Retour</button>
+  </div>
+
+  <!-- ÉTAPE 3 : Service -->
+  <div class="step" id="step3">
+    <div class="card">
+      <div class="section-title">Type de <span>Recharge</span></div>
+
+      <!-- TARIFS -->
+      <div style="background:rgba(56,225,255,0.06);border:1px solid rgba(56,225,255,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Nos tarifs</div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VL — Recharge R134a</span>
+          <span style="color:#fff;font-weight:700;">45€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VL — Recharge R1234yf</span>
+          <span style="color:#fff;font-weight:700;">49€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">Désinfection (option)</span>
+          <span style="color:#fff;font-weight:700;">+20€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">VU — Recharge</span>
+          <span style="color:#fff;font-weight:700;">à partir de 60€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">PL — Recharge</span>
+          <span style="color:#fff;font-weight:700;">à partir de 80€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;">
+          <span style="color:rgba(255,255,255,0.7);">Diagnostic + Recharge</span>
+          <span style="color:#fff;font-weight:700;">50€</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
+          <span style="color:rgba(255,138,61,0.9);">Déplacement à domicile</span>
+          <span style="color:#FF8A3D;font-weight:700;">+10€ / sur devis</span>
+        </div>
+      </div>
+
+      <div class="service-grid" id="serviceGrid">
+        <div class="service-btn" id="srv_vl_r134a" onclick="selectService(this,'VL Recharge Standard (R134a)')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg></span>VL Recharge Standard<br><small style="color:rgba(168,180,214,0.4)">R134a</small>
+        </div>
+        <div class="service-btn" id="srv_vl_r1234yf" onclick="selectService(this,'VL Recharge Standard (R1234yf)')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg></span>VL Recharge Standard<br><small style="color:rgba(168,180,214,0.4)">R1234yf</small>
+        </div>
+        <div class="service-btn" id="srv_vl_desinfec" onclick="selectService(this,'VL Recharge + Désinfection')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>VL Recharge +<br>Désinfection
+        </div>
+        <div class="service-btn" id="srv_vu_recharge" onclick="selectService(this,'VU Recharge Standard')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a1 1 0 0 1 1-1h11v9H2z"/><path d="M14 9h4l3 3.5V16h-7z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>VU Recharge<br>Standard
+        </div>
+        <div class="service-btn" id="srv_vu_desinfec" onclick="selectService(this,'VU Recharge + Désinfection')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a1 1 0 0 1 1-1h11v9H2z"/><path d="M14 9h4l3 3.5V16h-7z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg></span>VU Recharge +<br>Désinfection
+        </div>
+        <div class="service-btn" id="srv_diag" onclick="selectService(this,'Diagnostic + Recharge')">
+          <span class="sico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>Diagnostic +<br>Recharge
+        </div>
+      </div>
+      <div id="indispoMsg" style="display:none;margin-top:10px;background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.3);border-radius:10px;padding:12px;font-size:13px;color:#FF8A3D;">
+        Certaines prestations sont temporairement indisponibles. Appelez le <a href="tel:" id="telIndispo" style="color:var(--accent);font-weight:700;"></a> pour plus d'infos.
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="goStep(2)">← Retour</button>
+  </div>
+
+  <!-- ÉTAPE 4 : Créneau -->
+  <div class="step" id="step4">
+    <div class="card">
+      <div class="section-title">Choisir un <span>Créneau</span></div>
+      <div class="date-nav">
+        <button onclick="changeDay(-1)">‹</button>
+        <div class="date-label" id="dateLabelDisp"></div>
+        <button onclick="changeDay(1)">›</button>
+      </div>
+      <div class="slots-grid" id="slotsGrid"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="goStep(3)">← Retour</button>
+  </div>
+
+  <!-- ÉTAPE 5 : Récap -->
+  <div class="step" id="step5">
+    <div class="card">
+      <div class="section-title">Récap <span>RDV</span></div>
+      <div id="recapContent"></div>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="confirmerRDV()">Confirmer ma réservation</button>
+    </div>
+    <button class="btn btn-secondary" onclick="goStep(4)">← Retour</button>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div class="step" id="step6">
+    <div class="card confirm-box">
+      <div class="confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16.5 9.5"/></svg></div>
+      <div class="confirm-title">Réservation confirmée !</div>
+      <div class="confirm-sub" id="confirmSub"></div>
+      <div style="margin-top:20px;padding:14px;background:rgba(61,220,151,0.08);border:1px solid rgba(61,220,151,0.2);border-radius:12px;font-size:13px;color:rgba(168,180,214,0.7);">
+        En cas de problème, appelez directement :<br>
+        <a href="tel:" id="telContact" style="color:var(--accent);font-weight:700;font-size:16px;"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div style="font-size:11px;color:rgba(168,180,214,0.3);margin-bottom:6px;">Tout rendez-vous non honoré sans annulation préalable pourra entraîner la facturation des frais de déplacement.</div>
+  ClimExpress Recharge Auto — Var (83) · climexpressauto.fr
+</footer>
+
+<script>
+
+function toggleTarifs() {
+  const box = document.getElementById('tarifsBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// Lecture disponibilité services depuis localStorage (partagé même domaine)
+function appliquerDispoServices() {
+  const state = JSON.parse(localStorage.getItem('clim_services_dispo') || '{}');
+  const ids = ['vl_r134a','vl_r1234yf','vl_desinfec','vu_recharge','vu_desinfec','diag'];
+  let nbIndispo = 0;
+  ids.forEach(id => {
+    const el = document.getElementById('srv_' + id);
+    if (!el) return;
+    const dispo = state[id] !== false; // true par défaut si jamais modifié
+    if (!dispo) {
+      el.style.display = 'none';
+      nbIndispo++;
+    } else {
+      el.style.display = '';
+    }
+  });
+  document.getElementById('indispoMsg').style.display = nbIndispo > 0 ? 'block' : 'none';
+}
+
+function demanderDevis() {
+  document.getElementById('devisModal').style.display = 'flex';
+}
+
+function fermerDevisModal() {
+  document.getElementById('devisModal').style.display = 'none';
+}
+
+async function envoyerDevis() {
+  const nom = document.getElementById('devisNom').value.trim();
+  const tel = document.getElementById('devisTel').value.trim();
+  const adresse = document.getElementById('devisAdresse').value.trim();
+  const type = document.getElementById('devisType').value;
+  if (!nom || !tel || !adresse) { alert('Merci de remplir tous les champs'); return; }
+
+  try {
+    await fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        nom, tel, adresse, type,
+        _subject: '📋 Demande de devis déplacement — ' + nom,
+        message: 'Demande de devis déplacement au-delà de 15 km'
+      })
+    });
+    fermerDevisModal();
+    alert('Demande envoyée ! ClimExpress vous contactera très rapidement.');
+  } catch(e) {
+    alert('Erreur. Appelez directement le ' + TEL_TECH);
+  }
+}
+
+const SUPABASE_URL = 'https://cytgdpeoxhxempnewrep.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
+
+/* ------------------------------------------------------------------
+   Acces aux donnees publiques via fonctions Postgres.
+   Les tables rdvs et blocages ne sont plus lisibles par les visiteurs :
+   ces fonctions ne renvoient que ce qui est necessaire a l'affichage
+   (dates, heures, lieu), jamais un nom, telephone, adresse ou email.
+   ------------------------------------------------------------------ */
+async function sbRpc(nom, params) {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + nom, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params || {})
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+const HEURES_SEMAINE = ['09:30','10:00','10:30','11:00','11:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+const HEURES_SAM = ['09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00'];
+function getHeuresDuJour(d) {
+  var jour = d ? d.getDay() : new Date().getDay();
+  if (jour === 0) return [];
+  if (jour === 6) return HEURES_SAM;
+  return HEURES_SEMAINE;
+}
+const HEURES = HEURES_SEMAINE;
+
+let currentStep = 1;
+let selectedDate = new Date();
+let selectedHeure = null;
+let selectedService = null;
+let takenSlots = [];
+
+// ====== VARIABLES ZONES ======
+let selectedZoneSupp = 0;
+let selectedZoneKm = 0;
+let selectedZoneVille = '';
+let modeAttente = false;
+const SEUIL_REGROUPEMENT = 28;   // au-dela : reservation en attente, a grouper
+const MIN_CLIENTS_ZONE = 3;
+const DELAI_ATTENTE_JOURS = 2;
+
+const ZONES_CP = {
+  // ---- Coeur de secteur : +10€ ----
+  '83260': { ville: 'La Crau', km: 0, supp: 10 },
+  '83210': { ville: 'Solliès-Pont / La Farlède', km: 6, supp: 10 },
+  '83130': { ville: 'La Garde', km: 7, supp: 10 },
+  '83400': { ville: 'Hyères', km: 8, supp: 10 },
+  '83160': { ville: 'La Valette-du-Var', km: 8, supp: 10 },
+  '83220': { ville: 'Le Pradet', km: 9, supp: 10 },
+  '83320': { ville: 'Carqueiranne', km: 12, supp: 10 },
+  '83390': { ville: 'Cuers / Pierrefeu', km: 13, supp: 10 },
+  '83000': { ville: 'Toulon', km: 13, supp: 10 },
+  '83100': { ville: 'Toulon', km: 14, supp: 10 },
+  '83200': { ville: 'Toulon', km: 15, supp: 10 },
+
+  // ---- Ouest toulonnais : +15€ ----
+  '83190': { ville: 'Ollioules', km: 20, supp: 15 },
+  '83250': { ville: 'La Londe-les-Maures', km: 20, supp: 15 },
+  '83500': { ville: 'La Seyne-sur-Mer', km: 22, supp: 15 },
+  '83136': { ville: 'Garéoult / Rocbaron', km: 25, supp: 15 },
+  '83430': { ville: 'Saint-Mandrier-sur-Mer', km: 26, supp: 15 },
+  '83140': { ville: 'Six-Fours-les-Plages', km: 27, supp: 15 },
+
+  // ---- Bordure : +25€, regroupement ----
+  '83110': { ville: 'Sanary-sur-Mer', km: 30, supp: 25 },
+  '83330': { ville: 'Le Beausset / Le Castellet', km: 30, supp: 25 },
+  '83230': { ville: 'Bormes-les-Mimosas', km: 30, supp: 25 },
+  '83610': { ville: 'Collobrières', km: 30, supp: 25 },
+  '83870': { ville: 'Signes', km: 33, supp: 25 },
+  '83150': { ville: 'Bandol', km: 34, supp: 30 },
+  '83980': { ville: 'Le Lavandou', km: 34, supp: 30 },
+  '83170': { ville: 'Brignoles', km: 35, supp: 30 },
+  '83740': { ville: 'La Cadière-d\'Azur', km: 37, supp: 35 },
+  '83270': { ville: 'Saint-Cyr-sur-Mer', km: 40, supp: 35 },
+};
+
+const SECTEURS = {
+  'Toulon':            ['83000', '83100', '83200'],
+  'Hyères':            ['83400'],
+  'La Crau/Solliès':   ['83260', '83210'],
+  'La Garde/Le Pradet':['83130', '83220', '83320'],
+  'La Valette':        ['83160'],
+  'Cuers/Pierrefeu':   ['83390'],
+  'La Seyne/Ollioules':['83500', '83190'],
+  'Six-Fours':         ['83140', '83430'],
+  'Sanary/Bandol':     ['83110', '83150'],
+  'Le Beausset':       ['83330', '83870'],
+  'La Londe/Bormes':   ['83250', '83230'],
+  'Ouest':             ['83740', '83270'],
+};
+
+
+
+function analyserCodePostal() {
+  const cp = document.getElementById('cCodePostal') ? document.getElementById('cCodePostal').value.trim() : '';
+  const resultat = document.getElementById('zoneResultat');
+  const btnContinuer = document.getElementById('btnContinuerZone');
+  if (!resultat || !btnContinuer) return;
+  if (cp.length !== 5) { resultat.style.display = 'none'; btnContinuer.style.display = 'none'; return; }
+  const zone = ZONES_CP[cp];
+  if (!zone) {
+    resultat.style.display = 'block';
+    resultat.innerHTML = '<div style="background:rgba(255,84,112,0.1);border:1px solid rgba(255,84,112,0.3);border-radius:12px;padding:14px;font-size:13px;color:#FF8CA0;">Ce code postal est hors du secteur Toulon. Appelez le <a href="tel:' + TEL_TECH_LIEN + '" style="color:var(--accent);">' + TEL_TECH + '</a></div>';
+    btnContinuer.style.display = 'none'; return;
+  }
+  selectedZoneVille = zone.ville;
+  selectedZoneKm = zone.km;
+  selectedZoneSupp = zone.supp;
+  modeAttente = zone.km >= SEUIL_REGROUPEMENT;
+  resultat.style.display = 'block';
+  if (!modeAttente) {
+    resultat.innerHTML = '<div style="background:rgba(61,220,151,0.1);border:1px solid rgba(61,220,151,0.3);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">Supplément déplacement</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#3DDC97;">' + (zone.supp > 0 ? '+'+zone.supp+'€' : 'Gratuit') + '</span></div><div style="margin-top:8px;font-size:11px;color:rgba(61,220,151,0.7);">Confirmation immédiate après réservation</div></div>';
+    btnContinuer.textContent = 'Continuer →';
+  } else {
+    resultat.innerHTML = '<div style="background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.35);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;color:rgba(255,255,255,0.8);">' + zone.ville + '</span><span style="font-size:12px;color:rgba(255,255,255,0.4);">~' + zone.km + ' km</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:13px;color:rgba(255,255,255,0.7);">Supplément déplacement</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#FF8A3D;">+' + zone.supp + '€</span></div><div style="background:rgba(255,138,61,0.15);border-radius:8px;padding:10px;font-size:12px;color:#FF8A3D;line-height:1.5;"><strong>Réservation en attente de confirmation.</strong><br>Vous recevrez un SMS sous ' + (DELAI_ATTENTE_JOURS*24) + 'h maximum.</div></div>';
+    btnContinuer.textContent = 'Réserver (en attente) →';
+  }
+  btnContinuer.style.display = 'block';
+}
+
+function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const j = String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+j;
+}
+
+// Pas de RDV le dimanche
+function skipSunday(d) {
+  while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+selectedDate = skipSunday(new Date());
+
+function showError(msg) {
+  const e = document.getElementById('errorMsg');
+  e.textContent = msg; e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 4000);
+}
+
+let selectedLieu = null;
+
+function updateDots(step) {
+  for (let i = 1; i <= 6; i++) {
+    const d = document.getElementById('dot' + i);
+    if (!d) continue;
+    d.classList.remove('active', 'done');
+    if (i < step) d.classList.add('done');
+    else if (i === step) d.classList.add('active');
+  }
+}
+
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  currentStep = n;
+  updateDots(n);
+  window.scrollTo(0, 0);
+}
+
+function goStep2() {
+  const nom = document.getElementById('cNom').value.trim();
+  const tel = document.getElementById('cTel').value.trim();
+  if (!nom || !tel) { showError('Merci de remplir nom et téléphone'); return; }
+  goStep(2);
+}
+
+function selectLieu(lieu, el) {
+  selectedLieu = lieu;
+  document.querySelectorAll('#btnSurPlace, #btnDomicile').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('adresseGroup').style.display = lieu === 'domicile' ? 'block' : 'none';
+  if (lieu === 'sur_place') {
+    setTimeout(() => goStep(3), 300);
+  }
+}
+
+function goStep3FromDomicile() {
+  const adresseRue = document.getElementById('cAdresse') ? document.getElementById('cAdresse').value.trim() : '';
+  const villeVal = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
+  if (!adresseRue) { showError('Merci d\'entrer votre adresse'); return; }
+  if (!villeVal) { showError('Merci d\'entrer votre ville'); return; }
+  goStep(3);
+}
+
+function selectService(el, service) {
+  document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedService = service;
+  setTimeout(() => { goStep(4); loadSlots(); }, 300);
+}
+
+function changeDay(d) {
+  const newDate = new Date(selectedDate);
+  newDate.setDate(newDate.getDate() + d);
+  skipSunday(newDate);
+  // Empêcher de revenir en arrière avant aujourd'hui
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (newDate < today) return;
+  selectedDate = newDate;
+  selectedHeure = null;
+  loadSlots();
+}
+
+async function loadSlots() {
+  const dateStr = toLocalDateStr(selectedDate);
+  document.getElementById('dateLabelDisp').textContent = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Récupérer les créneaux pris ET les blocages depuis Supabase
+  try {
+    const [rdvData, blocData] = await Promise.all([
+      sbRpc('creneaux_occupes', { date_debut: dateStr, date_fin: dateStr, p_secteur: SECTEUR }),
+      sbRpc('creneaux_bloques', { date_debut: dateStr, date_fin: dateStr, p_secteur: SECTEUR })
+    ]);
+    takenSlots = Array.isArray(rdvData) ? rdvData.map(r => r.heure) : [];
+    const jourBloque = Array.isArray(blocData) && blocData.some(b => b.type === 'jour');
+    const heuresBloquees = Array.isArray(blocData) ? blocData.filter(b => b.type === 'heure').map(b => b.heure) : [];
+
+    const grid = document.getElementById('slotsGrid');
+    if (jourBloque) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#FF8CA0;font-weight:700;">Complet pour cette journée</div>`;
+      return;
+    }
+
+    const now = new Date();
+    const todayStr = toLocalDateStr(now);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    grid.innerHTML = getHeuresDuJour(selectedDate).map(h => {
+      const taken = takenSlots.includes(h) || heuresBloquees.includes(h);
+      // Bloquer automatiquement les créneaux passés si c'est aujourd'hui
+      const [hh, mm] = h.split(':').map(Number);
+      const slotMinutes = hh * 60 + mm;
+      const isPast = dateStr === todayStr && slotMinutes <= currentMinutes;
+      // Bloquer le créneau juste avant (30 min) pour laisser du temps
+      const tooClose = takenSlots.some(t => {
+        const [th, tm] = t.split(':').map(Number);
+        const takenMinutes = th * 60 + tm;
+        const diff = slotMinutes - takenMinutes;
+        // Bloquer uniquement le créneau 30 min APRÈS un RDV (temps de travail)
+        return diff > 0 && diff < 60;
+      });
+      const isBlocked = taken || isPast || tooClose;
+      const sel = h === selectedHeure;
+      const label = isPast ? h + ' ✗' : (taken || tooClose) ? h + ' ✗' : heuresBloquees.includes(h) ? h + ' —' : h;
+      return `<div class="slot-btn ${isBlocked?'taken':''} ${sel&&!isBlocked?'selected':''}" onclick="${isBlocked?'':'selectSlot(\''+h+'\')'}">${label}</div>`;
+    }).join('');
+  } catch(e) {
+    takenSlots = [];
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = getHeuresDuJour(selectedDate).map(h => '<div class="slot-btn" onclick="selectSlot(\'' + h + '\')">' + h + '</div>').join('');
+  }
+}
+
+function selectSlot(h) {
+  selectedHeure = h;
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  setTimeout(() => { showRecap(); goStep(5); }, 300);
+}
+
+function showRecap() {
+  const nom = document.getElementById('cNom').value.trim();
+  const tel = document.getElementById('cTel').value.trim();
+  const adresseRue = document.getElementById('cAdresse') ? document.getElementById('cAdresse').value.trim() : '';
+  const villeVal = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
+  const adresse = selectedLieu === 'domicile' ? ((adresseRue + (villeVal ? ', ' + villeVal : '')) || 'Non précisée') : 'Sur place — ' + BASE_TECH;
+  const lieuLabel = selectedLieu === 'domicile'
+    ? (selectedZoneVille ? 'À domicile — ' + selectedZoneVille : 'À domicile')
+    : 'Sur place — ' + BASE_TECH;
+  const dateStr = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const attenteMsg = modeAttente ? '<div style="margin-top:6px;font-size:11px;color:#FF8A3D;">En attente de confirmation — SMS sous 48h</div>' : '<div style="margin-top:6px;font-size:11px;color:#3DDC97;">✓ Confirmation immédiate</div>';
+  const depBadge = selectedLieu === 'domicile'
+    ? '<div style="background:rgba(255,138,61,0.1);border:1px solid rgba(255,138,61,0.3);border-radius:10px;padding:10px;margin-top:10px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#FF8A3D;">Déplacement — ' + (selectedZoneVille||'domicile') + '</span><span style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:22px;color:#FF8A3D;">' + (selectedZoneSupp > 0 ? '+'+selectedZoneSupp+'€' : 'Inclus') + '</span></div>' + attenteMsg + '</div>'
+    : '';
+  document.getElementById('recapContent').innerHTML = `
+    <div class="recap-row"><span class="recap-label">Nom</span><span class="recap-value">${nom}</span></div>
+    <div class="recap-row"><span class="recap-label">Téléphone</span><span class="recap-value">${tel}</span></div>
+    <div class="recap-row"><span class="recap-label">Lieu</span><span class="recap-value">${lieuLabel}</span></div>
+    <div class="recap-row"><span class="recap-label">Adresse</span><span class="recap-value">${adresse}</span></div>
+    <div class="recap-row"><span class="recap-label">Service</span><span class="recap-value">${selectedService}</span></div>
+    <div class="recap-row"><span class="recap-label">Date</span><span class="recap-value">${dateStr}</span></div>
+    <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-value" style="color:var(--accent);font-size:20px;">${selectedHeure}</span></div>
+    ${depBadge}
+  `;
+}
+
+async function confirmerRDV() {
+  const nom = document.getElementById('cNom').value.trim();
+  const tel = document.getElementById('cTel').value.trim();
+  const adresseRue2 = document.getElementById('cAdresse') ? document.getElementById('cAdresse').value.trim() : '';
+  const villeVal2 = document.getElementById('cVille') ? document.getElementById('cVille').value.trim() : '';
+  const adresse = selectedLieu === 'domicile' ? ((adresseRue2 + (villeVal2 ? ', ' + villeVal2 : '')) || '') : 'Sur place — ' + BASE_TECH;
+  const email = document.getElementById('cEmail').value.trim();
+  const lieu = selectedLieu === 'domicile' ? 'À domicile (+10€)' : 'Sur place — ' + BASE_TECH;
+  const dateStr = toLocalDateStr(selectedDate);
+
+  const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'confirmed', source: 'web', secteur: SECTEUR };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(rdv)
+    });
+
+    if (res.ok || res.status === 201) {
+      // Envoyer email via Formspree
+      fetch(FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          nom: nom, tel: tel, adresse: adresse, lieu: lieu, type: selectedService,
+          email_client: email || 'Non renseigné',
+          date: selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+          heure: selectedHeure,
+          _subject: '🔔 Nouveau RDV ClimExpress — ' + nom,
+          _replyto: email || 'noreply@climexpressauto.fr'
+        })
+      }).catch(e => console.log('Email:', e));
+
+      const dateAff = selectedDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+
+      const msgDom = ['Bonjour ' + nom + ' !', '', 'Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + selectedHeure + '.', '', 'Intervention a domicile - nous viendrons directement chez vous.', '', 'Pour toute question : ' + TEL_TECH, '', 'A bientot ! ' + NOM_TECH + ' - ClimExpress'].join('\n');
+      const msgPlace = ['Bonjour ' + nom + ' !', '', 'Votre RDV ClimExpress est confirme le ' + dateAff + ' a ' + selectedHeure + '.', '', 'ClimExpress est un service mobile - votre point de rendez-vous vous sera envoye 1h a 2h avant intervention.', '', 'Pour toute question : ' + TEL_TECH, '', 'A bientot ! ' + NOM_TECH + ' - ClimExpress'].join('\n');
+      const msgAuto = selectedLieu === 'domicile' ? msgDom : msgPlace;
+      if (email) { fetch(FORMSPREE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ _subject: 'Confirmation RDV ClimExpress - ' + dateAff, message: msgAuto, email: email, nom: nom }) }).catch(e => {}); }
+
+      const infLieu = selectedLieu === 'domicile' ? 'Nous viendrons directement chez vous.' : 'Service mobile - votre point de rendez-vous sera envoye 1h a 2h avant.';
+      const confirmMsg = 'RDV confirme le<br><strong style="color:#fff;">' + dateAff + ' a ' + selectedHeure + '</strong><br><br>' + infLieu + '<br><br>Pour toute question : <strong>' + TEL_TECH + '</strong>';
+      document.getElementById('confirmSub').innerHTML = confirmMsg;
+      goStep(6);
+      updateDots(6);
+    } else {
+      const err = await res.text();
+      showError('Erreur lors de la réservation. Réessayez ou appelez directement.');
+      console.error(err);
+    }
+  } catch(e) {
+    showError('Connexion impossible. Vérifiez votre réseau.');
+  }
+}
+
+// Init — telephone du technicien dans les liens
+['telIndispo','telContact'].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = TEL_TECH; el.setAttribute('href', 'tel:' + TEL_TECH_LIEN); }
+});
+
+loadSlots();
+appliquerDispoServices();
+
+function getSecteur(adresse) {
+  if (!adresse) return null;
+  const a = adresse.toLowerCase();
+  if (a.includes('toulon')) return 'Toulon';
+  if (a.includes('hyeres') || a.includes('hyères')) return 'Hyères';
+  if (a.includes('la crau') || a.includes('craux')) return 'La Crau';
+  if (a.includes('la garde')) return 'La Garde';
+  if (a.includes('la valette') || a.includes('valette')) return 'La Valette';
+  if (a.includes('le pradet') || a.includes('pradet')) return 'Le Pradet';
+  if (a.includes('carqueiranne')) return 'Carqueiranne';
+  if (a.includes('la seyne') || a.includes('seyne')) return 'La Seyne-sur-Mer';
+  if (a.includes('six-fours') || a.includes('six fours')) return 'Six-Fours';
+  if (a.includes('ollioules')) return 'Ollioules';
+  if (a.includes('sanary')) return 'Sanary-sur-Mer';
+  if (a.includes('bandol')) return 'Bandol';
+  if (a.includes('sollies') || a.includes('solliès')) return 'Solliès';
+  if (a.includes('cuers')) return 'Cuers';
+  if (a.includes('la londe') || a.includes('londe')) return 'La Londe';
+  return null;
+}
+
+
+async function chargerLocalisationJour() {
+  try {
+    const banniere = document.getElementById('banniereLocalisation');
+    const titre = document.getElementById('banniereTitre');
+    const detail = document.getElementById('banniereDetail');
+    if (!banniere || !titre || !detail) return;
+
+    const now = new Date();
+    const heure = now.getHours();
+
+    // Drapeaux d'affichage (mode complet / position masquee) en un seul appel
+    const flags = await sbRpc('flags_publics', { p_secteur: SECTEUR });
+    const flagTypes = flags.map(f => f.type);
+
+    if (flagTypes.indexOf('mode_complet') !== -1) {
+      banniere.style.display = 'block';
+      banniere.style.background = 'rgba(255,100,0,0.12)';
+      banniere.style.borderColor = 'rgba(255,149,0,0.4)';
+      titre.style.color = '#ff9500';
+      titre.textContent = 'Fort afflux en ce moment — créneaux temporairement complets';
+      detail.textContent = 'Revenez bientôt, nous reprendrons les réservations dès que possible. Pour urgence : ' + TEL_TECH;
+      return;
+    }
+
+    if (flagTypes.indexOf('masquer_position') !== -1) {
+      afficherMessageHeure(banniere, titre, detail, heure);
+      return;
+    }
+
+    const heureActuelle = heure * 60 + now.getMinutes();
+
+    // Jauge position : heure + lieu uniquement, aucune adresse client
+    const rdvs = await sbRpc('position_technicien', { p_secteur: SECTEUR });
+
+    let rdvActuel = null;
+    let rdvProchain = null;
+
+    if (Array.isArray(rdvs) && rdvs.length > 0) {
+      rdvs.sort((a,b) => a.heure.localeCompare(b.heure)).forEach(function(r) {
+        const parts = r.heure.split(':').map(Number);
+        const rdvMin = parts[0] * 60 + parts[1];
+        const diff = heureActuelle - rdvMin;
+        if (diff >= 0 && diff <= 90 && !rdvActuel) rdvActuel = r;
+        if (diff < 0 && !rdvProchain) rdvProchain = r;
+      });
+    }
+
+    const msgFixe = 'Intervention sous 25-30 min après confirmation';
+
+    if (rdvActuel) {
+      const secteur = rdvActuel.secteur;
+      banniere.style.display = 'block';
+      titre.textContent = secteur ? 'En intervention — secteur ' + secteur : 'En intervention dans votre secteur';
+      detail.textContent = 'Disponible rapidement après — ' + msgFixe;
+    } else if (rdvProchain) {
+      const secteur = rdvProchain.secteur;
+      banniere.style.display = 'block';
+      titre.textContent = secteur ? 'Prochain passage — secteur ' + secteur : 'Prochain passage prévu';
+      detail.textContent = 'Vers ' + rdvProchain.heure + ' — ' + msgFixe;
+    } else {
+      afficherMessageHeure(banniere, titre, detail, heure);
+    }
+  } catch(e) {
+    try {
+      const banniere = document.getElementById('banniereLocalisation');
+      const titre = document.getElementById('banniereTitre');
+      const detail = document.getElementById('banniereDetail');
+      afficherMessageHeure(banniere, titre, detail, new Date().getHours());
+    } catch(e2) {}
+  }
+}
+
+function afficherMessageHeure(banniere, titre, detail, heure) {
+  if (!banniere || !titre || !detail) return;
+  banniere.style.display = 'block';
+  const msgFixe = 'Intervention sous 25-30 min après confirmation';
+  const now = new Date();
+  const jour = now.getDay(); // 0=dim, 6=sam
+
+  // Samedi : on finit à 13h
+  if (jour === 6) {
+    if (heure < 9) {
+      titre.textContent = 'Disponible ce matin — réservez votre créneau !';
+    } else if (heure >= 9 && heure < 13) {
+      titre.textContent = 'Disponible ce matin — dernier créneau à 13h !';
+    } else {
+      titre.textContent = 'Fermé pour le week-end — réservez dès lundi à 9h30';
+    }
+  // Dimanche : fermé
+  } else if (jour === 0) {
+    titre.textContent = 'Fermé le dimanche — réservez dès demain à 9h30';
+  // Semaine : 9h30-17h30
+  } else {
+    if (heure < 9) {
+      titre.textContent = 'Disponible dès 9h30 ce matin — réservez maintenant !';
+    } else if (heure >= 9 && heure < 12) {
+      titre.textContent = 'Disponible ce matin — réservez votre créneau !';
+    } else if (heure >= 12 && heure < 13) {
+      titre.textContent = 'Disponible cet après-midi dès 13h — réservez vite !';
+    } else if (heure >= 13 && heure < 17) {
+      titre.textContent = 'Encore disponible cet après-midi — intervention rapide';
+    } else if (heure >= 17 && heure < 18) {
+      titre.textContent = 'Dernier créneau à 17h30 — réservez pour demain !';
+    } else {
+      titre.textContent = 'Fermé pour ce soir — réservez dès demain à 9h30';
+    }
+  }
+  detail.textContent = msgFixe;
+}
+
+chargerLocalisationJour();
+</script>
+<!-- MODAL DEVIS DEPLACEMENT -->
+<div id="devisModal" style="display:none;position:fixed;inset:0;background:rgba(7,10,22,0.94);z-index:500;display:none;align-items:flex-end;">
+  <div style="background:#131A30;border-radius:20px 20px 0 0;border:1px solid rgba(56,225,255,0.2);padding:24px;width:100%;max-height:85vh;overflow-y:auto;">
+    <div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 16px;"></div>
+    <div style="font-family:Plus Jakarta Sans,sans-serif;font-weight:800;font-size:24px;color:#fff;letter-spacing:1px;margin-bottom:4px;">Devis déplacement</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Pour toute intervention hors secteur Toulon</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre nom</label>
+      <input type="text" id="devisNom" placeholder="Ex: Jean Dupont" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Téléphone</label>
+      <input type="tel" id="devisTel" placeholder="06 12 34 56 78" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Votre adresse</label>
+      <input type="text" id="devisAdresse" placeholder="Ex: 8 rue des Pins, Pierrefeu du Var" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;color:#38E1FF;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Type de véhicule</label>
+      <select id="devisType" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(56,225,255,0.2);background:#0B0F1E;color:#fff;font-size:14px;font-family:Plus Jakarta Sans,sans-serif;">
+        <option value="">— Choisir —</option>
+        <option>VL — Voiture particulière (R134a)</option>
+        <option>VL — Voiture particulière (R1234yf)</option>
+        <option>VU — Véhicule utilitaire</option>
+        <option>PL — Poids lourd</option>
+      </select>
+    </div>
+    <button onclick="envoyerDevis()" style="width:100%;padding:14px;background:#38E1FF;color:#04222B;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;">Envoyer ma demande</button>
+    <button onclick="fermerDevisModal()" style="width:100%;padding:12px;background:transparent;color:rgba(255,255,255,0.4);border:none;border-radius:12px;font-size:13px;cursor:pointer;font-family:Plus Jakarta Sans,sans-serif;margin-top:8px;">Annuler</button>
+  </div>
+</div>
+
+</body>
+</html>

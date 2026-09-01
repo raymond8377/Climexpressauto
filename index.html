@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClimExpress — Recharge Clim Auto à Domicile | Golfe de Saint-Tropez & Var</title>
-<meta name="description" content="Recharge climatisation auto à domicile dans le Golfe de Saint-Tropez, de Sainte-Maxime à Hyères. R134a 45€, R1234yf 49€. Technicien certifié, intervention en 30 minutes. Réservation en ligne.">
+<title>ClimExpress — Recharge Clim Auto à Domicile | Golfe de Saint-Tropez, Toulon & Hyères</title>
+<meta name="description" content="Recharge climatisation auto à domicile dans le Var : Golfe de Saint-Tropez, Toulon, Hyères, La Seyne, Six-Fours. R134a 45€, R1234yf 49€. Deux techniciens certifiés, intervention en 30 minutes. Réservation en ligne.">
 <meta name="theme-color" content="#0B0F1E">
 <link rel="canonical" href="https://climexpressauto.fr/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-width='1.9'><rect width='24' height='24' rx='5' fill='%230B0F1E'/><path d='M 10.61 21.9 A 8.6 8.6 0 0 1 10.61 2.1' stroke='%233D8BFF' transform='translate(1.4,1.4) scale(0.885)'/><path d='M 13.39 2.1 A 8.6 8.6 0 0 1 13.39 21.9' stroke='%23FF5470' transform='translate(1.4,1.4) scale(0.885)'/></svg>">
 
 <meta property="og:title" content="ClimExpress — Recharge Clim Auto à Domicile | Var">
-<meta property="og:description" content="Votre clim souffle de l'air tiède ? On vient à vous. Recharge en 30 min, dès 45€. Golfe de Saint-Tropez → Hyères.">
+<meta property="og:description" content="Votre clim souffle de l'air tiède ? On vient à vous. Recharge en 30 min, dès 45€. Golfe de Saint-Tropez et agglomération toulonnaise.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://climexpressauto.fr/">
 <meta property="og:locale" content="fr_FR">
@@ -20,14 +20,14 @@
   "@context": "https://schema.org",
   "@type": "AutoRepair",
   "name": "ClimExpress Recharge Auto",
-  "description": "Service mobile de recharge de climatisation automobile à domicile. Golfe de Saint-Tropez et littoral varois, jusqu'à Hyères.",
+  "description": "Service mobile de recharge de climatisation automobile à domicile. Deux secteurs dans le Var : Golfe de Saint-Tropez et agglomération toulonnaise (Toulon, Hyères, La Seyne, Six-Fours).",
   "url": "https://climexpressauto.fr",
   "telephone": "+33648008558",
   "email": "rech.raymond@climexpressauto.fr",
   "priceRange": "45€ - 80€",
   "address": { "@type": "PostalAddress", "addressLocality": "Gassin", "postalCode": "83580", "addressRegion": "Var", "addressCountry": "FR" },
   "geo": { "@type": "GeoCoordinates", "latitude": 43.2286, "longitude": 6.5854 },
-  "areaServed": ["Gassin","Saint-Tropez","Cogolin","Grimaud","Sainte-Maxime","Cavalaire-sur-Mer","La Croix-Valmer","Ramatuelle","Le Lavandou","Hyères"],
+  "areaServed": ["Gassin","Saint-Tropez","Cogolin","Grimaud","Sainte-Maxime","Cavalaire-sur-Mer","La Croix-Valmer","Ramatuelle","Le Lavandou","Toulon","Hyères","La Crau","La Garde","La Valette-du-Var","Le Pradet","Carqueiranne","La Seyne-sur-Mer","Six-Fours-les-Plages","Ollioules","Sanary-sur-Mer","Solliès-Pont","Cuers"],
   "makesOffer": [
     { "@type": "Offer", "name": "Recharge climatisation R134a (véhicule léger)", "price": "45", "priceCurrency": "EUR" },
     { "@type": "Offer", "name": "Recharge climatisation R1234yf (véhicule léger)", "price": "49", "priceCurrency": "EUR" },
@@ -88,13 +88,13 @@
 
 /* ============================================================ BASE */
 *{ margin:0; padding:0; box-sizing:border-box; }
-html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+html{ scroll-behavior:smooth; -webkit-text-size-adjust:100%; background:#0B0F1E; }
 body{
   font-family:var(--font-body);
   font-size:16px;
   line-height:1.65;
   color:var(--text);
-  background:var(--bg);
+  background:#0B0F1E;
   min-height:100dvh;
   overflow-x:hidden;
 }
@@ -579,6 +579,38 @@ footer nav a:hover{ color:var(--cold); }
 }
 .action-bar .btn{ min-height:50px; font-size:.95rem; padding:0 12px; }
 @media(min-width:900px){ .action-bar{ display:none; } }
+
+/* --- deux numeros dans l'en-tete, un par secteur --- */
+.nav-tels{ display:flex; gap:8px; align-items:stretch; }
+.tel-secteur{
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:12px; text-decoration:none;
+  border:1px solid var(--border-strong); background:var(--surface-2);
+  color:var(--text); font-weight:600; line-height:1.15;
+  transition:border-color .18s, background .18s;
+}
+.tel-secteur svg{ width:18px; height:18px; flex:none; }
+.tel-secteur span{ display:flex; flex-direction:column; font-size:.92rem; }
+.tel-secteur small{
+  font-size:.66rem; font-weight:600; letter-spacing:.4px;
+  text-transform:uppercase; opacity:.72; margin-bottom:2px;
+}
+.tel-golfe svg,  .tel-golfe small { color:var(--cold); }
+.tel-toulon svg, .tel-toulon small{ color:var(--hot); }
+.tel-golfe:hover { border-color:var(--cold); background:var(--cold-soft); }
+.tel-toulon:hover{ border-color:var(--hot);  background:var(--hot-soft); }
+@media (max-width:860px){
+  .nav-tels{ gap:6px; }
+  .tel-secteur{ padding:7px 10px; }
+  .tel-secteur span{ font-size:.82rem; }
+  .tel-secteur small{ font-size:.6rem; }
+}
+@media (max-width:520px){
+  .nav-tels{ width:100%; }
+  .tel-secteur{ flex:1; justify-content:center; padding:8px 6px; }
+  .tel-secteur svg{ display:none; }
+  .tel-secteur span{ text-align:center; font-size:.8rem; }
+}
 </style>
 </head>
 
@@ -602,10 +634,16 @@ footer nav a:hover{ color:var(--cold); }
       <li><a href="#zone">Zone d'intervention</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
-    <a class="btn btn-primary" href="tel:+33648008558">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
-      06 48 00 85 58
-    </a>
+    <div class="nav-tels">
+      <a class="tel-secteur tel-golfe" href="tel:+33648008558">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+        <span><small>Golfe de Saint-Tropez</small>06 48 00 85 58</span>
+      </a>
+      <a class="tel-secteur tel-toulon" href="tel:+33643407035">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+        <span><small>Toulon et alentours</small>06 43 40 70 35</span>
+      </a>
+    </div>
   </div>
 </header>
 
@@ -617,10 +655,10 @@ footer nav a:hover{ color:var(--cold); }
     <div>
       <p class="eyebrow eyebrow-cold">Recharge clim auto à domicile — Var</p>
       <h1 id="hero-titre">Rechargez votre A/C.<br><span class="grad">Vite fait. Bien fait.</span></h1>
-      <p class="lead">Votre climatisation souffle de l'air tiède ? Inutile de vous déplacer&nbsp;: ClimExpress intervient chez vous, sur votre lieu de travail ou sur un point de rendez-vous, partout dans le Golfe de Saint-Tropez et le long du littoral, jusqu'à Hyères. Recharge complète en 30&nbsp;minutes.</p>
+      <p class="lead">Votre climatisation souffle de l'air tiède ? Inutile de vous déplacer&nbsp;: ClimExpress intervient chez vous, sur votre lieu de travail ou sur un point de rendez-vous. Deux techniciens, deux secteurs&nbsp;: le Golfe de Saint-Tropez et l'agglomération toulonnaise, de Toulon à Sanary en passant par Hyères. Recharge complète en 30&nbsp;minutes.</p>
 
       <div class="hero-cta">
-        <a class="btn btn-primary" href="reservation-client.html">
+        <a class="btn btn-primary" href="#" onclick="ouvrirSecteurs(event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Réserver en ligne
         </a>
@@ -673,7 +711,7 @@ footer nav a:hover{ color:var(--cold); }
   <div class="wrap">
     <div class="zone-inner">
       <span class="zone-dot" aria-hidden="true"></span>
-      <p id="zone-texte"><strong>Aujourd'hui :</strong> intervention dans le Golfe de Saint-Tropez — appelez pour connaître les disponibilités du jour.</p>
+      <p id="zone-texte"><strong>Deux secteurs :</strong> Golfe de Saint-Tropez et agglomération toulonnaise — réservez en ligne pour voir les créneaux de votre secteur.</p>
     </div>
   </div>
 </section>
@@ -942,9 +980,10 @@ footer nav a:hover{ color:var(--cold); }
 <section id="zone" aria-labelledby="zone-titre">
   <div class="wrap">
     <p class="eyebrow eyebrow-violet">Zone d'intervention</p>
-    <h2 id="zone-titre">Du Golfe de Saint-Tropez jusqu'à Hyères</h2>
-    <p class="lead">Basé à Gassin / La Foux, ClimExpress se déplace dans tout le golfe et le long du littoral varois.</p>
+    <h2 id="zone-titre">Deux secteurs, deux techniciens</h2>
+    <p class="lead">ClimExpress couvre le Golfe de Saint-Tropez depuis Gassin, et toute l'agglomération toulonnaise depuis La Crau. Chaque secteur a son technicien et ses créneaux&nbsp;: vous êtes toujours servi par celui qui est le plus près de chez vous.</p>
 
+    <h3 style="margin:2.2rem 0 .9rem;font-size:1.15rem;font-weight:700;color:var(--cold);">Golfe de Saint-Tropez</h3>
     <ul class="towns reveal">
       <li class="hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Gassin / La Foux</li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Saint-Tropez</li>
@@ -955,18 +994,36 @@ footer nav a:hover{ color:var(--cold); }
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Croix-Valmer</li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Cavalaire-sur-Mer</li>
       <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Le Lavandou</li>
-      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Hyères</li>
     </ul>
+
+    <h3 style="margin:2.2rem 0 .9rem;font-size:1.15rem;font-weight:700;color:var(--hot);">Toulon &amp; agglomération</h3>
+    <ul class="towns reveal">
+      <li class="hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Crau</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Toulon</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Hyères</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Garde</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Valette-du-Var</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Le Pradet</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Carqueiranne</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Solliès-Pont</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Cuers</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Ollioules</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>La Seyne-sur-Mer</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Six-Fours-les-Plages</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Saint-Mandrier</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Sanary-sur-Mer</li>
+    </ul>
+
     <div class="map-card reveal">
-      <div id="carte-zone" role="application" aria-label="Carte de la zone d'intervention et des points de rendez-vous"></div>
+      <div id="carte-zone" role="application" aria-label="Carte des deux secteurs d'intervention et des points de rendez-vous"></div>
       <div class="map-legende">
-        <span><i class="dot dot-base" aria-hidden="true"></i> Base ClimExpress — La Foux</span>
+        <span><i class="dot dot-base" aria-hidden="true"></i> Bases ClimExpress — La Foux et La Crau</span>
         <span><i class="dot dot-rdv" aria-hidden="true"></i> Points de rendez-vous (sans surcoût)</span>
-        <span><i class="dot dot-zone" aria-hidden="true"></i> Déplacement domicile +10&nbsp;€ (15&nbsp;km)</span>
+        <span><i class="dot dot-zone" aria-hidden="true"></i> Déplacement domicile +10&nbsp;€</span>
       </div>
     </div>
     <div class="pricing-notes">
-      <p>10 points de rendez-vous sans surcoût sont proposés lors de la réservation en ligne. Votre commune n'apparaît pas ? Appelez : le secteur s'étend régulièrement.</p>
+      <p>Votre commune n'apparaît pas ? Appelez&nbsp;: le secteur s'étend régulièrement. Au-delà des zones indiquées, l'intervention reste possible sur devis, en regroupant plusieurs rendez-vous.</p>
     </div>
   </div>
 </section>
@@ -1018,7 +1075,7 @@ footer nav a:hover{ color:var(--cold); }
 
     <ul class="contact-list">
       <li>
-        <a href="reservation-client.html">
+        <a href="#" onclick="ouvrirSecteurs(event)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span>Réserver un créneau en ligne <small>Disponibilités en temps réel</small></span>
         </a>
@@ -1026,7 +1083,13 @@ footer nav a:hover{ color:var(--cold); }
       <li>
         <a href="tel:+33648008558">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
-          <span>06 48 00 85 58 <small>Appel ou SMS</small></span>
+          <span>06 48 00 85 58 <small>Raymond — Golfe de Saint-Tropez</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="tel:+33643407035">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
+          <span>06 43 40 70 35 <small>Dimitri — Toulon et alentours</small></span>
         </a>
       </li>
       <li>
@@ -1067,7 +1130,7 @@ footer nav a:hover{ color:var(--cold); }
       <div>
         <h3>Pratique</h3>
         <nav aria-label="Liens pratiques">
-          <a href="reservation-client.html">Réserver en ligne</a>
+          <a href="#" onclick="ouvrirSecteurs(event)">Réserver en ligne</a>
           <a href="#zone">Zone d'intervention</a>
           <a href="#deroulement">Comment ça se passe</a>
           <a href="mailto:rech.raymond@climexpressauto.fr">Contact & devis pros</a>
@@ -1076,7 +1139,8 @@ footer nav a:hover{ color:var(--cold); }
       <div>
         <h3>Contact</h3>
         <nav aria-label="Contact">
-          <a href="tel:+33648008558">06 48 00 85 58</a>
+          <a href="tel:+33648008558">06 48 00 85 58 — Golfe de Saint-Tropez</a>
+          <a href="tel:+33643407035">06 43 40 70 35 — Toulon et alentours</a>
           <a href="https://wa.me/33648008558" rel="noopener">WhatsApp</a>
           <a href="mailto:rech.raymond@climexpressauto.fr">rech.raymond@climexpressauto.fr</a>
         </nav>
@@ -1089,11 +1153,11 @@ footer nav a:hover{ color:var(--cold); }
 
 <!-- ============================================================ BARRE MOBILE -->
 <div class="action-bar" role="group" aria-label="Actions rapides">
-  <a class="btn btn-ghost" href="tel:+33648008558">
+  <a class="btn btn-ghost" href="#" onclick="ouvrirAppels(event)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.22a2 2 0 0 1 2.11-.45c.85.31 1.73.53 2.63.65A2 2 0 0 1 22 16.92z"/></svg>
     Appeler
   </a>
-  <a class="btn btn-primary" href="reservation-client.html">
+  <a class="btn btn-primary" href="#" onclick="ouvrirSecteurs(event)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Réserver
   </a>
@@ -1130,6 +1194,20 @@ function majZone(texte){
    l'endroit, copie les deux nombres affichés.
    ============================================================ */
 var BASE_CLIMEXPRESS = ["Base ClimExpress — La Foux / Gassin", 43.2712, 6.5789];
+var BASE_TOULON      = ["Base ClimExpress — La Crau", 43.1497, 6.0741];
+var POINTS_TOULON = [
+  ["Toulon",               43.1242, 5.9280],
+  ["Hyères",               43.1198, 6.1285],
+  ["La Garde",             43.1258, 6.0114],
+  ["La Valette-du-Var",    43.1372, 5.9997],
+  ["Le Pradet",            43.1042, 6.0231],
+  ["Carqueiranne",         43.0947, 6.0742],
+  ["Solliès-Pont",         43.1911, 6.0428],
+  ["Ollioules",            43.1394, 5.8478],
+  ["La Seyne-sur-Mer",     43.1026, 5.8800],
+  ["Six-Fours-les-Plages", 43.0925, 5.8386],
+  ["Sanary-sur-Mer",       43.1189, 5.8000]
+];
 var POINTS_RDV = [
   ["Saint-Tropez",        43.2727, 6.6407],
   ["Cogolin",             43.2523, 6.5299],
@@ -1154,7 +1232,7 @@ var POINTS_RDV = [
     s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     s.onload = function(){
       var map = L.map('carte-zone', { scrollWheelZoom:false, zoomControl:true })
-                 .setView([43.22, 6.45], 10);
+                 .setView([43.19, 6.25], 9);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
         maxZoom: 18
@@ -1170,6 +1248,24 @@ var POINTS_RDV = [
       L.marker([BASE_CLIMEXPRESS[1], BASE_CLIMEXPRESS[2]], {
         icon: L.divIcon({ className:'', html:'<div class="pin-base"></div>', iconSize:[18,18], iconAnchor:[9,9] })
       }).addTo(map).bindPopup('<strong>' + BASE_CLIMEXPRESS[0] + '</strong>');
+
+      /* cercle 15 km autour de la base Toulon */
+      L.circle([BASE_TOULON[1], BASE_TOULON[2]], {
+        radius: 15000, color: '#FF8A3D', weight: 2, dashArray: '6 8',
+        fillColor: '#FF8A3D', fillOpacity: 0.06
+      }).addTo(map);
+
+      /* base Toulon */
+      L.marker([BASE_TOULON[1], BASE_TOULON[2]], {
+        icon: L.divIcon({ className:'', html:'<div class="pin-base"></div>', iconSize:[18,18], iconAnchor:[9,9] })
+      }).addTo(map).bindPopup('<strong>' + BASE_TOULON[0] + '</strong>');
+
+      /* communes du secteur Toulon */
+      POINTS_TOULON.forEach(function(p){
+        L.marker([p[1], p[2]], {
+          icon: L.divIcon({ className:'', html:'<div class="pin-rdv"></div>', iconSize:[14,14], iconAnchor:[7,7] })
+        }).addTo(map).bindPopup('<strong>' + p[0] + '</strong><br>Secteur Toulon');
+      });
 
       /* points de rendez-vous */
       POINTS_RDV.forEach(function(p){
@@ -1189,5 +1285,84 @@ var POINTS_RDV = [
 })();
 
 </script>
+
+<!-- ============================================================ CHOIX DU SECTEUR -->
+<div id="secteurModal" role="dialog" aria-modal="true" aria-labelledby="secteur-titre"
+  style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(6,9,20,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border-strong);border-radius:20px;padding:26px 22px;">
+    <h2 id="secteur-titre" style="font-size:1.4rem;font-weight:800;margin:0 0 6px;">Où êtes-vous&nbsp;?</h2>
+    <p style="font-size:.92rem;color:var(--text-2);margin:0 0 20px;line-height:1.5;">Chaque secteur a son technicien et ses créneaux. Choisissez le vôtre pour voir les disponibilités réelles.</p>
+
+    <a href="reservation-client.html" style="display:block;text-decoration:none;border:1px solid var(--border-strong);border-radius:14px;padding:16px;margin-bottom:12px;background:var(--cold-soft);">
+      <div style="font-size:1.02rem;font-weight:700;color:#fff;margin-bottom:4px;">Golfe de Saint-Tropez</div>
+      <div style="font-size:.83rem;color:var(--text-2);line-height:1.45;">Saint-Tropez, Cogolin, Grimaud, Sainte-Maxime, Ramatuelle, La Croix-Valmer, Cavalaire, Le Lavandou</div>
+    </a>
+
+    <a href="reservation-toulon.html" style="display:block;text-decoration:none;border:1px solid var(--border-strong);border-radius:14px;padding:16px;background:var(--hot-soft);">
+      <div style="font-size:1.02rem;font-weight:700;color:#fff;margin-bottom:4px;">Toulon &amp; agglomération</div>
+      <div style="font-size:.83rem;color:var(--text-2);line-height:1.45;">Toulon, Hyères, La Crau, La Garde, La Valette, Le Pradet, Carqueiranne, La Seyne, Six-Fours, Ollioules, Sanary</div>
+    </a>
+
+    <button type="button" onclick="fermerSecteurs()" style="width:100%;margin-top:16px;padding:12px;border:0;background:none;color:var(--text-2);font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;">Annuler</button>
+  </div>
+</div>
+
+<script>
+function ouvrirSecteurs(e){
+  if (e) e.preventDefault();
+  document.getElementById('secteurModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function fermerSecteurs(){
+  document.getElementById('secteurModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('secteurModal').addEventListener('click', function(e){
+  if (e.target === this) fermerSecteurs();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') fermerSecteurs();
+});
+</script>
+
+
+<div id="appelModal" role="dialog" aria-modal="true" aria-labelledby="appel-titre"
+  style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(6,9,20,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border-strong);border-radius:20px;padding:26px 22px;">
+    <h2 id="appel-titre" style="font-size:1.4rem;font-weight:800;margin:0 0 6px;">Qui appeler&nbsp;?</h2>
+    <p style="font-size:.92rem;color:var(--text-2);margin:0 0 20px;line-height:1.5;">Chaque secteur a son technicien.</p>
+
+    <a href="tel:+33648008558" style="display:block;text-decoration:none;border:1px solid var(--border-strong);border-radius:14px;padding:16px;margin-bottom:12px;background:var(--cold-soft);">
+      <div style="font-size:1.02rem;font-weight:700;color:#fff;margin-bottom:4px;">06 48 00 85 58</div>
+      <div style="font-size:.83rem;color:var(--text-2);">Raymond — Golfe de Saint-Tropez</div>
+    </a>
+
+    <a href="tel:+33643407035" style="display:block;text-decoration:none;border:1px solid var(--border-strong);border-radius:14px;padding:16px;background:var(--hot-soft);">
+      <div style="font-size:1.02rem;font-weight:700;color:#fff;margin-bottom:4px;">06 43 40 70 35</div>
+      <div style="font-size:.83rem;color:var(--text-2);">Dimitri — Toulon et alentours</div>
+    </a>
+
+    <button type="button" onclick="fermerAppels()" style="width:100%;margin-top:16px;padding:12px;border:0;background:none;color:var(--text-2);font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;">Annuler</button>
+  </div>
+</div>
+
+<script>
+function ouvrirAppels(e){
+  if (e) e.preventDefault();
+  document.getElementById('appelModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function fermerAppels(){
+  document.getElementById('appelModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('appelModal').addEventListener('click', function(e){
+  if (e.target === this) fermerAppels();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') fermerAppels();
+});
+</script>
+
 </body>
 </html>

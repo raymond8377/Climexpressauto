@@ -577,6 +577,8 @@
     <div id="todayList"></div>
   </div>
 
+  <div id="zoneAttente"></div>
+
   <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Créneaux libres aujourd'hui</div>
   <div class="slots" id="todaySlots"></div>
 
@@ -1223,7 +1225,7 @@ async function syncFromSupabase() {
         }
       }
     } catch(e) {}
-    renderAccueil(); renderCalendar(); renderRappels(); updateStats();
+    renderAccueil(); renderCalendar(); renderRappels(); updateStats(); renderAttente(); majBadgeAttente(); signalerNouvellesDemandes();
     showSyncBadge(webRdvs.length);
     verifierNouveauxRdvs(webRdvs);
   } catch(e) { console.log('Sync offline'); }
@@ -1408,7 +1410,7 @@ function addClientIfNew(nom, tel, adresse, type) {
 // =========== ACCUEIL ===========
 function renderAccueil() {
   const today = toLocalDateStr(new Date());
-  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule').sort((a,b) => a.heure.localeCompare(b.heure));
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'en_attente').sort((a,b) => a.heure.localeCompare(b.heure));
   const nbEffectues = todayRDVs.filter(r => r.status === 'done').length;
 
   const list = document.getElementById('todayList');
@@ -2471,7 +2473,7 @@ function goPage(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'accueil') renderAccueil();
+  if (name === 'accueil') { renderAccueil(); renderAttente(); }
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
   if (name === 'toulon') { if (!TLN_CHARGE) chargerToulon(); else renderToulon(); }
@@ -4912,6 +4914,169 @@ function renderToulonClients(zone) {
   }).join('');
 
   zone.innerHTML = html;
+}
+
+
+/* ============================================================
+   DEMANDES EN ATTENTE — a valider avant confirmation client
+   ============================================================ */
+var _attenteVues = [];
+try { _attenteVues = JSON.parse(localStorage.getItem('clim_attente_vues') || '[]'); } catch (e) { _attenteVues = []; }
+
+function rdvsEnAttente() {
+  return rdvs.filter(function (r) { return r.status === 'en_attente'; })
+             .sort(function (a, b) { return String(a.date + a.heure).localeCompare(String(b.date + b.heure)); });
+}
+
+function renderAttente() {
+  var zone = document.getElementById('zoneAttente');
+  if (!zone) return;
+  var liste = rdvsEnAttente();
+
+  if (!liste.length) { zone.innerHTML = ''; return; }
+
+  var html = '<div style="background:rgba(255,180,84,0.1);border:2px solid #FFB454;border-radius:16px;padding:14px;margin-bottom:16px;">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+    +   '<span style="font-size:20px;">🔔</span>'
+    +   '<span style="font-size:15px;font-weight:800;color:#FFB454;">'
+    +     liste.length + ' demande' + (liste.length > 1 ? 's' : '') + ' à confirmer</span>'
+    + '</div>';
+
+  liste.forEach(function (r) {
+    var d = new Date(String(r.date).split('T')[0] + 'T12:00:00');
+    var quand = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' à ' + String(r.heure).slice(0, 5);
+    var tel = String(r.tel || '').replace(/[^0-9+]/g, '');
+    html += '<div style="background:var(--card,#0f2547);border-radius:12px;padding:12px;margin-bottom:8px;">'
+      + '<div style="font-size:15px;font-weight:700;margin-bottom:2px;">' + tlnEchapper(r.nom) + '</div>'
+      + '<div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-bottom:2px;">' + tlnEchapper(quand) + ' · ' + tlnEchapper(r.type || '') + '</div>'
+      + '<div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-bottom:10px;">' + tlnEchapper([r.adresse, r.lieu].filter(Boolean).join(' — ')) + '</div>'
+      + '<div style="display:flex;gap:6px;">'
+      +   (tel ? '<a class="btn" href="tel:' + tlnEchapper(tel) + '" style="flex:1;margin:0;padding:10px;font-size:13px;text-align:center;text-decoration:none;">📞 Appeler</a>' : '')
+      +   (tel ? '<button class="btn" onclick="smsConfirmation(' + JSON.stringify(r.id) + ')" style="flex:1;margin:0;padding:10px;font-size:13px;">💬 SMS</button>' : '')
+      + '</div>'
+      + '<div style="display:flex;gap:6px;margin-top:6px;">'
+      +   '<button class="btn" onclick="validerDemande(' + JSON.stringify(r.id) + ')" style="flex:1;margin:0;padding:10px;font-size:13px;background:rgba(0,214,143,0.16);color:#00d68f;border:1px solid rgba(0,214,143,0.3);">✓ Confirmer</button>'
+      +   '<button class="btn" onclick="refuserDemande(' + JSON.stringify(r.id) + ')" style="flex:0 0 auto;margin:0;padding:10px 14px;font-size:13px;background:rgba(255,68,68,0.12);color:#ff4444;border:1px solid rgba(255,68,68,0.25);">✕</button>'
+      + '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+  zone.innerHTML = html;
+}
+
+async function majStatutRdv(id, statut) {
+  var r = rdvs.find(function (x) { return x.id === id; });
+  if (!r) return false;
+  r.status = statut;
+  localStorage.setItem('clim_rdvs', JSON.stringify(rdvs));
+  if (r.supabase_id) {
+    try {
+      await fetch(SB_URL + '/rest/v1/rdvs?id=eq.' + r.supabase_id, {
+        method: 'PATCH',
+        headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ status: statut })
+      });
+    } catch (e) {}
+  }
+  renderAttente();
+  renderAccueil();
+  updateStats();
+  return true;
+}
+
+async function validerDemande(id) {
+  await majStatutRdv(id, 'confirmed');
+  showNotif('✓ RDV confirmé — préviens le client');
+}
+
+async function refuserDemande(id) {
+  if (!confirm('Refuser cette demande ? Pense à prévenir le client.')) return;
+  var r = rdvs.find(function (x) { return x.id === id; });
+  await majStatutRdv(id, 'annule');
+  showNotif('Demande refusée', '#ff9500');
+  if (r && _telClient(r) && confirm('Envoyer un SMS au client pour le prévenir ?')) smsRefus(id);
+}
+
+/* --- Alerte sonore et vibration a l'arrivee d'une demande --- */
+function signalerNouvellesDemandes() {
+  var liste = rdvsEnAttente();
+  var nouveaux = liste.filter(function (r) { return _attenteVues.indexOf(r.id) === -1; });
+  if (!nouveaux.length) return;
+
+  _attenteVues = liste.map(function (r) { return r.id; });
+  localStorage.setItem('clim_attente_vues', JSON.stringify(_attenteVues));
+
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.18].forEach(function (t) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; o.type = 'sine';
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.15);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.16);
+    });
+  } catch (e) {}
+
+  showNotif('🔔 ' + nouveaux.length + ' nouvelle demande à confirmer', '#FFB454');
+}
+
+/* --- Pastille sur l'onglet Accueil --- */
+function majBadgeAttente() {
+  var n = rdvsEnAttente().length;
+  var btn = document.querySelectorAll('.nav-btn')[0];
+  if (!btn) return;
+  var pastille = btn.querySelector('.badge-attente');
+  if (n > 0) {
+    if (!pastille) {
+      pastille = document.createElement('span');
+      pastille.className = 'badge-attente';
+      pastille.style.cssText = 'position:absolute;top:2px;right:8px;min-width:16px;height:16px;border-radius:8px;background:#FFB454;color:#0a1f3d;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;';
+      btn.style.position = 'relative';
+      btn.appendChild(pastille);
+    }
+    pastille.textContent = n;
+  } else if (pastille) {
+    pastille.remove();
+  }
+}
+
+var NOM_ENVOI = 'Raymond';
+var TEL_ENVOI = '06 48 00 85 58';
+
+/* --- Messages tout prets pour repondre au client --- */
+function _telClient(r) { return String(r.tel || '').replace(/[^0-9+]/g, ''); }
+
+function _quandRdv(r) {
+  var d = new Date(String(r.date).split('T')[0] + 'T12:00:00');
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+       + ' a ' + String(r.heure).slice(0, 5);
+}
+
+function smsConfirmation(id) {
+  var r = rdvs.find(function (x) { return x.id === id; });
+  if (!r) return;
+  var tel = _telClient(r);
+  if (!tel) { showNotif('Pas de numero pour ce client', '#ff9500'); return; }
+  var txt = 'Bonjour ' + (r.nom || '') + ', votre rendez-vous ClimExpress du ' + _quandRdv(r)
+          + ' est confirme. ' + NOM_ENVOI + ' - ' + TEL_ENVOI;
+  window.location.href = 'sms:' + tel + (navigator.userAgent.match(/iPhone|iPad/) ? '&' : '?')
+    + 'body=' + encodeURIComponent(txt);
+}
+
+function smsRefus(id) {
+  var r = rdvs.find(function (x) { return x.id === id; });
+  if (!r) return;
+  var tel = _telClient(r);
+  if (!tel) { showNotif('Pas de numero pour ce client', '#ff9500'); return; }
+  var txt = 'Bonjour ' + (r.nom || '') + ', desole, le creneau du ' + _quandRdv(r)
+          + ' n\'est finalement plus disponible. Rappelez-moi pour en choisir un autre. '
+          + NOM_ENVOI + ' - ' + TEL_ENVOI;
+  window.location.href = 'sms:' + tel + (navigator.userAgent.match(/iPhone|iPad/) ? '&' : '?')
+    + 'body=' + encodeURIComponent(txt);
 }
 
 </script>

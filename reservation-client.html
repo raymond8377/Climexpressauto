@@ -791,7 +791,7 @@ async function confirmerRDV() {
   const lieu = selectedLieu === 'domicile' ? 'À domicile (+10€)' : 'Sur place — La Foux';
   const dateStr = toLocalDateStr(selectedDate);
 
-  const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'en_attente', source: 'web' };
+  const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'pending', source: 'web' };
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs`, {

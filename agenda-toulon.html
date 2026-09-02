@@ -4522,17 +4522,15 @@ function renderAttente() {
     var d = new Date(String(r.date).split('T')[0] + 'T12:00:00');
     var quand = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' à ' + String(r.heure).slice(0, 5);
     var tel = String(r.tel || '').replace(/[^0-9+]/g, '');
-    html += '<div style="background:var(--card,#0f2547);border-radius:12px;padding:12px;margin-bottom:8px;">'
+    html += '<div style="background:#22487a;border-radius:12px;padding:12px;margin-bottom:8px;">'
       + '<div style="font-size:15px;font-weight:700;margin-bottom:2px;">' + tlnEchapper(r.nom) + '</div>'
       + '<div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-bottom:2px;">' + tlnEchapper(quand) + ' · ' + tlnEchapper(r.type || '') + '</div>'
-      + '<div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-bottom:10px;">' + tlnEchapper([r.adresse, r.lieu].filter(Boolean).join(' — ')) + '</div>'
-      + '<div style="display:flex;gap:6px;">'
-      +   (tel ? '<a class="btn" href="tel:' + tlnEchapper(tel) + '" style="flex:1;margin:0;padding:10px;font-size:13px;text-align:center;text-decoration:none;">📞 Appeler</a>' : '')
-      +   (tel ? '<button class="btn" onclick="smsConfirmation(' + JSON.stringify(r.id) + ')" style="flex:1;margin:0;padding:10px;font-size:13px;">💬 SMS</button>' : '')
-      + '</div>'
-      + '<div style="display:flex;gap:6px;margin-top:6px;">'
-      +   '<button class="btn" onclick="validerDemande(' + JSON.stringify(r.id) + ')" style="flex:1;margin:0;padding:10px;font-size:13px;background:rgba(0,214,143,0.16);color:#00d68f;border:1px solid rgba(0,214,143,0.3);">✓ Confirmer</button>'
-      +   '<button class="btn" onclick="refuserDemande(' + JSON.stringify(r.id) + ')" style="flex:0 0 auto;margin:0;padding:10px 14px;font-size:13px;background:rgba(255,68,68,0.12);color:#ff4444;border:1px solid rgba(255,68,68,0.25);">✕</button>'
+      + '<div style="font-size:12.5px;color:rgba(255,255,255,0.6);margin-bottom:10px;">' + tlnEchapper(r.adresse === r.lieu ? (r.lieu || '') : [r.adresse, r.lieu].filter(Boolean).join(' — ')) + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'
+      +   (tel ? '<a href="tel:' + tlnEchapper(tel) + '" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:11px;border-radius:10px;background:rgba(0,194,255,0.16);color:#00c2ff;border:1px solid rgba(0,194,255,0.32);font-size:13.5px;font-weight:700;text-decoration:none;font-family:DM Sans,sans-serif;">📞 Appeler</a>' : '')
+      +   (tel ? '<button onclick="smsConfirmation(' + JSON.stringify(r.id) + ')" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:11px;border-radius:10px;background:rgba(139,123,255,0.16);color:#8B7BFF;border:1px solid rgba(139,123,255,0.32);font-size:13.5px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">💬 SMS</button>' : '')
+      +   '<button onclick="validerDemande(' + JSON.stringify(r.id) + ')" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:11px;border-radius:10px;background:rgba(0,214,143,0.18);color:#00d68f;border:1px solid rgba(0,214,143,0.35);font-size:13.5px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">✓ Confirmer</button>'
+      +   '<button onclick="refuserDemande(' + JSON.stringify(r.id) + ')" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:11px;border-radius:10px;background:rgba(255,68,68,0.14);color:#ff5c6e;border:1px solid rgba(255,68,68,0.3);font-size:13.5px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">✕ Refuser</button>'
       + '</div>'
       + '</div>';
   });

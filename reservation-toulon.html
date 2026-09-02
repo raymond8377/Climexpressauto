@@ -301,6 +301,11 @@ const BASE_TECH     = 'La Crau';
           </div>
         </div>
 
+        <div id="avertSurPlace" style="display:none;padding:13px 15px;background:rgba(255,84,112,0.1);border:1px solid rgba(255,84,112,0.35);border-radius:12px;font-size:12.5px;color:#FF8CA0;line-height:1.55;">
+          <strong style="display:block;margin-bottom:5px;">Attention : nous n'avons ni atelier ni local.</strong>
+          ClimExpress est un service 100&nbsp;% mobile. « Sur place » signifie que vous nous rejoignez sur un point de rendez-vous, en extérieur, là où se trouve le technicien dans son secteur ce jour-là. Le lieu exact vous sera communiqué 1&nbsp;h à 2&nbsp;h avant l'intervention.
+        </div>
+
         <div class="service-btn" id="btnDomicile" onclick="selectLieu('domicile',this)" style="padding:20px 16px;text-align:left;display:flex;align-items:center;gap:14px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="#FF8A3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;flex:none;"><path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11"/><path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H4a1 1 0 0 1-1-1v-5z"/></svg>
           <div>
@@ -685,8 +690,10 @@ function selectLieu(lieu, el) {
   document.querySelectorAll('#btnSurPlace, #btnDomicile').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('adresseGroup').style.display = lieu === 'domicile' ? 'block' : 'none';
+  var av = document.getElementById('avertSurPlace');
+  if (av) av.style.display = lieu === 'sur_place' ? 'block' : 'none';
   if (lieu === 'sur_place') {
-    setTimeout(() => goStep(3), 300);
+    setTimeout(() => goStep(3), 1400);
   }
 }
 
@@ -846,7 +853,11 @@ async function confirmerRDV() {
       const msgAuto = selectedLieu === 'domicile' ? msgDom : msgPlace;
       if (email) { fetch(FORMSPREE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ _subject: 'Confirmation RDV ClimExpress - ' + dateAff, message: msgAuto, email: email, nom: nom }) }).catch(e => {}); }
 
-      const infLieu = selectedLieu === 'domicile' ? 'Nous viendrons directement chez vous.' : 'Service mobile - votre point de rendez-vous sera envoye 1h a 2h avant.';
+      const infLieu = selectedLieu === 'domicile'
+        ? 'Nous viendrons directement chez vous.'
+        : '<span style="display:block;padding:12px 14px;background:rgba(255,84,112,0.1);border:1px solid rgba(255,84,112,0.35);border-radius:11px;color:#FF8CA0;font-size:12.5px;line-height:1.55;text-align:left;">'
+          + '<strong>Rappel : ni atelier ni local.</strong><br>'
+          + 'Nous sommes un service mobile. Vous nous rejoindrez sur un point de rendez-vous en exterieur, dans le secteur ou travaille le technicien ce jour-la. Le lieu exact vous sera envoye 1h a 2h avant.</span>';
       const confirmMsg = 'Creneau demande pour le<br><strong style="color:#fff;">' + dateAff + ' a ' + selectedHeure + '</strong><br><br>'
         + '<span style="color:#FFB454;font-weight:700;">Nous vous confirmons ce creneau par appel ou SMS, en general sous 2 heures.</span><br><br>'
         + infLieu + '<br><br>Pour toute question : <strong>' + TEL_TECH + '</strong>';

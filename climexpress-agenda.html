@@ -583,6 +583,7 @@
   <button class="btn" onclick="ouvrirBlocage()" style="margin-top:10px;background:rgba(255,68,68,0.15);color:#ff4444;border:1px solid rgba(255,68,68,0.3);">🔒 Bloquer un créneau / jour</button>
   <button id="btnMasquerPos" class="btn" onclick="toggleMasquerPosition()" style="margin-top:8px;background:rgba(255,149,0,0.15);color:#ff9500;border:1px solid rgba(255,149,0,0.3);">👁️ Masquer ma position aux clients</button>
   <button id="btnModeComplet" class="btn" onclick="toggleModeComplet()" style="margin-top:8px;background:rgba(255,68,68,0.15);color:#ff4444;border:1px solid rgba(255,68,68,0.3);">⚡ Mode complet — activer</button>
+  <button class="btn" onclick="ouvrirPhotos()" style="margin-top:8px;background:rgba(139,123,255,0.15);color:#8B7BFF;border:1px solid rgba(139,123,255,0.3);">📸 Photos de l'équipe sur le site</button>
 </div>
 
 <!-- PAGE RDV -->
@@ -4510,6 +4511,197 @@ function envoyerDocument(f) {
     }
   }
 }
+
+/* ============================================================
+   PHOTOS DE L'EQUIPE — pilotage du site depuis l'agenda
+   ============================================================ */
+var CONFIG_SITE = {};
+
+var PERSONNES = [
+  { cle: 'photo_raymond', nom: 'Raymond', sect: 'Golfe de Saint-Tropez', fichier: 'raymond', local: 'photo-raymond.jpg' },
+  { cle: 'photo_dimitri', nom: 'Dimitri', sect: 'Toulon et alentours',   fichier: 'dimitri', local: 'photo-dimitri.jpg' }
+];
+
+async function chargerConfigSite() {
+  try {
+    var res = await fetch(SB_URL + '/rest/v1/site_config?select=cle,valeur', { headers: sbHeaders() });
+    if (!res.ok) return false;
+    var rows = await res.json();
+    CONFIG_SITE = {};
+    rows.forEach(function (l) { CONFIG_SITE[l.cle] = l.valeur; });
+    return true;
+  } catch (e) { return false; }
+}
+
+async function enregistrerConfig(cle, valeur) {
+  var res = await fetch(SB_URL + '/rest/v1/site_config?cle=eq.' + encodeURIComponent(cle), {
+    method: 'PATCH',
+    headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify({ valeur: valeur, maj_le: new Date().toISOString() })
+  });
+  if (res.ok) CONFIG_SITE[cle] = valeur;
+  return res.ok;
+}
+
+async function ouvrirPhotos() {
+  if (!sessionValide()) { showNotif('⚠️ Connecte-toi d\u2019abord', '#ff9500'); return; }
+  document.getElementById('photosModal').classList.add('active');
+  document.getElementById('photoBlocs').innerHTML =
+    '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:13px;">Chargement…</div>';
+  await chargerConfigSite();
+  renderPhotos();
+}
+
+function fermerPhotos() {
+  document.getElementById('photosModal').classList.remove('active');
+}
+
+function renderPhotos() {
+  var hote = document.getElementById('photoBlocs');
+  hote.innerHTML = '';
+
+  PERSONNES.forEach(function (p) {
+    var url = CONFIG_SITE[p.cle] || '';
+
+    var ligne = document.createElement('div');
+    ligne.style.cssText = 'display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);';
+
+    var apercu;
+    if (url) {
+      apercu = document.createElement('img');
+      apercu.src = url;
+      apercu.alt = '';
+      apercu.style.cssText = 'width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none;';
+    } else {
+      apercu = document.createElement('div');
+      apercu.textContent = 'GitHub';
+      apercu.style.cssText = 'width:64px;height:64px;border-radius:12px;background:#1B2440;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,0.4);flex:none;';
+    }
+    ligne.appendChild(apercu);
+
+    var infos = document.createElement('div');
+    infos.style.cssText = 'flex:1;min-width:0;';
+    infos.innerHTML =
+      '<div style="font-size:15px;font-weight:700;">' + p.nom + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:6px;">' + p.sect + '</div>' +
+      '<div style="font-size:11px;color:' + (url ? '#8B7BFF' : 'rgba(255,255,255,0.45)') + ';">' +
+        (url ? 'Photo personnalisée' : p.local) + '</div>';
+    ligne.appendChild(infos);
+
+    var actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;flex-direction:column;gap:5px;flex:none;';
+
+    var champ = document.createElement('input');
+    champ.type = 'file';
+    champ.accept = 'image/*';
+    champ.style.display = 'none';
+    champ.onchange = function () { televerserPhoto(champ, p.cle, p.fichier); };
+
+    var bChanger = document.createElement('button');
+    bChanger.className = 'btn';
+    bChanger.textContent = 'Changer';
+    bChanger.style.cssText = 'padding:8px 12px;font-size:12px;margin:0;background:rgba(139,123,255,0.15);color:#8B7BFF;border:1px solid rgba(139,123,255,0.3);';
+    bChanger.onclick = function () { champ.click(); };
+    actions.appendChild(bChanger);
+
+    if (url) {
+      var bRetirer = document.createElement('button');
+      bRetirer.className = 'btn';
+      bRetirer.textContent = 'Retirer';
+      bRetirer.style.cssText = 'padding:8px 12px;font-size:12px;margin:0;background:rgba(255,68,68,0.12);color:#ff4444;border:1px solid rgba(255,68,68,0.25);';
+      bRetirer.onclick = function () { retirerPhoto(p.cle); };
+      actions.appendChild(bRetirer);
+    }
+
+    ligne.appendChild(actions);
+    ligne.appendChild(champ);
+    hote.appendChild(ligne);
+  });
+
+  var btn = document.getElementById('btnMasquerEquipe');
+  if (btn) {
+    var masquee = CONFIG_SITE.equipe_masquee === 'oui';
+    btn.textContent = masquee ? '✅ Section masquée — appuyer pour afficher' : '👁️ Masquer la section équipe';
+    btn.style.background  = masquee ? 'rgba(255,68,68,0.15)' : 'rgba(255,149,0,0.15)';
+    btn.style.color       = masquee ? '#ff4444'              : '#ff9500';
+    btn.style.borderColor = masquee ? 'rgba(255,68,68,0.3)'  : 'rgba(255,149,0,0.3)';
+  }
+}
+
+function redimensionner(fichier) {
+  return new Promise(function (resolve, reject) {
+    var lecteur = new FileReader();
+    lecteur.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var LARGE = 1000, RATIO = 4 / 3.4;
+        var cw = img.width, ch = Math.round(cw / RATIO), gx = 0, gy = 0;
+        if (ch > img.height) { ch = img.height; cw = Math.round(ch * RATIO); gx = Math.round((img.width - cw) / 2); }
+        else { gy = Math.round(img.height * 0.05); if (gy + ch > img.height) gy = img.height - ch; }
+        var c = document.createElement('canvas');
+        c.width = LARGE; c.height = Math.round(LARGE / RATIO);
+        c.getContext('2d').drawImage(img, gx, gy, cw, ch, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error('conversion')); }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function () { reject(new Error('image illisible')); };
+      img.src = lecteur.result;
+    };
+    lecteur.onerror = function () { reject(new Error('lecture')); };
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+async function televerserPhoto(input, cle, nomFichier) {
+  var f = input.files && input.files[0];
+  input.value = '';
+  if (!f) return;
+  showNotif('📤 Envoi de la photo…', '#8B7BFF');
+  try {
+    var blob = await redimensionner(f);
+    var chemin = nomFichier + '-' + Date.now() + '.jpg';
+    var res = await fetch(SB_URL + '/storage/v1/object/photos/' + chemin, {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: 'Bearer ' + (SB_SESSION && SB_SESSION.access_token),
+        'Content-Type': 'image/jpeg',
+        'x-upsert': 'true'
+      },
+      body: blob
+    });
+    if (!res.ok) { showNotif('⚠️ Envoi refusé — reconnecte-toi', '#ff9500'); return; }
+    var url = SB_URL + '/storage/v1/object/public/photos/' + chemin;
+    if (await enregistrerConfig(cle, url)) {
+      renderPhotos();
+      showNotif('✓ Photo mise à jour sur le site', '#00d68f');
+    } else {
+      showNotif('⚠️ Photo envoyée mais non publiée', '#ff9500');
+    }
+  } catch (e) {
+    showNotif('⚠️ ' + (e.message || 'Échec'), '#ff9500');
+  }
+}
+
+async function retirerPhoto(cle) {
+  if (!confirm('Revenir à la photo déposée sur GitHub ?')) return;
+  if (await enregistrerConfig(cle, '')) {
+    renderPhotos();
+    showNotif('✓ Photo d\u2019origine rétablie');
+  } else {
+    showNotif('⚠️ Échec', '#ff9500');
+  }
+}
+
+async function toggleEquipe() {
+  var nouveau = CONFIG_SITE.equipe_masquee === 'oui' ? 'non' : 'oui';
+  if (await enregistrerConfig('equipe_masquee', nouveau)) {
+    renderPhotos();
+    showNotif(nouveau === 'oui' ? '👁️ Section masquée sur le site' : '✅ Section visible', nouveau === 'oui' ? '#ff9500' : '#00d68f');
+  } else {
+    showNotif('⚠️ Échec', '#ff9500');
+  }
+}
+
 </script>
 <!-- MODAL BLOCAGE -->
 <div class="modal-overlay" id="blocageModal" onclick="closeBlocageModal()">

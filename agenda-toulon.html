@@ -1218,7 +1218,22 @@ function showSyncBadge(n) {
 }
 
 // Synchronisation automatique toutes les 2 minutes
-setInterval(syncFromSupabase, 120000);
+setInterval(function(){ _dernierSync = Date.now(); syncFromSupabase(); }, 60000);
+/* --- Actualisation automatique ---------------------------------
+   Sur iPhone les minuteurs sont geles quand l'app passe en fond.
+   On resynchronise donc aussi au retour sur la page.            */
+var _dernierSync = Date.now();
+function syncSiBesoin(delaiMin) {
+  if (Date.now() - _dernierSync < (delaiMin || 15000)) return;
+  _dernierSync = Date.now();
+  syncFromSupabase();
+}
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) syncSiBesoin(5000);
+});
+window.addEventListener('focus', function () { syncSiBesoin(15000); });
+window.addEventListener('online', function () { syncSiBesoin(0); });
+
 
 // =========== DATA ===========
 let rdvs = JSON.parse(localStorage.getItem('climtoulon_rdvs') || '[]');

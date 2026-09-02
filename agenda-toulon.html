@@ -1386,7 +1386,7 @@ function addClientIfNew(nom, tel, adresse, type) {
 // =========== ACCUEIL ===========
 function renderAccueil() {
   const today = toLocalDateStr(new Date());
-  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'en_attente').sort((a,b) => a.heure.localeCompare(b.heure));
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'pending').sort((a,b) => a.heure.localeCompare(b.heure));
   const nbEffectues = todayRDVs.filter(r => r.status === 'done').length;
 
   const list = document.getElementById('todayList');
@@ -4500,7 +4500,7 @@ var _attenteVues = [];
 try { _attenteVues = JSON.parse(localStorage.getItem('climtoulon_attente_vues') || '[]'); } catch (e) { _attenteVues = []; }
 
 function rdvsEnAttente() {
-  return rdvs.filter(function (r) { return r.status === 'en_attente'; })
+  return rdvs.filter(function (r) { return r.status === 'pending'; })
              .sort(function (a, b) { return String(a.date + a.heure).localeCompare(String(b.date + b.heure)); });
 }
 

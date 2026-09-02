@@ -1410,7 +1410,7 @@ function addClientIfNew(nom, tel, adresse, type) {
 // =========== ACCUEIL ===========
 function renderAccueil() {
   const today = toLocalDateStr(new Date());
-  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'en_attente').sort((a,b) => a.heure.localeCompare(b.heure));
+  const todayRDVs = rdvs.filter(r => r.date === today && r.status !== 'annule' && r.status !== 'pending').sort((a,b) => a.heure.localeCompare(b.heure));
   const nbEffectues = todayRDVs.filter(r => r.status === 'done').length;
 
   const list = document.getElementById('todayList');
@@ -4585,29 +4585,65 @@ var PERSONNES = [
   { cle: 'photo_dimitri', nom: 'Dimitri', sect: 'Toulon et alentours',   fichier: 'dimitri', local: 'photo-dimitri.jpg' }
 ];
 
+var DIAG_PHOTOS = '';
+
 async function chargerConfigSite() {
+  DIAG_PHOTOS = '';
   try {
     var res = await fetch(SB_URL + '/rest/v1/site_config?select=cle,valeur', { headers: sbHeaders() });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      var t = '';
+      try { t = await res.text(); } catch (e) {}
+      DIAG_PHOTOS = 'Lecture refusée — code ' + res.status + (t ? ' : ' + t.slice(0, 200) : '');
+      return false;
+    }
     var rows = await res.json();
     CONFIG_SITE = {};
     rows.forEach(function (l) { CONFIG_SITE[l.cle] = l.valeur; });
     return true;
-  } catch (e) { return false; }
+  } catch (e) {
+    DIAG_PHOTOS = 'Réseau : ' + (e.message || 'injoignable');
+    return false;
+  }
 }
 
 async function enregistrerConfig(cle, valeur) {
-  var res = await fetch(SB_URL + '/rest/v1/site_config?cle=eq.' + encodeURIComponent(cle), {
-    method: 'PATCH',
-    headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
-    body: JSON.stringify({ valeur: valeur, maj_le: new Date().toISOString() })
-  });
-  if (res.ok) CONFIG_SITE[cle] = valeur;
-  return res.ok;
+  DIAG_PHOTOS = '';
+  if (!SB_SESSION || !SB_SESSION.access_token) {
+    DIAG_PHOTOS = 'Pas de session active — déconnecte-toi et reconnecte-toi.';
+    return false;
+  }
+  try {
+    var res = await fetch(SB_URL + '/rest/v1/site_config?cle=eq.' + encodeURIComponent(cle), {
+      method: 'PATCH',
+      headers: Object.assign({}, sbHeaders(), { 'Prefer': 'return=minimal' }),
+      body: JSON.stringify({ valeur: valeur, maj_le: new Date().toISOString() })
+    });
+    if (!res.ok) {
+      var t = '';
+      try { t = await res.text(); } catch (e) {}
+      DIAG_PHOTOS = 'Écriture refusée — code ' + res.status + (t ? ' : ' + t.slice(0, 200) : '');
+      return false;
+    }
+    CONFIG_SITE[cle] = valeur;
+    return true;
+  } catch (e) {
+    DIAG_PHOTOS = 'Réseau : ' + (e.message || 'injoignable');
+    return false;
+  }
+}
+
+function afficherDiag() {
+  var z = document.getElementById('diagPhotos');
+  if (!z) return;
+  z.innerHTML = DIAG_PHOTOS
+    ? '<div style="margin-top:12px;padding:11px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:10px;font-size:11.5px;color:#ff8080;line-height:1.5;word-break:break-word;">'
+      + tlnEchapper(DIAG_PHOTOS) + '</div>'
+    : '';
 }
 
 async function ouvrirPhotos() {
-  document.getElementById('photosModal').classList.add('active');
+  document.getElementById('photosModal').classList.add('open');
   var zone = document.getElementById('photoBlocs');
   zone.innerHTML = '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:13px;">Chargement…</div>';
 
@@ -4616,14 +4652,15 @@ async function ouvrirPhotos() {
   var ok = await chargerConfigSite();
   if (!ok) {
     zone.innerHTML = '<div style="padding:16px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;font-size:13px;color:#ffb454;line-height:1.5;">'
-      + 'Impossible de joindre le serveur. Vérifie ta connexion, ou déconnecte-toi et reconnecte-toi si le problème persiste.</div>';
+      + 'Impossible de joindre le serveur.<br><br><span style="font-size:11.5px;color:#ff8080;word-break:break-word;">'
+      + tlnEchapper(DIAG_PHOTOS || 'raison inconnue') + '</span></div>';
     return;
   }
   renderPhotos();
 }
 
 function fermerPhotos() {
-  document.getElementById('photosModal').classList.remove('active');
+  document.getElementById('photosModal').classList.remove('open');
 }
 
 function renderPhotos() {
@@ -4755,20 +4792,22 @@ async function televerserPhoto(input, cle, nomFichier) {
 async function retirerPhoto(cle) {
   if (!confirm('Revenir à la photo déposée sur GitHub ?')) return;
   if (await enregistrerConfig(cle, '')) {
-    renderPhotos();
+    renderPhotos(); afficherDiag();
     showNotif('✓ Photo d\u2019origine rétablie');
   } else {
-    showNotif('⚠️ Échec', '#ff9500');
+    afficherDiag();
+    showNotif('⚠️ Échec — voir le détail en bas', '#ff9500');
   }
 }
 
 async function toggleEquipe() {
   var nouveau = CONFIG_SITE.equipe_masquee === 'oui' ? 'non' : 'oui';
   if (await enregistrerConfig('equipe_masquee', nouveau)) {
-    renderPhotos();
+    renderPhotos(); afficherDiag();
     showNotif(nouveau === 'oui' ? '👁️ Section masquée sur le site' : '✅ Section visible', nouveau === 'oui' ? '#ff9500' : '#00d68f');
   } else {
-    showNotif('⚠️ Échec', '#ff9500');
+    afficherDiag();
+    showNotif('⚠️ Échec — voir le détail en bas', '#ff9500');
   }
 }
 
@@ -4924,7 +4963,7 @@ var _attenteVues = [];
 try { _attenteVues = JSON.parse(localStorage.getItem('clim_attente_vues') || '[]'); } catch (e) { _attenteVues = []; }
 
 function rdvsEnAttente() {
-  return rdvs.filter(function (r) { return r.status === 'en_attente'; })
+  return rdvs.filter(function (r) { return r.status === 'pending'; })
              .sort(function (a, b) { return String(a.date + a.heure).localeCompare(String(b.date + b.heure)); });
 }
 
@@ -5081,6 +5120,29 @@ function smsRefus(id) {
 
 </script>
 <!-- MODAL BLOCAGE -->
+
+<!-- MODALE PHOTOS DU SITE -->
+<div class="modal-overlay" id="photosModal" onclick="fermerPhotos()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Photos de l'équipe</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.5;">
+      Ces photos s'affichent sur climexpressauto.fr, section « Qui vient chez vous ».
+      Le changement est visible immédiatement, sans rien redéposer sur GitHub.
+    </div>
+
+    <div id="photoBlocs"></div>
+
+    <div style="border-top:1px solid var(--border);margin:18px 0 14px;"></div>
+
+    <button id="btnMasquerEquipe" class="btn" onclick="toggleEquipe()" style="background:rgba(255,149,0,0.15);color:#ff9500;border:1px solid rgba(255,149,0,0.3);">
+      👁️ Masquer la section équipe
+    </button>
+    <div id="diagPhotos"></div>
+    <button class="btn" onclick="fermerPhotos()" style="margin-top:8px;">Fermer</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="blocageModal" onclick="closeBlocageModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>

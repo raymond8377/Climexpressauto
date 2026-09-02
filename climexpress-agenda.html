@@ -576,6 +576,12 @@
     <div id="todayList"></div>
   </div>
 
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+    <button id="vue_golfe"  onclick="changerVueSecteur('golfe')"  style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Golfe</button>
+    <button id="vue_toulon" onclick="changerVueSecteur('toulon')" style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Toulon</button>
+    <button id="vue_tous"   onclick="changerVueSecteur('tous')"   style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Les deux</button>
+  </div>
+
   <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Créneaux libres aujourd'hui</div>
   <div class="slots" id="todaySlots"></div>
 
@@ -1156,6 +1162,27 @@ document.addEventListener('visibilitychange', function () {
 
 let deletedSupabaseIds = JSON.parse(localStorage.getItem('clim_deleted_ids') || '[]');
 
+/* Vue par secteur : 'golfe' (defaut), 'toulon' ou 'tous' */
+var VUE_SECTEUR = localStorage.getItem('clim_vue_secteur') || 'golfe';
+
+function changerVueSecteur(v) {
+  VUE_SECTEUR = v;
+  localStorage.setItem('clim_vue_secteur', v);
+  majBoutonsSecteur();
+  syncFromSupabase();
+}
+
+function majBoutonsSecteur() {
+  ['golfe','toulon','tous'].forEach(function (v) {
+    var b = document.getElementById('vue_' + v);
+    if (!b) return;
+    var actif = VUE_SECTEUR === v;
+    b.style.background  = actif ? 'rgba(0,194,255,0.18)' : 'rgba(255,255,255,0.04)';
+    b.style.color       = actif ? 'var(--accent)'        : 'rgba(255,255,255,0.5)';
+    b.style.borderColor = actif ? 'var(--accent)'        : 'var(--border)';
+  });
+}
+
 async function syncFromSupabase() {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/rdvs?select=*&order=date.asc,heure.asc`, { headers: sbHeaders() });
@@ -1164,13 +1191,14 @@ async function syncFromSupabase() {
     if (!Array.isArray(data)) return;
     const webRdvs = data
       .filter(r => !deletedSupabaseIds.includes(r.id))
+      .filter(r => VUE_SECTEUR === 'tous' || (r.secteur || 'golfe') === VUE_SECTEUR)
       .map(r => ({
         id: r.id || ('web_' + r.created_at),
         nom: r.nom, tel: r.tel, adresse: r.adresse, type: r.type,
         email: r.email || '', lieu: r.lieu || '',
         date: (r.date || '').split('T')[0], heure: r.heure, notes: r.notes || '',
         status: r.status || 'confirmed', source: 'web',
-        supabase_id: r.id, createdAt: r.created_at
+        supabase_id: r.id, createdAt: r.created_at, secteur: r.secteur || 'golfe'
       }));
     const localOnly = rdvs.filter(r => r.source !== 'web');
     rdvs = [...localOnly, ...webRdvs];
@@ -1182,7 +1210,10 @@ async function syncFromSupabase() {
         const bdata = await resBlo.json();
         if (Array.isArray(bdata) && bdata.length > 0) {
           const today = toLocalDateStr(new Date());
-          blocages = bdata.filter(b => b.date >= today).map(b => ({
+          blocages = bdata
+            .filter(b => b.date >= today)
+            .filter(b => VUE_SECTEUR === 'tous' || (b.secteur || 'golfe') === VUE_SECTEUR)
+            .map(b => ({
             id: b.id, type: b.type,
             date: (b.date || '').split('T')[0],
             heure: b.heure || null, raison: b.raison || 'Indisponible'
@@ -1210,7 +1241,22 @@ function showSyncBadge(n) {
 }
 
 // Synchronisation automatique toutes les 2 minutes
-setInterval(syncFromSupabase, 120000);
+setInterval(function(){ _dernierSync = Date.now(); syncFromSupabase(); }, 60000);
+/* --- Actualisation automatique ---------------------------------
+   Sur iPhone les minuteurs sont geles quand l'app passe en fond.
+   On resynchronise donc aussi au retour sur la page.            */
+var _dernierSync = Date.now();
+function syncSiBesoin(delaiMin) {
+  if (Date.now() - _dernierSync < (delaiMin || 15000)) return;
+  _dernierSync = Date.now();
+  syncFromSupabase();
+}
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) syncSiBesoin(5000);
+});
+window.addEventListener('focus', function () { syncSiBesoin(15000); });
+window.addEventListener('online', function () { syncSiBesoin(0); });
+
 
 // =========== DATA ===========
 let rdvs = JSON.parse(localStorage.getItem('clim_rdvs') || '[]');
@@ -1419,7 +1465,7 @@ function rdvCard(r) {
       <div class="rdv-name">${r.nom} ${lieuBadge}</div>
       <div class="rdv-detail">📍 ${r.adresse || 'Adresse non précisée'}</div>
       <div class="rdv-detail">📞 <a class="tel" href="tel:${r.tel}" onclick="event.stopPropagation()">${r.tel}</a></div>
-      <span class="rdv-badge ${badge}">${label}</span>
+      <span class="rdv-badge ${badge}">${label}</span>${VUE_SECTEUR === 'tous' && (r.secteur || 'golfe') === 'toulon' ? '<span class="rdv-badge" style="background:rgba(255,149,0,0.18);color:#ff9500;margin-left:4px;">TOULON</span>' : ''}
     </div>
     <div class="rdv-actions">
       <div class="btn-icon" onclick="event.stopPropagation();callClient('${r.tel}')">📞</div>

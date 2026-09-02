@@ -501,6 +501,7 @@
   <button class="nav-btn" onclick="goPage('agenda',this)"><span class="icon">🗓</span>Agenda</button>
   <button class="nav-btn" onclick="goPage('rappels',this)"><span class="icon">🔔</span><span id="notifBadge">Rappels</span></button>
   <button class="nav-btn" onclick="goPage('compta',this)"><span class="icon">💰</span>Compta</button>
+  <button class="nav-btn" onclick="goPage('toulon',this)"><span class="icon">🟠</span>Toulon</button>
 </nav>
 
 <!-- PAGE ACCUEIL -->
@@ -574,12 +575,6 @@
   <div class="today-section">
     <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Planning du jour</div>
     <div id="todayList"></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
-    <button id="vue_golfe"  onclick="changerVueSecteur('golfe')"  style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Golfe</button>
-    <button id="vue_toulon" onclick="changerVueSecteur('toulon')" style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Toulon</button>
-    <button id="vue_tous"   onclick="changerVueSecteur('tous')"   style="padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif;">Les deux</button>
   </div>
 
   <div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Créneaux libres aujourd'hui</div>
@@ -674,6 +669,28 @@
 <div class="page" id="page-rappels">
   <div class="section-title">🔔 <span>Rappels</span></div>
   <div id="rappelList"></div>
+</div>
+
+
+<!-- PAGE SECTEUR TOULON (consultation) -->
+<div class="page" id="page-toulon">
+  <div class="section-title">Secteur <span>Toulon</span></div>
+
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.22);border-radius:12px;">
+    <span style="font-size:18px;">🟠</span>
+    <div style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.45;">
+      Le secteur de Dimitri, en consultation seule. Ces rendez-vous et ces clients n'entrent jamais dans ton planning ni dans ta compta.
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
+    <button id="tlnOngletPlanning" onclick="ongletToulon('planning')" style="padding:11px 8px;border-radius:10px;border:1px solid #ff9500;background:rgba(255,149,0,0.16);color:#ff9500;font-weight:700;font-size:12.5px;cursor:pointer;font-family:DM Sans,sans-serif;">Planning</button>
+    <button id="tlnOngletClients" onclick="ongletToulon('clients')" style="padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-weight:700;font-size:12.5px;cursor:pointer;font-family:DM Sans,sans-serif;">Clients</button>
+  </div>
+
+  <div id="tlnContenu"><div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);font-size:13px;">Chargement…</div></div>
+
+  <button class="btn" onclick="chargerToulon()" style="margin-top:14px;">↻ Actualiser</button>
 </div>
 
 <!-- PAGE COMPTABILITE -->
@@ -1163,25 +1180,9 @@ document.addEventListener('visibilitychange', function () {
 let deletedSupabaseIds = JSON.parse(localStorage.getItem('clim_deleted_ids') || '[]');
 
 /* Vue par secteur : 'golfe' (defaut), 'toulon' ou 'tous' */
-var VUE_SECTEUR = localStorage.getItem('clim_vue_secteur') || 'golfe';
+var VUE_SECTEUR = 'golfe';   // ton agenda ne montre que ton secteur
 
-function changerVueSecteur(v) {
-  VUE_SECTEUR = v;
-  localStorage.setItem('clim_vue_secteur', v);
-  majBoutonsSecteur();
-  syncFromSupabase();
-}
 
-function majBoutonsSecteur() {
-  ['golfe','toulon','tous'].forEach(function (v) {
-    var b = document.getElementById('vue_' + v);
-    if (!b) return;
-    var actif = VUE_SECTEUR === v;
-    b.style.background  = actif ? 'rgba(0,194,255,0.18)' : 'rgba(255,255,255,0.04)';
-    b.style.color       = actif ? 'var(--accent)'        : 'rgba(255,255,255,0.5)';
-    b.style.borderColor = actif ? 'var(--accent)'        : 'var(--border)';
-  });
-}
 
 async function syncFromSupabase() {
   try {
@@ -1465,7 +1466,7 @@ function rdvCard(r) {
       <div class="rdv-name">${r.nom} ${lieuBadge}</div>
       <div class="rdv-detail">📍 ${r.adresse || 'Adresse non précisée'}</div>
       <div class="rdv-detail">📞 <a class="tel" href="tel:${r.tel}" onclick="event.stopPropagation()">${r.tel}</a></div>
-      <span class="rdv-badge ${badge}">${label}</span>${VUE_SECTEUR === 'tous' && (r.secteur || 'golfe') === 'toulon' ? '<span class="rdv-badge" style="background:rgba(255,149,0,0.18);color:#ff9500;margin-left:4px;">TOULON</span>' : ''}
+      <span class="rdv-badge ${badge}">${label}</span>
     </div>
     <div class="rdv-actions">
       <div class="btn-icon" onclick="event.stopPropagation();callClient('${r.tel}')">📞</div>
@@ -1510,8 +1511,17 @@ function marquerAbsent(id) {
   }
 }
 
+function estAutreSecteur(r) {
+  return !!r && (r.secteur || 'golfe') !== 'golfe';
+}
+
 function marquerEffectue(id) {
   const r = rdvs.find(r => r.id === id);
+  if (estAutreSecteur(r)) {
+    showNotif('⚠️ RDV du secteur Toulon — c\u2019est à Dimitri de le valider', '#ff9500');
+    closeRdvModal();
+    return;
+  }
   if (r) {
     r.status = 'done';
     r.deplacement = r.lieu && r.lieu.includes('domicile') ? true : false;
@@ -1599,6 +1609,10 @@ function callClient(tel) { window.location.href = 'tel:' + tel; }
 
 function doneRDV(id) {
   const r = rdvs.find(r => r.id === id);
+  if (estAutreSecteur(r)) {
+    showNotif('⚠️ RDV du secteur Toulon — c\u2019est à Dimitri de le valider', '#ff9500');
+    return;
+  }
   if (r) { r.status = 'done'; localStorage.setItem('clim_rdvs', JSON.stringify(rdvs)); renderAccueil(); updateStats(); showNotif('✓ RDV marqué comme fait'); }
 }
 
@@ -2460,6 +2474,7 @@ function goPage(name, btn) {
   if (name === 'accueil') renderAccueil();
   if (name === 'agenda') { renderCalendar(); renderRappels(); }
   if (name === 'rappels') renderRappels();
+  if (name === 'toulon') { if (!TLN_CHARGE) chargerToulon(); else renderToulon(); }
   if (name === 'compta') { renderCompta(); renderCaisse(); renderServicesDispo(); majAlerteSauvegarde(); majBandeauCompte(); try { renderPerf(); } catch(e) { console.error('perf', e); } try { majCaisseBandeau(); caisseSync(true); } catch(e) { console.error('caisse', e); } }
 }
 
@@ -4590,11 +4605,18 @@ async function enregistrerConfig(cle, valeur) {
 }
 
 async function ouvrirPhotos() {
-  if (!sessionValide()) { showNotif('⚠️ Connecte-toi d\u2019abord', '#ff9500'); return; }
   document.getElementById('photosModal').classList.add('active');
-  document.getElementById('photoBlocs').innerHTML =
-    '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:13px;">Chargement…</div>';
-  await chargerConfigSite();
+  var zone = document.getElementById('photoBlocs');
+  zone.innerHTML = '<div style="text-align:center;padding:24px;color:rgba(255,255,255,0.45);font-size:13px;">Chargement…</div>';
+
+  if (!sessionValide()) { await rafraichirSession(); }
+
+  var ok = await chargerConfigSite();
+  if (!ok) {
+    zone.innerHTML = '<div style="padding:16px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;font-size:13px;color:#ffb454;line-height:1.5;">'
+      + 'Impossible de joindre le serveur. Vérifie ta connexion, ou déconnecte-toi et reconnecte-toi si le problème persiste.</div>';
+    return;
+  }
   renderPhotos();
 }
 
@@ -4746,6 +4768,150 @@ async function toggleEquipe() {
   } else {
     showNotif('⚠️ Échec', '#ff9500');
   }
+}
+
+
+/* ============================================================
+   SECTEUR TOULON — consultation seule
+   Donnees separees : rien n'alimente le planning, les clients
+   ni la compta de Raymond.
+   ============================================================ */
+var TLN_RDVS = [];
+var TLN_ONGLET = 'planning';
+var TLN_CHARGE = false;
+
+async function chargerToulon() {
+  var zone = document.getElementById('tlnContenu');
+  if (!zone) return;
+  zone.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);font-size:13px;">Chargement…</div>';
+  try {
+    if (!sessionValide()) await rafraichirSession();
+    var res = await fetch(SB_URL + '/rest/v1/rdvs?select=*&secteur=eq.toulon&order=date.asc,heure.asc',
+                          { headers: sbHeaders() });
+    if (!res.ok) {
+      zone.innerHTML = '<div style="padding:16px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;font-size:13px;color:#ffb454;">Lecture impossible. Vérifie ta connexion.</div>';
+      return;
+    }
+    TLN_RDVS = await res.json();
+    TLN_CHARGE = true;
+    renderToulon();
+  } catch (e) {
+    zone.innerHTML = '<div style="padding:16px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.3);border-radius:12px;font-size:13px;color:#ffb454;">Hors ligne.</div>';
+  }
+}
+
+function ongletToulon(nom) {
+  TLN_ONGLET = nom;
+  var a = document.getElementById('tlnOngletPlanning');
+  var b = document.getElementById('tlnOngletClients');
+  [[a, nom === 'planning'], [b, nom === 'clients']].forEach(function (x) {
+    if (!x[0]) return;
+    x[0].style.background  = x[1] ? 'rgba(255,149,0,0.16)' : 'rgba(255,255,255,0.04)';
+    x[0].style.color       = x[1] ? '#ff9500'              : 'rgba(255,255,255,0.5)';
+    x[0].style.borderColor = x[1] ? '#ff9500'              : 'var(--border)';
+  });
+  renderToulon();
+}
+
+function tlnEchapper(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function renderToulon() {
+  var zone = document.getElementById('tlnContenu');
+  if (!zone) return;
+  if (TLN_ONGLET === 'clients') return renderToulonClients(zone);
+  return renderToulonPlanning(zone);
+}
+
+function renderToulonPlanning(zone) {
+  var today = toLocalDateStr(new Date());
+  var actifs = TLN_RDVS.filter(function (r) { return r.status !== 'annule'; });
+  var duJour = actifs.filter(function (r) { return (r.date || '').split('T')[0] === today; });
+  var aVenir = actifs.filter(function (r) {
+    var d = (r.date || '').split('T')[0];
+    return d > today && r.status !== 'done';
+  });
+
+  var html = '<div class="stats" style="margin-bottom:16px;">'
+    + '<div class="stat-card"><div class="stat-num" style="color:#ff9500;">' + duJour.length + '</div><div class="stat-label">Aujourd\\u2019hui</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:#ff9500;">' + aVenir.length + '</div><div class="stat-label">À venir</div></div>'
+    + '</div>';
+
+  html += '<div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Journée de Dimitri</div>';
+  html += duJour.length
+    ? duJour.sort(function (a, b) { return String(a.heure).localeCompare(String(b.heure)); }).map(tlnCarte).join('')
+    : '<div class="empty-state"><div class="icon">☀️</div><p>Aucun RDV aujourd\\u2019hui sur Toulon</p></div>';
+
+  if (aVenir.length) {
+    html += '<div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;">Prochains rendez-vous</div>';
+    html += aVenir.slice(0, 25).map(function (r) {
+      var d = new Date((r.date || '').split('T')[0] + 'T12:00:00');
+      return '<div style="font-size:11px;color:#ff9500;text-transform:uppercase;letter-spacing:.8px;margin:12px 0 4px;">'
+        + d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</div>' + tlnCarte(r);
+    }).join('');
+  }
+  zone.innerHTML = html;
+}
+
+function tlnCarte(r) {
+  var fait = r.status === 'done';
+  var adresse = [r.adresse, r.lieu].filter(Boolean).join(' — ') || 'Adresse non précisée';
+  var tel = String(r.tel || '').replace(/[^0-9+]/g, '');
+  return '<div class="today-rdv" style="position:relative;border-left:3px solid ' + (fait ? '#00d68f' : '#ff9500') + ';' + (fait ? 'opacity:.6;' : '') + '">'
+    + '<div class="rdv-time" style="color:' + (fait ? 'rgba(255,255,255,0.4)' : '#ff9500') + ';">' + tlnEchapper(String(r.heure || '').slice(0, 5)) + '</div>'
+    + '<div class="rdv-info">'
+    +   '<div class="rdv-name">' + tlnEchapper(r.nom) + (fait ? ' ✅' : '') + '</div>'
+    +   '<div class="rdv-detail">📍 ' + tlnEchapper(adresse) + '</div>'
+    +   (r.tel ? '<div class="rdv-detail">📞 <a class="tel" href="tel:' + tlnEchapper(tel) + '">' + tlnEchapper(r.tel) + '</a></div>' : '')
+    +   '<div class="rdv-detail">🔧 ' + tlnEchapper(r.type) + '</div>'
+    +   (r.notes ? '<div class="rdv-detail">📝 ' + tlnEchapper(r.notes) + '</div>' : '')
+    + '</div>'
+    + '</div>';
+}
+
+function renderToulonClients(zone) {
+  var parTel = {};
+  TLN_RDVS.forEach(function (r) {
+    var cle = String(r.tel || r.nom || '').replace(/[^0-9]/g, '') || r.nom;
+    if (!cle) return;
+    if (!parTel[cle]) {
+      parTel[cle] = { nom: r.nom, tel: r.tel, adresse: r.adresse, nb: 0, dernier: '' };
+    }
+    parTel[cle].nb++;
+    var d = (r.date || '').split('T')[0];
+    if (d > parTel[cle].dernier) parTel[cle].dernier = d;
+    if (!parTel[cle].adresse && r.adresse) parTel[cle].adresse = r.adresse;
+  });
+
+  var liste = Object.keys(parTel).map(function (k) { return parTel[k]; })
+    .sort(function (a, b) { return String(b.dernier).localeCompare(String(a.dernier)); });
+
+  if (!liste.length) {
+    zone.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>Aucun client sur le secteur Toulon</p></div>';
+    return;
+  }
+
+  var html = '<div style="font-size:13px;font-weight:600;color:rgba(205,232,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">'
+    + liste.length + ' client' + (liste.length > 1 ? 's' : '') + ' — Dimitri</div>';
+
+  html += liste.map(function (c) {
+    var tel = String(c.tel || '').replace(/[^0-9+]/g, '');
+    var init = (c.nom || '?').trim().charAt(0).toUpperCase();
+    return '<div class="client-card">'
+      + '<div class="client-avatar" style="background:rgba(255,149,0,0.18);color:#ff9500;">' + tlnEchapper(init) + '</div>'
+      + '<div class="client-info">'
+      +   '<div class="client-name">' + tlnEchapper(c.nom) + '</div>'
+      +   '<div class="client-sub">' + tlnEchapper(c.adresse || 'Adresse non précisée') + '</div>'
+      +   '<div class="client-sub">' + c.nb + ' RDV · dernier le ' + tlnEchapper(c.dernier || '—') + '</div>'
+      + '</div>'
+      + (tel ? '<div class="client-actions"><a class="btn-icon" href="tel:' + tlnEchapper(tel) + '">📞</a></div>' : '')
+      + '</div>';
+  }).join('');
+
+  zone.innerHTML = html;
 }
 
 </script>

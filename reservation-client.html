@@ -415,10 +415,10 @@ const FORMSPREE_URL = 'https://formspree.io/f/xvznankq';
   <!-- CONFIRMATION -->
   <div class="step" id="step6">
     <div class="card confirm-box">
-      <div class="confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3DDC97" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16.5 9.5"/></svg></div>
-      <div class="confirm-title">Réservation confirmée !</div>
+      <div class="confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FFB454" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15.5 14"/></svg></div>
+      <div class="confirm-title" style="color:#FFB454;">Demande envoyée !</div>
       <div class="confirm-sub" id="confirmSub"></div>
-      <div style="margin-top:20px;padding:14px;background:rgba(61,220,151,0.08);border:1px solid rgba(61,220,151,0.2);border-radius:12px;font-size:13px;color:rgba(168,180,214,0.7);">
+      <div style="margin-top:20px;padding:14px;background:rgba(255,180,84,0.08);border:1px solid rgba(255,180,84,0.22);border-radius:12px;font-size:13px;color:rgba(168,180,214,0.7);">
         En cas de problème, appelez directement :<br>
         <a href="tel:+33648008558" style="color:var(--accent);font-weight:700;font-size:16px;">06 48 00 85 58</a>
       </div>
@@ -791,7 +791,7 @@ async function confirmerRDV() {
   const lieu = selectedLieu === 'domicile' ? 'À domicile (+10€)' : 'Sur place — La Foux';
   const dateStr = toLocalDateStr(selectedDate);
 
-  const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'confirmed', source: 'web' };
+  const rdv = { nom, tel, adresse, email, lieu, type: selectedService, date: dateStr, heure: selectedHeure, status: 'en_attente', source: 'web' };
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rdvs`, {
@@ -828,7 +828,9 @@ async function confirmerRDV() {
       if (email) { fetch('https://formspree.io/f/xvznankq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ _subject: 'Confirmation RDV ClimExpress - ' + dateAff, message: msgAuto, email: email, nom: nom }) }).catch(e => {}); }
 
       const infLieu = selectedLieu === 'domicile' ? 'Nous viendrons directement chez vous.' : 'Service mobile - votre point de rendez-vous sera envoye 1h a 2h avant.';
-      const confirmMsg = 'RDV confirme le<br><strong style="color:#fff;">' + dateAff + ' a ' + selectedHeure + '</strong><br><br>' + infLieu + '<br><br>Pour toute question : <strong>06 48 00 85 58</strong>';
+      const confirmMsg = 'Creneau demande pour le<br><strong style="color:#fff;">' + dateAff + ' a ' + selectedHeure + '</strong><br><br>'
+        + '<span style="color:#FFB454;font-weight:700;">Nous vous confirmons ce creneau par appel ou SMS, en general sous 2 heures.</span><br><br>'
+        + infLieu + '<br><br>Pour toute question : <strong>06 48 00 85 58</strong>';
       document.getElementById('confirmSub').innerHTML = confirmMsg;
       goStep(6);
       updateDots(6);

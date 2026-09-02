@@ -611,6 +611,51 @@ footer nav a:hover{ color:var(--cold); }
   .tel-secteur svg{ display:none; }
   .tel-secteur span{ text-align:center; font-size:.8rem; }
 }
+
+/* --- section equipe : deux techniciens --- */
+.equipe-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:18px; margin-top:2rem;
+}
+.tech-card{
+  background:var(--surface); border:1px solid var(--border-strong);
+  border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
+  transition:transform .22s, border-color .22s;
+}
+.tech-card:hover{ transform:translateY(-3px); }
+.tech-golfe:hover { border-color:var(--cold); }
+.tech-toulon:hover{ border-color:var(--hot); }
+.tech-photo{ position:relative; aspect-ratio:4/3; overflow:hidden; background:var(--surface-2); }
+.tech-photo img{ width:100%; height:100%; object-fit:cover; object-position:center 28%; display:block; }
+.tech-photo::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom, transparent 55%, rgba(11,15,30,.85) 100%);
+  pointer-events:none;
+}
+.tech-info{ padding:18px 20px 20px; }
+.tech-secteur{
+  font-size:.7rem; font-weight:700; letter-spacing:1.1px; text-transform:uppercase;
+  margin:0 0 6px;
+}
+.tech-golfe  .tech-secteur{ color:var(--cold); }
+.tech-toulon .tech-secteur{ color:var(--hot); }
+.tech-info h3{ font-size:1.45rem; font-weight:800; margin:0 0 3px; letter-spacing:-.01em; }
+.tech-role{ font-size:.86rem; color:var(--text-2); margin:0 0 12px; font-weight:600; }
+.tech-txt{ font-size:.92rem; color:var(--text-2); line-height:1.55; margin:0 0 16px; }
+.tech-liens{ display:flex; gap:8px; flex-wrap:wrap; }
+.tech-liens a{
+  flex:1; min-width:110px; text-align:center; text-decoration:none;
+  padding:10px 12px; border-radius:11px; font-size:.88rem; font-weight:700;
+  border:1px solid var(--border-strong); color:var(--text);
+  background:var(--surface-2); transition:background .18s, border-color .18s;
+}
+.tech-golfe  .tech-liens a:hover{ background:var(--cold-soft); border-color:var(--cold); }
+.tech-toulon .tech-liens a:hover{ background:var(--hot-soft);  border-color:var(--hot);  }
+@media (max-width:520px){
+  .tech-photo{ aspect-ratio:1/1; }
+  .tech-info{ padding:16px 16px 18px; }
+}
+
 </style>
 </head>
 
@@ -631,6 +676,7 @@ footer nav a:hover{ color:var(--cold); }
     <ul class="nav-links">
       <li><a href="#tarifs">Tarifs</a></li>
       <li><a href="#deroulement">Déroulement</a></li>
+      <li><a href="#equipe">L'équipe</a></li>
       <li><a href="#zone">Zone d'intervention</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -977,6 +1023,51 @@ footer nav a:hover{ color:var(--cold); }
 </section>
 
 <!-- ============================================================ ZONE D'INTERVENTION -->
+<!-- ============================================================ EQUIPE -->
+<section id="equipe" aria-labelledby="equipe-titre">
+  <div class="wrap">
+    <p class="eyebrow eyebrow-violet">L'équipe</p>
+    <h2 id="equipe-titre">Qui vient chez vous</h2>
+    <p class="lead">Deux techniciens certifiés, chacun sur son secteur. Vous savez à l'avance qui sonnera à votre porte.</p>
+
+    <div class="equipe-grid reveal">
+
+      <article class="tech-card tech-golfe">
+        <div class="tech-photo">
+          <img src="photo-raymond.jpg" alt="Raymond, technicien ClimExpress pour le Golfe de Saint-Tropez" loading="lazy" width="400" height="400">
+        </div>
+        <div class="tech-info">
+          <p class="tech-secteur">Golfe de Saint-Tropez</p>
+          <h3>Raymond</h3>
+          <p class="tech-role">Fondateur &amp; technicien climatisation</p>
+          <p class="tech-txt">Mécanicien de formation, Raymond a passé des années sous les capots avant de se spécialiser dans la climatisation automobile. Il a fondé ClimExpress pour une raison simple&nbsp;: une recharge de clim ne justifie pas d'immobiliser une voiture une demi-journée au garage. Station TEXA, détection de fuite, désinfection d'habitacle — il intervient de Sainte-Maxime à Cavalaire, en passant par Saint-Tropez, Cogolin et Grimaud.</p>
+          <div class="tech-liens">
+            <a href="tel:+33648008558">06 48 00 85 58</a>
+            <a href="mailto:rech.raymond@climexpressauto.fr">Écrire</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="tech-card tech-toulon">
+        <div class="tech-photo">
+          <img src="photo-dimitri.jpg" alt="Dimitri, technicien ClimExpress pour Toulon et Hyères" loading="lazy" width="400" height="340">
+        </div>
+        <div class="tech-info">
+          <p class="tech-secteur">Toulon et alentours</p>
+          <h3>Dimitri</h3>
+          <p class="tech-role">Technicien climatisation</p>
+          <p class="tech-txt">Dimitri rejoint ClimExpress pour ouvrir le secteur toulonnais, avec le même matériel et les mêmes tarifs. Basé à La Crau, il couvre Toulon, Hyères, La Garde, La Valette, Le Pradet, Carqueiranne, La Seyne, Six-Fours, Ollioules et jusqu'à Sanary.</p>
+          <div class="tech-liens">
+            <a href="tel:+33643407035">06 43 40 70 35</a>
+            <a href="mailto:dimitri.s@climexpressauto.fr">Écrire</a>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
 <section id="zone" aria-labelledby="zone-titre">
   <div class="wrap">
     <p class="eyebrow eyebrow-violet">Zone d'intervention</p>
@@ -1101,7 +1192,13 @@ footer nav a:hover{ color:var(--cold); }
       <li>
         <a href="mailto:rech.raymond@climexpressauto.fr">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <span>rech.raymond@climexpressauto.fr <small>Devis flottes & professionnels</small></span>
+          <span>rech.raymond@climexpressauto.fr <small>Raymond — Golfe de Saint-Tropez</small></span>
+        </a>
+      </li>
+      <li>
+        <a href="mailto:dimitri.s@climexpressauto.fr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>dimitri.s@climexpressauto.fr <small>Dimitri — Toulon et alentours</small></span>
         </a>
       </li>
     </ul>
@@ -1143,6 +1240,7 @@ footer nav a:hover{ color:var(--cold); }
           <a href="tel:+33643407035">06 43 40 70 35 — Toulon et alentours</a>
           <a href="https://wa.me/33648008558" rel="noopener">WhatsApp</a>
           <a href="mailto:rech.raymond@climexpressauto.fr">rech.raymond@climexpressauto.fr</a>
+          <a href="mailto:dimitri.s@climexpressauto.fr">dimitri.s@climexpressauto.fr</a>
         </nav>
         <p>Gassin / La Foux — Var (83)</p>
       </div>
@@ -1362,6 +1460,45 @@ document.getElementById('appelModal').addEventListener('click', function(e){
 document.addEventListener('keydown', function(e){
   if (e.key === 'Escape') fermerAppels();
 });
+</script>
+
+
+<script>
+/* ============================================================
+   Photos et visibilite de la section equipe, pilotees depuis
+   l'agenda de Raymond via Supabase. Si le reseau echoue, les
+   photos deposees sur GitHub restent affichees.
+   ============================================================ */
+(function(){
+  var SB  = 'https://cytgdpeoxhxempnewrep.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
+
+  fetch(SB + '/rest/v1/site_config?select=cle,valeur', {
+    headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+  })
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(rows){
+    if (!rows) return;
+    var cfg = {};
+    rows.forEach(function(l){ cfg[l.cle] = l.valeur; });
+
+    if (cfg.equipe_masquee === 'oui') {
+      var sec = document.getElementById('equipe');
+      if (sec) sec.style.display = 'none';
+      var lien = document.querySelector('.nav-links a[href="#equipe"]');
+      if (lien && lien.parentNode) lien.parentNode.style.display = 'none';
+      return;
+    }
+
+    [['photo_raymond','photo-raymond.jpg'], ['photo_dimitri','photo-dimitri.jpg']].forEach(function(p){
+      var url = cfg[p[0]];
+      if (!url) return;
+      var img = document.querySelector('img[src="' + p[1] + '"]');
+      if (img) img.src = url;
+    });
+  })
+  .catch(function(){});
+})();
 </script>
 
 </body>

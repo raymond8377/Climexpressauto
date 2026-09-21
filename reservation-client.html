@@ -1020,5 +1020,41 @@ chargerLocalisationJour();
   </div>
 </div>
 
+
+<script>
+/* Fermeture saisonniere : pilotee depuis l'agenda, sans redeploiement */
+(function(){
+  var SB  = 'https://cytgdpeoxhxempnewrep.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dGdkcGVveGh4ZW1wbmV3cmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Njk1NzUsImV4cCI6MjA5NjQ0NTU3NX0.Xnx99U2TgdeO2msP7PbkKFTDy1zpFqrMPNIRCr6uxQk';
+
+  fetch(SB + '/rest/v1/site_config?select=cle,valeur&cle=in.(saison_fermee,saison_message)', {
+    headers: { apikey: KEY, Authorization: 'Bearer ' + KEY }
+  })
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(rows){
+    if (!rows) return;
+    var cfg = {};
+    rows.forEach(function(l){ cfg[l.cle] = l.valeur; });
+    if (cfg.saison_fermee !== 'oui') return;
+
+    var msg = cfg.saison_message || 'Nous reprenons les interventions au printemps.';
+    var v = document.createElement('div');
+    v.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0B0F1E;display:flex;align-items:center;justify-content:center;padding:24px;';
+    v.innerHTML =
+      '<div style="width:100%;max-width:430px;">'
+      + '<div style="background:#131A31;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px 24px;">'
+      + '<div style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#FF8A3D;background:rgba(255,138,61,.12);border:1px solid rgba(255,138,61,.3);border-radius:999px;padding:6px 13px;margin-bottom:16px;">R&eacute;servations ferm&eacute;es</div>'
+      + '<h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px;color:#EAF0FF;line-height:1.28;">La r&eacute;servation en ligne est suspendue</h1>'
+      + '<p style="font-size:15px;color:#8E9BBF;margin:0 0 12px;line-height:1.55;">' + msg + '</p>'
+      + '<p style="font-size:15px;color:#8E9BBF;margin:0 0 22px;line-height:1.55;">Une question d&rsquo;ici l&agrave; ? &Eacute;crivez-nous sur WhatsApp.</p>'
+      + '<a href="https://wa.me/33648008558" style="display:block;text-align:center;text-decoration:none;padding:15px;border-radius:13px;background:#38E1FF;color:#04121A;font-weight:700;font-size:15px;margin-bottom:9px;">Nous &eacute;crire sur WhatsApp</a>'
+      + '<a href="index.html" style="display:block;text-align:center;text-decoration:none;padding:15px;border-radius:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#EAF0FF;font-weight:700;font-size:15px;">Retour au site</a>'
+      + '</div></div>';
+    document.body.appendChild(v);
+    document.body.style.overflow = 'hidden';
+  })
+  .catch(function(){});
+})();
+</script>
 </body>
 </html>
